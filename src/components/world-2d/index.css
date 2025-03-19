@@ -9,3 +9,71 @@ body {
   height  : 100%;
   overflow: hidden;
 }
+
+.world-2d {
+  width           : 100vw;
+  height          : 100vh;
+  display         : flex;
+  flex-direction  : column;
+  justify-content : center;
+  align-items     : center;
+  gap             : 20px;
+  background-color: #1e1e1e;
+}
+
+.world-2d .controls {
+  display         : flex;
+  gap             : 20px;
+  align-items     : center;
+  padding         : 10px;
+  background-color: #2d2d2d;
+  border-radius   : 5px;
+}
+
+.world-2d .controls select,
+.world-2d .controls input[type="number"] {
+  padding         : 5px;
+  background-color: #3d3d3d;
+  color           : #ffffff;
+  border          : 1px solid #4d4d4d;
+  border-radius   : 3px;
+  font-size       : 14px;
+}
+
+.world-2d .controls input[type="number"] {
+  width: 100px;
+}
+
+.world-2d .controls label {
+  display    : flex;
+  align-items: center;
+  gap        : 8px;
+  color      : #ffffff;
+  font-size  : 14px;
+}
+
+.world-2d .controls input[type="checkbox"] {
+  width       : 16px;
+  height      : 16px;
+  accent-color: #4a9eff;
+}
+
+.world-2d .controls button {
+  padding         : 5px 15px;
+  background-color: #4a9eff;
+  color           : #ffffff;
+  border          : none;
+  border-radius   : 3px;
+  cursor          : pointer;
+  font-size       : 14px;
+  transition      : background-color 0.2s;
+}
+
+.world-2d .controls button:hover {
+  background-color: #3a8eef;
+}
+
+.world-2d canvas {
+  border          : 1px solid #3d3d3d;
+  background-color: #1e1e1e;
+}
