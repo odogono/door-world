@@ -5,6 +5,12 @@ import { PRNG } from '@helpers/random';
 
 const log = createLog('World2D');
 
+interface DungeonData {
+  rooms: Room[];
+  doors: Door[];
+  strategy: RoomGenerationStrategy;
+}
+
 interface Room {
   x: number;
   y: number;
@@ -516,7 +522,7 @@ const createStrategy = (
 const generateDungeon = (
   fillSpace: boolean = false,
   strategy: 'random' | 'growth' | 'type' | 'branch' = 'random'
-): Room[] => {
+): DungeonData => {
   const rooms: Room[] = [];
   const generationStrategy = createStrategy(strategy);
 
@@ -580,39 +586,53 @@ const generateDungeon = (
     }
   }
 
-  return rooms;
+  return {
+    rooms,
+    doors: findDoors(rooms),
+    strategy: generationStrategy
+  };
 };
 
-const generateRoomsAround = (rooms: Room[], targetRoom: Room): Room[] => {
-  const newRooms: Room[] = [...rooms];
+const generateRoomsAround = (
+  dungeon: DungeonData,
+  targetRoom: Room
+): DungeonData => {
+  const newRooms: Room[] = [...dungeon.rooms];
 
   log.debug('Generating room around', roomToString(targetRoom));
 
   let attempts = 0;
   const maxAttempts = 10;
   let roomsGenerated = 0;
+  let consecutiveFailures = 0;
+  const maxConsecutiveFailures = 5;
 
-  while (attempts < maxAttempts && roomsGenerated < NUM_ROOMS_PER_CLICK) {
+  while (
+    attempts < maxAttempts &&
+    roomsGenerated < NUM_ROOMS_PER_CLICK &&
+    consecutiveFailures < maxConsecutiveFailures
+  ) {
+    // Always use the clicked room as the target
     const newRoom = generateRoomAround(targetRoom, newRooms);
 
     if (newRoom) {
       log.debug('Found valid room position', roomToString(newRoom));
       newRooms.push(newRoom);
       roomsGenerated++;
+      consecutiveFailures = 0;
+    } else {
+      consecutiveFailures++;
     }
 
     attempts++;
-    if (attempts >= maxAttempts) {
-      log.debug(
-        'Failed to find valid room position after',
-        maxAttempts,
-        'attempts'
-      );
-    }
   }
 
   log.debug('New rooms array length', newRooms.length);
-  return newRooms;
+  return {
+    rooms: newRooms,
+    doors: findDoors(newRooms),
+    strategy: dungeon.strategy
+  };
 };
 
 const findDoorPosition = (
@@ -716,18 +736,18 @@ const findDoors = (rooms: Room[]): Door[] => {
 
 export const World2D = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const [dungeon, setDungeon] = useState<DungeonData | null>(null);
   const [clickedRoom, setClickedRoom] = useState<Room | null>(null);
 
   useEffect(() => {
-    const initialRooms = generateDungeon(true, 'branch'); // Using branching strategy
-    log.debug('Initial rooms generated', initialRooms.length);
-    setRooms(initialRooms);
+    const initialDungeon = generateDungeon(true, 'branch'); // Using branching strategy
+    log.debug('Initial rooms generated', initialDungeon.rooms.length);
+    setDungeon(initialDungeon);
   }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !dungeon) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -741,7 +761,7 @@ export const World2D = () => {
     ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     // Draw rooms
-    for (const room of rooms) {
+    for (const room of dungeon.rooms) {
       // Draw room fill based on type
       switch (room.type) {
         case RoomType.LARGE:
@@ -773,8 +793,7 @@ export const World2D = () => {
     }
 
     // Draw doors
-    const doors = findDoors(rooms);
-    for (const door of doors) {
+    for (const door of dungeon.doors) {
       // Draw door frame
       ctx.fillStyle = '#000';
       ctx.fillRect(door.position.x, door.position.y, door.width, door.height);
@@ -792,7 +811,7 @@ export const World2D = () => {
     // Draw room connection indicators (only for rooms with doors)
     ctx.strokeStyle = '#00ff00aa';
     ctx.lineWidth = 2;
-    for (const door of doors) {
+    for (const door of dungeon.doors) {
       // Draw a line between rooms that have doors
       const center1 = getRoomCenter(door.room1);
       const center2 = getRoomCenter(door.room2);
@@ -804,31 +823,33 @@ export const World2D = () => {
 
     // Draw room centers (for debugging)
     ctx.fillStyle = '#f00';
-    for (const room of rooms) {
+    for (const room of dungeon.rooms) {
       const center = getRoomCenter(room);
       ctx.beginPath();
       ctx.arc(center.x, center.y, 2, 0, Math.PI * 2);
       ctx.fill();
     }
-  }, [rooms, clickedRoom]);
+  }, [dungeon, clickedRoom]);
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !dungeon) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
     // Find clicked room
-    const clickedRoom = rooms.find(room => isPointInRoom({ x, y }, room));
+    const clickedRoom = dungeon.rooms.find(room =>
+      isPointInRoom({ x, y }, room)
+    );
     if (clickedRoom) {
       log.debug('Room clicked', roomToString(clickedRoom));
       setClickedRoom(clickedRoom);
 
-      const newRooms = generateRoomsAround(rooms, clickedRoom);
-      log.debug('Setting new rooms', newRooms.length);
-      setRooms(newRooms);
+      const newDungeon = generateRoomsAround(dungeon, clickedRoom);
+      log.debug('Setting new rooms', newDungeon.rooms.length);
+      setDungeon(newDungeon);
 
       // Reset clicked room after a short delay
       setTimeout(() => {
