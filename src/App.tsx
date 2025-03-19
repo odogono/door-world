@@ -1,4 +1,4 @@
-import { Grid, OrbitControls, Plane } from '@react-three/drei';
+import { Grid, OrbitControls, Plane, Sphere } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import './App.css';
 import { Door } from '@components/door';
@@ -8,6 +8,15 @@ import { useState } from 'react';
 import { Vector3 } from 'three';
 
 const log = createLog('App');
+
+// ClickMarker component to show where the ground was clicked
+const ClickMarker = ({ position }: { position: Vector3 }) => {
+  return (
+    <Sphere args={[0.1, 16, 16]} position={[position.x, 0.1, position.z]}>
+      <meshStandardMaterial color="red" />
+    </Sphere>
+  );
+};
 
 // GroundPlane component to handle clicks
 const GroundPlane = ({
@@ -41,6 +50,12 @@ const GroundPlane = ({
 
 const App = () => {
   const [targetPosition, setTargetPosition] = useState<Vector3 | null>(null);
+  const [clickedPosition, setClickedPosition] = useState<Vector3 | null>(null);
+
+  const handleTargetPositionChange = (pos: Vector3) => {
+    setTargetPosition(pos);
+    setClickedPosition(pos);
+  };
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
@@ -50,7 +65,8 @@ const App = () => {
         {/* <XYZAxis /> */}
         <Door position={[0, 0, 2]} />
         <Door position={[-2, 0, 0]} rotationY={0} doorColor="#00f900" />
-        <GroundPlane onTargetPositionChange={setTargetPosition} />
+        <GroundPlane onTargetPositionChange={handleTargetPositionChange} />
+        {clickedPosition && <ClickMarker position={clickedPosition} />}
         <Grid
           infiniteGrid
           sectionSize={1}
