@@ -64,7 +64,7 @@ const App = () => {
 
         {/* <XYZAxis /> */}
         <Door position={[0, 0, 2]} />
-        <Door position={[-2, 0, 0]} rotationY={0} doorColor="#00f900" />
+        <Door position={[-2, 0, 0]} rotationY={0} doorColor="#00f900" isOpen />
         <GroundPlane onTargetPositionChange={handleTargetPositionChange} />
         {clickedPosition && <ClickMarker position={clickedPosition} />}
         <Grid

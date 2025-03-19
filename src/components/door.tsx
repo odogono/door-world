@@ -11,6 +11,7 @@ interface DoorProps {
   rotationY?: number;
   frameColor?: string;
   doorColor?: string;
+  isOpen?: boolean;
 }
 
 const log = createLog('Door');
@@ -24,7 +25,8 @@ export const Door = ({
   scale = [1, 1, 1],
   rotationY = -Math.PI / 2,
   doorColor = '#83D5FF',
-  frameColor = '#FFF'
+  frameColor = '#FFF',
+  isOpen: isOpenProp = false
 }: DoorProps) => {
   const gltf = useGLTF('/vbasic.door.glb');
 
@@ -36,7 +38,7 @@ export const Door = ({
     []
   );
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(isOpenProp);
   const doorRef = useRef<Object3D>(null);
   const frameRef = useRef<Object3D>(null);
   const targetRotation = isOpen ? Math.PI / 2 : 0;
@@ -58,6 +60,7 @@ export const Door = ({
 
     if (doorNode) {
       doorRef.current = doorNode;
+      doorRef.current.rotation.y = targetRotation;
       applyColor(doorNode, doorColor);
     }
 
