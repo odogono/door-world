@@ -18,6 +18,8 @@ const log = createLog('World2D');
 export const World2D = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dungeon, setDungeon] = useState<DungeonData | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
   const [selectedStrategy, setSelectedStrategy] =
     useState<StrategyType>('random');
   const [fillSpace, setFillSpace] = useState(false);
@@ -35,13 +37,36 @@ export const World2D = () => {
   const [isOverRoom, setIsOverRoom] = useState(false);
   const [highlightedRoom, setHighlightedRoom] = useState<Room | null>(null);
 
-  const regenerateDungeon = () => {
+  const regenerateDungeon = async () => {
     const start = performance.now();
     log.debug('Regenerating dungeon');
-    setDungeon(generateDungeon(fillSpace, selectedStrategy, seed));
-    const end = performance.now();
-    log.debug(`Dungeon generated in ${end - start}ms`);
-    resetView();
+    setIsGenerating(true);
+    setGenerationProgress(0);
+
+    try {
+      const newDungeon = await generateDungeon(
+        fillSpace,
+        selectedStrategy,
+        seed,
+        intermediateDungeon => {
+          setDungeon(intermediateDungeon);
+          // Calculate progress based on room count
+          const maxRooms = fillSpace ? 100 : 20; // Approximate max rooms
+          const progress = Math.min(
+            100,
+            (intermediateDungeon.rooms.length / maxRooms) * 100
+          );
+          setGenerationProgress(progress);
+        }
+      );
+      setDungeon(newDungeon);
+    } finally {
+      setIsGenerating(false);
+      setGenerationProgress(0);
+      const end = performance.now();
+      log.debug(`Dungeon generated in ${end - start}ms`);
+      resetView();
+    }
   };
 
   const resetView = () => {
@@ -143,13 +168,25 @@ export const World2D = () => {
       canvas.width - 10,
       canvas.height - 10
     );
+
+    // Draw generation progress at bottom left if generating
+    if (isGenerating) {
+      ctx.textAlign = 'left';
+      ctx.fillText(
+        `Generating... ${Math.round(generationProgress)}%`,
+        10,
+        canvas.height - 10
+      );
+    }
   }, [
     dungeon,
     showConnections,
     showRooms,
     showDoors,
     viewportOffset,
-    highlightedRoom
+    highlightedRoom,
+    isGenerating,
+    generationProgress
   ]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -277,7 +314,9 @@ export const World2D = () => {
             Show Doors
           </label>
         </div>
-        <button onClick={regenerateDungeon}>Regenerate</button>
+        <button onClick={regenerateDungeon} disabled={isGenerating}>
+          {isGenerating ? 'Generating...' : 'Regenerate'}
+        </button>
         <button onClick={resetView}>Reset View</button>
       </div>
       <canvas
