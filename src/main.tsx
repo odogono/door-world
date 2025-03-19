@@ -1,10 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import App from './App.tsx';
+import { World2D } from './components/world-2d';
+import { World3D } from './components/world-3d';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    {/* <World3D /> */}
+    <World2D />
   </StrictMode>
 );
