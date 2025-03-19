@@ -1,5 +1,5 @@
 import { PRNG } from '@helpers/random';
-import { MAX_ROOMS, NUM_ROOMS_PER_CLICK, WORLD_SIZE } from './constants';
+import { MAX_ROOMS, NUM_ROOMS_PER_CLICK } from './constants';
 import { findDoors } from './door';
 import { generateRoomAround, getMaxRoomDepth } from './room';
 import { createStrategy } from './strategies';
@@ -11,11 +11,21 @@ export * from './strategies';
 export * from './room';
 export * from './door';
 
-export const generateDungeon = (
+export const generateDungeon = async (
+  fillSpace: boolean = false,
+  strategy: 'random' | 'growth' | 'type' | 'branch' = 'random',
+  seed: number = Math.floor(Math.random() * 1000000),
+  onProgress?: (dungeon: DungeonData) => void
+): Promise<DungeonData> => {
+  return generateDungeonAsync(fillSpace, strategy, seed, onProgress);
+};
+
+// Generator function for dungeon generation
+export function* generateDungeonGenerator(
   fillSpace: boolean = false,
   strategy: 'random' | 'growth' | 'type' | 'branch' = 'random',
   seed: number = Math.floor(Math.random() * 1000000)
-): DungeonData => {
+): Generator<DungeonData, DungeonData> {
   const dungeonPrng = new PRNG(seed);
   const rooms: Room[] = [];
   const generationStrategy = createStrategy(strategy);
@@ -68,8 +78,20 @@ export const generateDungeon = (
     if (attempts >= maxAttempts) {
       break;
     }
+
+    // Yield intermediate state every few rooms
+    if (roomsGenerated % 5 === 0) {
+      yield {
+        rooms: [...rooms],
+        doors: findDoors(rooms),
+        strategy: generationStrategy,
+        seed: dungeonPrng.getSeed(),
+        maxDepth: getMaxRoomDepth(rooms)
+      };
+    }
   }
 
+  // Final yield with complete dungeon
   return {
     rooms,
     doors: findDoors(rooms),
@@ -77,6 +99,32 @@ export const generateDungeon = (
     seed: dungeonPrng.getSeed(),
     maxDepth: getMaxRoomDepth(rooms)
   };
+}
+
+// Async wrapper for the generator
+export const generateDungeonAsync = async (
+  fillSpace: boolean = false,
+  strategy: 'random' | 'growth' | 'type' | 'branch' = 'random',
+  seed: number = Math.floor(Math.random() * 1000000),
+  onProgress?: (dungeon: DungeonData) => void
+): Promise<DungeonData> => {
+  const generator = generateDungeonGenerator(fillSpace, strategy, seed);
+  let result: DungeonData;
+
+  while (true) {
+    const { value, done } = generator.next();
+    if (done) {
+      result = value;
+      break;
+    }
+    if (onProgress) {
+      onProgress(value);
+    }
+    // Allow other tasks to run
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+
+  return result;
 };
 
 interface GenerateRoomsAroundProps {
