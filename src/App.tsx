@@ -1,11 +1,12 @@
-import { Grid, OrbitControls, Plane, Sphere } from '@react-three/drei';
+import { Grid, OrbitControls, Plane, Sphere, Text } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import './App.css';
 import { Door } from '@components/door';
 import { ISO_ANGLE, IsometricCamera } from '@components/isometric-camera';
 import { createLog } from '@helpers/log';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Vector3 } from 'three';
+import { GroundText } from './components/ground-text';
 
 const log = createLog('App');
 
@@ -63,16 +64,28 @@ const App = () => {
         <IsometricCamera targetPosition={targetPosition} />
 
         {/* <XYZAxis /> */}
-        <Door position={[0, 0, 2]} />
-        <Door position={[-2, 0, 0]} rotationY={0} doorColor="#00f900" isOpen />
+        <Door position={[0, 0, 4]} />
+        <Door position={[-4, 0, 0]} rotationY={0} doorColor="#00f900" isOpen />
+        <Door position={[0, 0, -4]} doorColor="#7F42FF" />
         <GroundPlane onTargetPositionChange={handleTargetPositionChange} />
-        {clickedPosition && <ClickMarker position={clickedPosition} />}
+        {clickedPosition && (
+          <>
+            <ClickMarker position={clickedPosition} />
+            <GroundText
+              position={clickedPosition}
+              text="Clicked here!"
+              onEnterSpeed={0.01}
+            />
+          </>
+        )}
         <Grid
           infiniteGrid
           sectionSize={1}
           sectionColor="black"
           cellSize={0.1}
         />
+
+        <GroundText position={[0, 0, 0]} text="Open Door Go North" />
 
         <ambientLight intensity={0.1} />
         <directionalLight position={[10, 10, 5]} intensity={2} />
