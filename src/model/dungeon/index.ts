@@ -1,5 +1,5 @@
 import { PRNG } from '@helpers/random';
-import { CANVAS_SIZE, NUM_ROOMS_PER_CLICK } from './constants';
+import { MAX_ROOMS, NUM_ROOMS_PER_CLICK, WORLD_SIZE } from './constants';
 import { findDoors } from './door';
 import { generateRoomAround, getMaxRoomDepth } from './room';
 import { createStrategy } from './strategies';
@@ -20,10 +20,10 @@ export const generateDungeon = (
   const rooms: Room[] = [];
   const generationStrategy = createStrategy(strategy);
 
-  // Create central room with only TOP edge allowed
+  // Create central room at world center
   const centralRoom: Room = {
-    x: CANVAS_SIZE / 2 - 50,
-    y: CANVAS_SIZE / 2 - 50,
+    x: -50, // Center the room at (0,0)
+    y: -50,
     width: 100,
     height: 100,
     type: RoomType.NORMAL,
@@ -45,7 +45,7 @@ export const generateDungeon = (
       attempts,
       maxAttempts,
       roomsGenerated,
-      fillSpace ? Infinity : NUM_ROOMS_PER_CLICK,
+      fillSpace ? MAX_ROOMS : NUM_ROOMS_PER_CLICK,
       consecutiveFailures,
       maxConsecutiveFailures
     )

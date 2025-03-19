@@ -1,9 +1,9 @@
 import { PRNG } from '@helpers/random';
 import {
-  CANVAS_SIZE,
   ROOM_SIZE_LARGE,
   ROOM_SIZE_MEDIUM,
-  ROOM_SIZE_SMALL
+  ROOM_SIZE_SMALL,
+  WORLD_SIZE
 } from './constants';
 import { Room, RoomType } from './types';
 
@@ -142,8 +142,9 @@ export const generateRoomAround = (
         break;
     }
 
-    x = Math.max(0, Math.min(CANVAS_SIZE - width, x));
-    y = Math.max(0, Math.min(CANVAS_SIZE - height, y));
+    // Allow rooms to be placed anywhere in the world
+    x = Math.max(-WORLD_SIZE / 2, Math.min(WORLD_SIZE / 2 - width, x));
+    y = Math.max(-WORLD_SIZE / 2, Math.min(WORLD_SIZE / 2 - height, y));
 
     const newRoom = {
       x,
