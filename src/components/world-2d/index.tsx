@@ -343,11 +343,79 @@ class GrowthDirectionStrategy implements RoomGenerationStrategy {
   }
 }
 
+// Room type strategy
+class RoomTypeStrategy implements RoomGenerationStrategy {
+  private getRoomDensity(room: Room, allRooms: Room[]): number {
+    // Calculate how many rooms are within a certain radius
+    const radius = 150; // Adjust this to control density check radius
+    let nearbyRooms = 0;
+
+    for (const otherRoom of allRooms) {
+      if (otherRoom === room) continue;
+
+      const distance = getDistanceBetweenRooms(room, otherRoom);
+      if (distance < radius) {
+        nearbyRooms++;
+      }
+    }
+
+    return nearbyRooms;
+  }
+
+  private getRoomTypeScore(room: Room, allRooms: Room[]): number {
+    const density = this.getRoomDensity(room, allRooms);
+    const center = CANVAS_SIZE / 2;
+    const roomCenterX = room.x + room.width / 2;
+    const roomCenterY = room.y + room.height / 2;
+    const distanceFromCenter = Math.sqrt(
+      Math.pow(roomCenterX - center, 2) + Math.pow(roomCenterY - center, 2)
+    );
+
+    // Calculate scores for different aspects
+    const densityScore = Math.max(0, 5 - density); // Lower density is better
+    const centerScore = Math.max(0, distanceFromCenter - 200); // Favor rooms away from center
+    const combinedScore = densityScore * 2 + centerScore * 0.5;
+
+    return combinedScore;
+  }
+
+  selectTargetRoom(rooms: Room[]): Room {
+    // Sort rooms by their type score (highest first)
+    const sortedRooms = [...rooms].sort(
+      (a, b) =>
+        this.getRoomTypeScore(b, rooms) - this.getRoomTypeScore(a, rooms)
+    );
+
+    // Select from the 5 rooms with the highest scores
+    const candidates = sortedRooms.slice(0, Math.min(5, sortedRooms.length));
+    return candidates[prng.nextInt(0, candidates.length - 1)];
+  }
+
+  shouldContinueGeneration(
+    attempts: number,
+    maxAttempts: number,
+    roomsGenerated: number,
+    maxRooms: number,
+    consecutiveFailures: number,
+    maxConsecutiveFailures: number
+  ): boolean {
+    return (
+      attempts < maxAttempts &&
+      roomsGenerated < maxRooms &&
+      consecutiveFailures < maxConsecutiveFailures
+    );
+  }
+}
+
 // Strategy factory
-const createStrategy = (type: 'random' | 'growth'): RoomGenerationStrategy => {
+const createStrategy = (
+  type: 'random' | 'growth' | 'type'
+): RoomGenerationStrategy => {
   switch (type) {
     case 'growth':
       return new GrowthDirectionStrategy();
+    case 'type':
+      return new RoomTypeStrategy();
     case 'random':
     default:
       return new RandomStrategy();
@@ -356,7 +424,7 @@ const createStrategy = (type: 'random' | 'growth'): RoomGenerationStrategy => {
 
 const generateDungeon = (
   fillSpace: boolean = false,
-  strategy: 'random' | 'growth' = 'random'
+  strategy: 'random' | 'growth' | 'type' = 'random'
 ): Room[] => {
   const rooms: Room[] = [];
   const generationStrategy = createStrategy(strategy);
@@ -560,7 +628,7 @@ export const World2D = () => {
   const [clickedRoom, setClickedRoom] = useState<Room | null>(null);
 
   useEffect(() => {
-    const initialRooms = generateDungeon(true, 'growth'); // Using growth strategy
+    const initialRooms = generateDungeon(true, 'type'); // Using type strategy
     log.debug('Initial rooms generated', initialRooms.length);
     setRooms(initialRooms);
   }, []);
