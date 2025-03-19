@@ -79,37 +79,70 @@ export const generateDungeon = (
   };
 };
 
-export const generateRoomsAround = (
-  dungeon: DungeonData,
-  targetRoom: Room
-): DungeonData => {
+interface GenerateRoomsAroundProps {
+  dungeon: DungeonData;
+  targetRoom: Room;
+  maxAttempts?: number;
+  maxConsecutiveFailures?: number;
+  roomCount?: number;
+  recurseCount?: number;
+}
+
+export const generateRoomsAround = ({
+  dungeon,
+  targetRoom,
+  maxAttempts = 20,
+  maxConsecutiveFailures = 10,
+  roomCount = NUM_ROOMS_PER_CLICK,
+  recurseCount = 1
+}: GenerateRoomsAroundProps): DungeonData => {
   const dungeonPrng = new PRNG(dungeon.seed);
   const rooms = [...dungeon.rooms];
-  let attempts = 0;
   let roomsGenerated = 0;
-  let consecutiveFailures = 0;
-  const maxAttempts = 10;
-  const maxConsecutiveFailures = 5;
 
-  while (
-    dungeon.strategy.shouldContinueGeneration(
-      attempts,
-      maxAttempts,
-      roomsGenerated,
-      NUM_ROOMS_PER_CLICK,
-      consecutiveFailures,
-      maxConsecutiveFailures
-    )
-  ) {
-    attempts++;
-    const newRoom = generateRoomAround(targetRoom, rooms, dungeonPrng);
+  // Queue of rooms to process for each recursion level
+  const roomQueue: Room[][] = Array(recurseCount)
+    .fill(null)
+    .map(() => []);
+  roomQueue[0].push(targetRoom);
 
-    if (newRoom) {
-      rooms.push(newRoom);
-      roomsGenerated++;
-      consecutiveFailures = 0;
-    } else {
-      consecutiveFailures++;
+  // Process each recursion level
+  for (let level = 0; level < recurseCount; level++) {
+    const currentLevelRooms = roomQueue[level];
+
+    // Process each room in the current level
+    for (const currentRoom of currentLevelRooms) {
+      let levelAttempts = 0;
+      let levelRoomsGenerated = 0;
+      let levelConsecutiveFailures = 0;
+
+      while (
+        dungeon.strategy.shouldContinueGeneration(
+          levelAttempts,
+          maxAttempts,
+          levelRoomsGenerated,
+          roomCount,
+          levelConsecutiveFailures,
+          maxConsecutiveFailures
+        )
+      ) {
+        levelAttempts++;
+        const newRoom = generateRoomAround(currentRoom, rooms, dungeonPrng);
+
+        if (newRoom) {
+          rooms.push(newRoom);
+          roomsGenerated++;
+          levelRoomsGenerated++;
+          levelConsecutiveFailures = 0;
+
+          // Add new room to next level's queue if we're not at the last level
+          if (level < recurseCount - 1) {
+            roomQueue[level + 1].push(newRoom);
+          }
+        } else {
+          levelConsecutiveFailures++;
+        }
+      }
     }
   }
 

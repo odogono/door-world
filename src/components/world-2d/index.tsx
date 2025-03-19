@@ -25,6 +25,7 @@ export const World2D = () => {
   const [showConnections, setShowConnections] = useState(true);
   const [showRooms, setShowRooms] = useState(true);
   const [showDoors, setShowDoors] = useState(true);
+  const [recurseCount, setRecurseCount] = useState(1);
   const [viewportOffset, setViewportOffset] = useState(() => ({
     x: CANVAS_SIZE / 2,
     y: CANVAS_SIZE / 2
@@ -40,6 +41,7 @@ export const World2D = () => {
     setDungeon(generateDungeon(fillSpace, selectedStrategy, seed));
     const end = performance.now();
     log.debug(`Dungeon generated in ${end - start}ms`);
+    resetView();
   };
 
   const resetView = () => {
@@ -131,6 +133,16 @@ export const World2D = () => {
     }
 
     ctx.restore();
+
+    // Draw room count at bottom right
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(
+      `Rooms: ${dungeon.rooms.length}`,
+      canvas.width - 10,
+      canvas.height - 10
+    );
   }, [
     dungeon,
     showConnections,
@@ -195,7 +207,11 @@ export const World2D = () => {
     );
 
     if (clickedRoom) {
-      const newDungeon = generateRoomsAround(dungeon, clickedRoom);
+      const newDungeon = generateRoomsAround({
+        dungeon,
+        targetRoom: clickedRoom,
+        recurseCount
+      });
       setDungeon(newDungeon);
     }
   };
@@ -226,30 +242,41 @@ export const World2D = () => {
           onChange={e => setSeed(parseInt(e.target.value, 10) || 0)}
           placeholder="Enter seed"
         />
-        <label>
-          <input
-            type="checkbox"
-            checked={showConnections}
-            onChange={e => setShowConnections(e.target.checked)}
-          />
-          Show Connections
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={showRooms}
-            onChange={e => setShowRooms(e.target.checked)}
-          />
-          Show Rooms
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={showDoors}
-            onChange={e => setShowDoors(e.target.checked)}
-          />
-          Show Doors
-        </label>
+        <input
+          type="number"
+          value={recurseCount}
+          onChange={e =>
+            setRecurseCount(Math.max(1, parseInt(e.target.value, 10) || 1))
+          }
+          min="1"
+          placeholder="Recurse count"
+        />
+        <div className="controls-toggle-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={showConnections}
+              onChange={e => setShowConnections(e.target.checked)}
+            />
+            Show Connections
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={showRooms}
+              onChange={e => setShowRooms(e.target.checked)}
+            />
+            Show Rooms
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={showDoors}
+              onChange={e => setShowDoors(e.target.checked)}
+            />
+            Show Doors
+          </label>
+        </div>
         <button onClick={regenerateDungeon}>Regenerate</button>
         <button onClick={resetView}>Reset View</button>
       </div>
