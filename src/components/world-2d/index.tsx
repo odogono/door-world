@@ -1,5 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
-import './index.css';
 import { darkenColor } from '@helpers/colour';
 import { createLog } from '@helpers/log';
 import {
@@ -12,6 +10,7 @@ import {
   StrategyType
 } from '@model/dungeon';
 import { CANVAS_SIZE } from '@model/dungeon/constants';
+import { useEffect, useRef, useState } from 'react';
 
 const log = createLog('World2D');
 
@@ -254,22 +253,24 @@ export const World2D = () => {
   };
 
   return (
-    <div className="world-2d">
-      <div className="controls">
+    <div className="relative flex flex-col items-center gap-4 p-4 w-screen h-screen bg-[#1e1e1e]">
+      <div className="flex flex-wrap gap-4 items-center p-2 bg-[#2a2a2a] rounded fixed top-5 left-1/2 -translate-x-1/2 z-50">
         <select
           value={selectedStrategy}
           onChange={e => setSelectedStrategy(e.target.value as StrategyType)}
+          className="p-1.5 bg-[#3d3d3d] text-white border border-[#4d4d4d] rounded text-sm"
         >
           <option value="random">Random Strategy</option>
           <option value="growth">Growth Strategy</option>
           <option value="type">Type Strategy</option>
           <option value="branch">Branch Strategy</option>
         </select>
-        <label>
+        <label className="flex items-center gap-2 text-white text-sm">
           <input
             type="checkbox"
             checked={fillSpace}
             onChange={e => setFillSpace(e.target.checked)}
+            className="w-4 h-4 accent-[#4a9eff]"
           />
           Fill Space
         </label>
@@ -278,6 +279,7 @@ export const World2D = () => {
           value={seed}
           onChange={e => setSeed(parseInt(e.target.value, 10) || 0)}
           placeholder="Enter seed"
+          className="p-1.5 bg-[#3d3d3d] text-white border border-[#4d4d4d] rounded text-sm w-[100px]"
         />
         <input
           type="number"
@@ -287,37 +289,50 @@ export const World2D = () => {
           }
           min="1"
           placeholder="Recurse count"
+          className="p-1.5 bg-[#3d3d3d] text-white border border-[#4d4d4d] rounded text-sm w-[100px]"
         />
-        <div className="controls-toggle-group">
-          <label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 text-white text-sm">
             <input
               type="checkbox"
               checked={showConnections}
               onChange={e => setShowConnections(e.target.checked)}
+              className="w-4 h-4 accent-[#4a9eff]"
             />
             Show Connections
           </label>
-          <label>
+          <label className="flex items-center gap-2 text-white text-sm">
             <input
               type="checkbox"
               checked={showRooms}
               onChange={e => setShowRooms(e.target.checked)}
+              className="w-4 h-4 accent-[#4a9eff]"
             />
             Show Rooms
           </label>
-          <label>
+          <label className="flex items-center gap-2 text-white text-sm">
             <input
               type="checkbox"
               checked={showDoors}
               onChange={e => setShowDoors(e.target.checked)}
+              className="w-4 h-4 accent-[#4a9eff]"
             />
             Show Doors
           </label>
         </div>
-        <button onClick={regenerateDungeon} disabled={isGenerating}>
+        <button
+          onClick={regenerateDungeon}
+          disabled={isGenerating}
+          className="px-4 py-1.5 bg-[#4a9eff] text-white border-none rounded cursor-pointer text-sm transition-colors hover:bg-[#3a8eef] disabled:opacity-50"
+        >
           {isGenerating ? 'Generating...' : 'Regenerate'}
         </button>
-        <button onClick={resetView}>Reset View</button>
+        <button
+          onClick={resetView}
+          className="px-4 py-1.5 bg-[#4a9eff] text-white border-none rounded cursor-pointer text-sm transition-colors hover:bg-[#3a8eef]"
+        >
+          Reset View
+        </button>
       </div>
       <canvas
         ref={canvasRef}
@@ -328,6 +343,7 @@ export const World2D = () => {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        className="border border-[#444] bg-[#1e1e1e] cursor-grab active:cursor-grabbing"
         style={{
           cursor: isDragging ? 'grabbing' : isOverRoom ? 'pointer' : 'grab'
         }}

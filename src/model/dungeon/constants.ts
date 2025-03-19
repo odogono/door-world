@@ -6,7 +6,6 @@ export const ROOM_SIZE_LARGE: RoomSizeRange = [80, 120];
 
 export const NUM_ROOMS_PER_CLICK = 3;
 export const CANVAS_SIZE = 1024; // Size of the canvas element
-export const WORLD_SIZE = 8192; // 4x larger than canvas for the world space
 export const MAX_ROOMS = 500; // Maximum number of rooms in the dungeon
 export const DOOR_WIDTH = 8;
 export const DOOR_HEIGHT = 12;
