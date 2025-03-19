@@ -9,6 +9,7 @@ interface DungeonData {
   rooms: Room[];
   doors: Door[];
   strategy: RoomGenerationStrategy;
+  seed: number;
 }
 
 interface Room {
@@ -52,11 +53,9 @@ const CANVAS_SIZE = 1024;
 const DOOR_WIDTH = 8;
 const DOOR_HEIGHT = 12;
 
-// Create a single PRNG instance for the entire application
-const prng = new PRNG();
-
 const getRoomSizeForType = (
-  type: RoomType
+  type: RoomType,
+  prng: PRNG
 ): { width: number; height: number } => {
   switch (type) {
     case RoomType.LARGE:
@@ -80,12 +79,13 @@ const getRoomSizeForType = (
 
 const generateRoomAround = (
   targetRoom: Room,
-  existingRooms: Room[]
+  existingRooms: Room[],
+  prng: PRNG
 ): Room | null => {
   // Randomly select a room type
   const types = Object.values(RoomType);
   const type = types[prng.nextInt(0, types.length - 1)];
-  const { width, height } = getRoomSizeForType(type);
+  const { width, height } = getRoomSizeForType(type, prng);
 
   // log.debug('Generating room with dimensions', { width, height, type });
 
@@ -253,7 +253,7 @@ const isPointInRoom = (
 
 // Room generation strategy interface
 interface RoomGenerationStrategy {
-  selectTargetRoom(rooms: Room[]): Room;
+  selectTargetRoom(rooms: Room[], prng: PRNG): Room;
   shouldContinueGeneration(
     attempts: number,
     maxAttempts: number,
@@ -266,7 +266,7 @@ interface RoomGenerationStrategy {
 
 // Random strategy (current implementation)
 class RandomStrategy implements RoomGenerationStrategy {
-  selectTargetRoom(rooms: Room[]): Room {
+  selectTargetRoom(rooms: Room[], prng: PRNG): Room {
     return rooms[prng.nextInt(0, rooms.length - 1)];
   }
 
@@ -329,7 +329,7 @@ class GrowthDirectionStrategy implements RoomGenerationStrategy {
     return combinedScore;
   }
 
-  selectTargetRoom(rooms: Room[]): Room {
+  selectTargetRoom(rooms: Room[], prng: PRNG): Room {
     // Sort rooms by their growth score (highest first)
     const sortedRooms = [...rooms].sort(
       (a, b) => this.getRoomGrowthScore(b) - this.getRoomGrowthScore(a)
@@ -393,7 +393,7 @@ class RoomTypeStrategy implements RoomGenerationStrategy {
     return combinedScore;
   }
 
-  selectTargetRoom(rooms: Room[]): Room {
+  selectTargetRoom(rooms: Room[], prng: PRNG): Room {
     // Sort rooms by their type score (highest first)
     const sortedRooms = [...rooms].sort(
       (a, b) =>
@@ -475,7 +475,7 @@ class BranchingStrategy implements RoomGenerationStrategy {
     return Math.min(1, minDistance / 200);
   }
 
-  selectTargetRoom(rooms: Room[]): Room {
+  selectTargetRoom(rooms: Room[], prng: PRNG): Room {
     // Sort rooms by their branch score (highest first)
     const sortedRooms = [...rooms].sort(
       (a, b) => this.getBranchScore(b, rooms) - this.getBranchScore(a, rooms)
@@ -521,8 +521,12 @@ const createStrategy = (
 
 const generateDungeon = (
   fillSpace: boolean = false,
-  strategy: 'random' | 'growth' | 'type' | 'branch' = 'random'
+  strategy: 'random' | 'growth' | 'type' | 'branch' = 'random',
+  seed: number = Math.floor(Math.random() * 1000000)
 ): DungeonData => {
+  // Create a new PRNG instance with the seed
+  const dungeonPrng = new PRNG(seed);
+
   const rooms: Room[] = [];
   const generationStrategy = createStrategy(strategy);
 
@@ -557,8 +561,8 @@ const generateDungeon = (
     )
   ) {
     // Select target room using the strategy
-    const targetRoom = generationStrategy.selectTargetRoom(rooms);
-    const newRoom = generateRoomAround(targetRoom, rooms);
+    const targetRoom = generationStrategy.selectTargetRoom(rooms, dungeonPrng);
+    const newRoom = generateRoomAround(targetRoom, rooms, dungeonPrng);
 
     if (newRoom) {
       rooms.push(newRoom);
@@ -589,7 +593,8 @@ const generateDungeon = (
   return {
     rooms,
     doors: findDoors(rooms),
-    strategy: generationStrategy
+    strategy: generationStrategy,
+    seed
   };
 };
 
@@ -597,41 +602,43 @@ const generateRoomsAround = (
   dungeon: DungeonData,
   targetRoom: Room
 ): DungeonData => {
-  const newRooms: Room[] = [...dungeon.rooms];
+  // Create a new PRNG instance with the dungeon's seed
+  const dungeonPrng = new PRNG(dungeon.seed);
 
-  log.debug('Generating room around', roomToString(targetRoom));
-
+  const rooms = [...dungeon.rooms];
   let attempts = 0;
-  const maxAttempts = 10;
   let roomsGenerated = 0;
   let consecutiveFailures = 0;
+  const maxAttempts = 10;
   const maxConsecutiveFailures = 5;
 
   while (
-    attempts < maxAttempts &&
-    roomsGenerated < NUM_ROOMS_PER_CLICK &&
-    consecutiveFailures < maxConsecutiveFailures
+    dungeon.strategy.shouldContinueGeneration(
+      attempts,
+      maxAttempts,
+      roomsGenerated,
+      NUM_ROOMS_PER_CLICK,
+      consecutiveFailures,
+      maxConsecutiveFailures
+    )
   ) {
-    // Always use the clicked room as the target
-    const newRoom = generateRoomAround(targetRoom, newRooms);
+    attempts++;
+    const newRoom = generateRoomAround(targetRoom, rooms, dungeonPrng);
 
     if (newRoom) {
-      log.debug('Found valid room position', roomToString(newRoom));
-      newRooms.push(newRoom);
+      rooms.push(newRoom);
       roomsGenerated++;
       consecutiveFailures = 0;
     } else {
       consecutiveFailures++;
     }
-
-    attempts++;
   }
 
-  log.debug('New rooms array length', newRooms.length);
   return {
-    rooms: newRooms,
-    doors: findDoors(newRooms),
-    strategy: dungeon.strategy
+    rooms,
+    doors: findDoors(rooms),
+    strategy: dungeon.strategy,
+    seed: dungeon.seed
   };
 };
 
@@ -737,103 +744,80 @@ const findDoors = (rooms: Room[]): Door[] => {
 export const World2D = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dungeon, setDungeon] = useState<DungeonData | null>(null);
-  const [clickedRoom, setClickedRoom] = useState<Room | null>(null);
+  const [selectedStrategy, setSelectedStrategy] = useState<
+    'random' | 'growth' | 'type' | 'branch'
+  >('random');
+  const [fillSpace, setFillSpace] = useState(false);
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1000000));
+  const [showConnections, setShowConnections] = useState(true);
+
+  const regenerateDungeon = () => {
+    setDungeon(generateDungeon(fillSpace, selectedStrategy, seed));
+  };
 
   useEffect(() => {
-    const initialDungeon = generateDungeon(true, 'branch'); // Using branching strategy
-    log.debug('Initial rooms generated', initialDungeon.rooms.length);
-    setDungeon(initialDungeon);
+    regenerateDungeon();
   }, []);
 
   useEffect(() => {
+    if (!dungeon) return;
+
     const canvas = canvasRef.current;
-    if (!canvas || !dungeon) return;
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
-    canvas.width = CANVAS_SIZE;
-    canvas.height = CANVAS_SIZE;
-
     // Clear canvas
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw rooms
-    for (const room of dungeon.rooms) {
-      // Draw room fill based on type
-      switch (room.type) {
-        case RoomType.LARGE:
-          ctx.fillStyle = room === clickedRoom ? '#444' : '#222';
-          break;
-        case RoomType.SMALL:
-          ctx.fillStyle = room === clickedRoom ? '#555' : '#333';
-          break;
-        case RoomType.NORMAL:
-        default:
-          ctx.fillStyle = room === clickedRoom ? '#666' : '#444';
-      }
+    dungeon.rooms.forEach(room => {
+      ctx.fillStyle = room.isCentral ? '#4a9eff' : '#2d2d2d';
       ctx.fillRect(room.x, room.y, room.width, room.height);
 
-      // Draw room border
-      ctx.strokeStyle = room === clickedRoom ? '#fff' : '#666';
-      ctx.lineWidth = room === clickedRoom ? 2 : 1;
+      ctx.strokeStyle = '#888';
       ctx.strokeRect(room.x, room.y, room.width, room.height);
 
-      // Draw room type label
-      ctx.fillStyle = '#fff';
-      ctx.font = '12px Arial';
+      // Draw room text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '12px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(
         room.isCentral ? 'Start' : `${room.depth || 0}`,
         room.x + room.width / 2,
         room.y + room.height / 2
       );
-    }
+    });
 
     // Draw doors
-    for (const door of dungeon.doors) {
-      // Draw door frame
-      ctx.fillStyle = '#000';
+    ctx.fillStyle = '#FF893F';
+    dungeon.doors.forEach(door => {
       ctx.fillRect(door.position.x, door.position.y, door.width, door.height);
+    });
 
-      // Draw door
-      ctx.fillStyle = '#brown';
-      ctx.fillRect(
-        door.position.x + 1,
-        door.position.y + 1,
-        door.width - 2,
-        door.height - 2
-      );
+    // Draw room connection indicators if enabled
+    if (showConnections) {
+      ctx.strokeStyle = '#00ff00aa';
+      ctx.lineWidth = 2;
+      dungeon.doors.forEach(door => {
+        // Draw a line between rooms that have doors
+        const center1 = getRoomCenter(door.room1);
+        const center2 = getRoomCenter(door.room2);
+        ctx.beginPath();
+        ctx.moveTo(center1.x, center1.y);
+        ctx.lineTo(center2.x, center2.y);
+        ctx.stroke();
+      });
     }
-
-    // Draw room connection indicators (only for rooms with doors)
-    ctx.strokeStyle = '#00ff00aa';
-    ctx.lineWidth = 2;
-    for (const door of dungeon.doors) {
-      // Draw a line between rooms that have doors
-      const center1 = getRoomCenter(door.room1);
-      const center2 = getRoomCenter(door.room2);
-      ctx.beginPath();
-      ctx.moveTo(center1.x, center1.y);
-      ctx.lineTo(center2.x, center2.y);
-      ctx.stroke();
-    }
-
-    // Draw room centers (for debugging)
-    ctx.fillStyle = '#f00';
-    for (const room of dungeon.rooms) {
-      const center = getRoomCenter(room);
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }, [dungeon, clickedRoom]);
+  }, [dungeon, showConnections]);
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!dungeon) return;
+
     const canvas = canvasRef.current;
-    if (!canvas || !dungeon) return;
+    if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -843,38 +827,56 @@ export const World2D = () => {
     const clickedRoom = dungeon.rooms.find(room =>
       isPointInRoom({ x, y }, room)
     );
+
     if (clickedRoom) {
-      log.debug('Room clicked', roomToString(clickedRoom));
-      setClickedRoom(clickedRoom);
-
       const newDungeon = generateRoomsAround(dungeon, clickedRoom);
-      log.debug('Setting new rooms', newDungeon.rooms.length);
       setDungeon(newDungeon);
-
-      // Reset clicked room after a short delay
-      setTimeout(() => {
-        setClickedRoom(null);
-      }, 200);
     }
   };
 
   return (
-    <div
-      style={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-    >
+    <div className="world-2d">
+      <div className="controls">
+        <select
+          value={selectedStrategy}
+          onChange={e =>
+            setSelectedStrategy(e.target.value as typeof selectedStrategy)
+          }
+        >
+          <option value="random">Random Strategy</option>
+          <option value="growth">Growth Strategy</option>
+          <option value="type">Type Strategy</option>
+          <option value="branch">Branch Strategy</option>
+        </select>
+        <label>
+          <input
+            type="checkbox"
+            checked={fillSpace}
+            onChange={e => setFillSpace(e.target.checked)}
+          />
+          Fill Space
+        </label>
+        <input
+          type="number"
+          value={seed}
+          onChange={e => setSeed(parseInt(e.target.value, 10) || 0)}
+          placeholder="Enter seed"
+        />
+        <label>
+          <input
+            type="checkbox"
+            checked={showConnections}
+            onChange={e => setShowConnections(e.target.checked)}
+          />
+          Show Connections
+        </label>
+        <button onClick={regenerateDungeon}>Regenerate</button>
+      </div>
       <canvas
         ref={canvasRef}
+        width={CANVAS_SIZE}
+        height={CANVAS_SIZE}
         onClick={handleCanvasClick}
-        style={{
-          border: '1px solid #666',
-          backgroundColor: '#000'
-        }}
       />
     </div>
   );
