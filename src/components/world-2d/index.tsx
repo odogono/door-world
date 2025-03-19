@@ -11,6 +11,7 @@ interface Room {
   height: number;
   type: RoomType;
   isCentral?: boolean;
+  allowedEdges?: ('TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT')[];
 }
 
 interface Door {
@@ -120,10 +121,35 @@ const generateRoomAround = (
   const type = types[prng.nextInt(0, types.length - 1)];
   const { width, height } = getRoomSizeForType(type);
 
-  log.debug('Generating room with dimensions', { width, height, type });
+  // log.debug('Generating room with dimensions', { width, height, type });
 
-  // Try each side in random order
-  const sides = prng.shuffle([0, 1, 2, 3]);
+  // Get allowed edges for the target room
+  const allowedEdges = targetRoom.allowedEdges || [
+    'TOP',
+    'BOTTOM',
+    'LEFT',
+    'RIGHT'
+  ];
+
+  // Try each allowed side in random order
+  const sides = prng.shuffle(
+    allowedEdges
+      .map(edge => {
+        switch (edge) {
+          case 'TOP':
+            return 0;
+          case 'RIGHT':
+            return 1;
+          case 'BOTTOM':
+            return 2;
+          case 'LEFT':
+            return 3;
+          default:
+            return -1;
+        }
+      })
+      .filter(side => side !== -1)
+  );
 
   for (const side of sides) {
     let x = 0;
@@ -164,22 +190,22 @@ const generateRoomAround = (
       invalidReason = 'Not touching target room';
     }
 
-    log.debug('Candidate room', {
-      room: roomToString(newRoom),
-      side,
-      isValid,
-      invalidReason
-    });
+    // log.debug('Candidate room', {
+    //   room: roomToString(newRoom),
+    //   side,
+    //   isValid,
+    //   invalidReason
+    // });
 
     // Check for overlaps with all existing rooms
     for (const room of existingRooms) {
       if (roomsOverlap(newRoom, room)) {
         isValid = false;
         invalidReason = `Overlaps with ${roomToString(room)}`;
-        log.debug('Room overlap detected', {
-          newRoom: roomToString(newRoom),
-          existingRoom: roomToString(room)
-        });
+        // log.debug('Room overlap detected', {
+        //   newRoom: roomToString(newRoom),
+        //   existingRoom: roomToString(room)
+        // });
         break;
       }
     }
@@ -214,12 +240,12 @@ const roomsTouch = (room1: Room, room2: Room): boolean => {
       room2.y + room2.height === room1.y) &&
     !(room1.x + room1.width < room2.x || room2.x + room2.width < room1.x);
 
-  log.debug('Checking if rooms touch', {
-    room1: roomToString(room1),
-    room2: roomToString(room2),
-    touchesHorizontally,
-    touchesVertically
-  });
+  // log.debug('Checking if rooms touch', {
+  //   room1: roomToString(room1),
+  //   room2: roomToString(room2),
+  //   touchesHorizontally,
+  //   touchesVertically
+  // });
 
   return touchesHorizontally || touchesVertically;
 };
@@ -254,20 +280,21 @@ const isPointInRoom = (
 const generateDungeon = (): Room[] => {
   const rooms: Room[] = [];
 
-  // Create central room
+  // Create central room with only TOP edge allowed
   const centralRoom: Room = {
     x: CANVAS_SIZE / 2 - 50,
     y: CANVAS_SIZE / 2 - 50,
     width: 100,
     height: 100,
     type: RoomType.NORMAL,
-    isCentral: true
+    isCentral: true,
+    allowedEdges: ['TOP']
   };
   rooms.push(centralRoom);
 
   // Generate multiple rooms around the central room
   let attempts = 0;
-  const maxAttempts = 10;
+  const maxAttempts = 100;
   let roomsGenerated = 0;
 
   while (attempts < maxAttempts && roomsGenerated < NUM_ROOMS_PER_CLICK) {
@@ -328,69 +355,71 @@ const findDoorPosition = (
   room1: Room,
   room2: Room
 ): { x: number; y: number } | null => {
-  // Special case for central room - only allow doors on top edge
-  if (room1.isCentral || room2.isCentral) {
-    const centralRoom = room1.isCentral ? room1 : room2;
-    const otherRoom = room1.isCentral ? room2 : room1;
+  // Determine which room is the target and which is the other
+  const targetRoom = room1.allowedEdges ? room1 : room2;
+  const otherRoom = room1.allowedEdges ? room2 : room1;
 
-    // Only allow doors if the other room is touching the top edge of the central room
-    if (otherRoom.y + otherRoom.height === centralRoom.y) {
-      // Find overlapping x range
-      const xOverlap =
-        Math.min(
-          centralRoom.x + centralRoom.width,
-          otherRoom.x + otherRoom.width
-        ) - Math.max(centralRoom.x, otherRoom.x);
+  // Get allowed edges for the target room
+  const allowedEdges = targetRoom.allowedEdges || [
+    'TOP',
+    'BOTTOM',
+    'LEFT',
+    'RIGHT'
+  ];
 
-      if (xOverlap >= DOOR_WIDTH) {
-        // Center the door in the overlapping area
-        const x =
-          Math.max(centralRoom.x, otherRoom.x) + (xOverlap - DOOR_WIDTH) / 2;
-        const y = centralRoom.y - DOOR_HEIGHT / 2;
-        return { x, y };
-      }
-    }
+  // Determine which edge the other room is touching
+  let touchingEdge: 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT' | null = null;
+
+  // Check if rooms are touching on any edge
+  if (otherRoom.y + otherRoom.height === targetRoom.y) {
+    touchingEdge = 'TOP';
+  } else if (targetRoom.y + targetRoom.height === otherRoom.y) {
+    touchingEdge = 'BOTTOM';
+  } else if (otherRoom.x + otherRoom.width === targetRoom.x) {
+    touchingEdge = 'LEFT';
+  } else if (targetRoom.x + targetRoom.width === otherRoom.x) {
+    touchingEdge = 'RIGHT';
+  }
+
+  // If rooms aren't touching or the touching edge isn't allowed, return null
+  if (!touchingEdge || !allowedEdges.includes(touchingEdge)) {
     return null;
   }
 
-  // Normal door placement for non-central rooms
-  // Check horizontal touching
-  if (room1.x + room1.width === room2.x || room2.x + room2.width === room1.x) {
-    // Find overlapping y range
-    const yOverlap =
-      Math.min(room1.y + room1.height, room2.y + room2.height) -
-      Math.max(room1.y, room2.y);
+  // Find overlapping range for door placement
+  let xOverlap: number;
+  let yOverlap: number;
 
-    if (yOverlap >= DOOR_HEIGHT) {
-      // Center the door in the overlapping area
-      const y = Math.max(room1.y, room2.y) + (yOverlap - DOOR_HEIGHT) / 2;
-      const x =
-        room1.x + room1.width === room2.x
-          ? room1.x + room1.width - DOOR_WIDTH / 2
-          : room2.x + room2.width - DOOR_WIDTH / 2;
-
-      return { x, y };
-    }
-  }
-
-  // Check vertical touching
-  if (
-    room1.y + room1.height === room2.y ||
-    room2.y + room2.height === room1.y
-  ) {
-    // Find overlapping x range
-    const xOverlap =
-      Math.min(room1.x + room1.width, room2.x + room2.width) -
-      Math.max(room1.x, room2.x);
+  if (touchingEdge === 'TOP' || touchingEdge === 'BOTTOM') {
+    // For vertical edges, find horizontal overlap
+    xOverlap =
+      Math.min(targetRoom.x + targetRoom.width, otherRoom.x + otherRoom.width) -
+      Math.max(targetRoom.x, otherRoom.x);
 
     if (xOverlap >= DOOR_WIDTH) {
-      // Center the door in the overlapping area
-      const x = Math.max(room1.x, room2.x) + (xOverlap - DOOR_WIDTH) / 2;
+      const x =
+        Math.max(targetRoom.x, otherRoom.x) + (xOverlap - DOOR_WIDTH) / 2;
       const y =
-        room1.y + room1.height === room2.y
-          ? room1.y + room1.height - DOOR_HEIGHT / 2
-          : room2.y + room2.height - DOOR_HEIGHT / 2;
+        touchingEdge === 'TOP'
+          ? targetRoom.y - DOOR_HEIGHT / 2
+          : targetRoom.y + targetRoom.height - DOOR_HEIGHT / 2;
+      return { x, y };
+    }
+  } else {
+    // For horizontal edges, find vertical overlap
+    yOverlap =
+      Math.min(
+        targetRoom.y + targetRoom.height,
+        otherRoom.y + otherRoom.height
+      ) - Math.max(targetRoom.y, otherRoom.y);
 
+    if (yOverlap >= DOOR_HEIGHT) {
+      const y =
+        Math.max(targetRoom.y, otherRoom.y) + (yOverlap - DOOR_HEIGHT) / 2;
+      const x =
+        touchingEdge === 'LEFT'
+          ? targetRoom.x - DOOR_WIDTH / 2
+          : targetRoom.x + targetRoom.width - DOOR_WIDTH / 2;
       return { x, y };
     }
   }
@@ -473,7 +502,7 @@ export const World2D = () => {
       ctx.font = '12px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(
-        room.isCentral ? 'Start' : room.type,
+        room.isCentral ? 'Start' : '',
         room.x + room.width / 2,
         room.y + room.height / 2
       );
@@ -496,21 +525,17 @@ export const World2D = () => {
       );
     }
 
-    // Draw touching room indicators
+    // Draw room connection indicators (only for rooms with doors)
     ctx.strokeStyle = '#00ff00aa';
     ctx.lineWidth = 2;
-    for (let i = 0; i < rooms.length; i++) {
-      for (let j = i + 1; j < rooms.length; j++) {
-        if (roomsTouch(rooms[i], rooms[j])) {
-          // Draw a line between touching rooms
-          const center1 = getRoomCenter(rooms[i]);
-          const center2 = getRoomCenter(rooms[j]);
-          ctx.beginPath();
-          ctx.moveTo(center1.x, center1.y);
-          ctx.lineTo(center2.x, center2.y);
-          ctx.stroke();
-        }
-      }
+    for (const door of doors) {
+      // Draw a line between rooms that have doors
+      const center1 = getRoomCenter(door.room1);
+      const center2 = getRoomCenter(door.room2);
+      ctx.beginPath();
+      ctx.moveTo(center1.x, center1.y);
+      ctx.lineTo(center2.x, center2.y);
+      ctx.stroke();
     }
 
     // Draw room centers (for debugging)
