@@ -290,14 +290,39 @@ class GrowthDirectionStrategy implements RoomGenerationStrategy {
     );
   }
 
-  selectTargetRoom(rooms: Room[]): Room {
-    // Sort rooms by their distance to the edges (closest first)
-    const sortedRooms = [...rooms].sort(
-      (a, b) => this.getRoomFrontier(a) - this.getRoomFrontier(b)
+  private getRoomGrowthScore(room: Room): number {
+    // Calculate a score that favors rooms that:
+    // 1. Are close to edges (but not necessarily at them)
+    // 2. Have fewer adjacent rooms
+    // 3. Are not too close to the center
+
+    const frontier = this.getRoomFrontier(room);
+    const center = CANVAS_SIZE / 2;
+    const roomCenterX = room.x + room.width / 2;
+    const roomCenterY = room.y + room.height / 2;
+    const distanceFromCenter = Math.sqrt(
+      Math.pow(roomCenterX - center, 2) + Math.pow(roomCenterY - center, 2)
     );
 
-    // Select from the 3 rooms closest to the edges
-    const candidates = sortedRooms.slice(0, Math.min(3, sortedRooms.length));
+    // Favor rooms that are:
+    // - Within 100 pixels of an edge (but not necessarily at it)
+    // - Not too close to the center
+    // - Have more space around them
+    const edgeScore = Math.max(0, 100 - frontier);
+    const centerScore = Math.max(0, distanceFromCenter - 200);
+    const combinedScore = edgeScore + centerScore * 0.5;
+
+    return combinedScore;
+  }
+
+  selectTargetRoom(rooms: Room[]): Room {
+    // Sort rooms by their growth score (highest first)
+    const sortedRooms = [...rooms].sort(
+      (a, b) => this.getRoomGrowthScore(b) - this.getRoomGrowthScore(a)
+    );
+
+    // Select from the 5 rooms with the highest growth scores
+    const candidates = sortedRooms.slice(0, Math.min(5, sortedRooms.length));
     return candidates[prng.nextInt(0, candidates.length - 1)];
   }
 
@@ -309,6 +334,7 @@ class GrowthDirectionStrategy implements RoomGenerationStrategy {
     consecutiveFailures: number,
     maxConsecutiveFailures: number
   ): boolean {
+    // Continue if we haven't hit any limits
     return (
       attempts < maxAttempts &&
       roomsGenerated < maxRooms &&
