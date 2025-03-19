@@ -10,22 +10,22 @@ export const findDoorPosition = (
   const otherRoom = room1.allowedEdges ? room2 : room1;
 
   const allowedEdges = targetRoom.allowedEdges || [
-    'TOP',
-    'BOTTOM',
-    'LEFT',
-    'RIGHT'
+    'NORTH',
+    'EAST',
+    'SOUTH',
+    'WEST'
   ];
 
-  let touchingEdge: 'TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT' | null = null;
+  let touchingEdge: 'NORTH' | 'EAST' | 'SOUTH' | 'WEST' | null = null;
 
   if (otherRoom.y + otherRoom.height === targetRoom.y) {
-    touchingEdge = 'TOP';
+    touchingEdge = 'NORTH';
   } else if (targetRoom.y + targetRoom.height === otherRoom.y) {
-    touchingEdge = 'BOTTOM';
+    touchingEdge = 'SOUTH';
   } else if (otherRoom.x + otherRoom.width === targetRoom.x) {
-    touchingEdge = 'LEFT';
+    touchingEdge = 'WEST';
   } else if (targetRoom.x + targetRoom.width === otherRoom.x) {
-    touchingEdge = 'RIGHT';
+    touchingEdge = 'EAST';
   }
 
   if (!touchingEdge || !allowedEdges.includes(touchingEdge)) {
@@ -35,7 +35,7 @@ export const findDoorPosition = (
   let xOverlap: number;
   let yOverlap: number;
 
-  if (touchingEdge === 'TOP' || touchingEdge === 'BOTTOM') {
+  if (touchingEdge === 'NORTH' || touchingEdge === 'SOUTH') {
     xOverlap =
       Math.min(targetRoom.x + targetRoom.width, otherRoom.x + otherRoom.width) -
       Math.max(targetRoom.x, otherRoom.x);
@@ -44,7 +44,7 @@ export const findDoorPosition = (
       const x =
         Math.max(targetRoom.x, otherRoom.x) + (xOverlap - DOOR_WIDTH) / 2;
       const y =
-        touchingEdge === 'TOP'
+        touchingEdge === 'NORTH'
           ? targetRoom.y - DOOR_HEIGHT / 2
           : targetRoom.y + targetRoom.height - DOOR_HEIGHT / 2;
       return { x, y };
@@ -60,7 +60,7 @@ export const findDoorPosition = (
       const y =
         Math.max(targetRoom.y, otherRoom.y) + (yOverlap - DOOR_HEIGHT) / 2;
       const x =
-        touchingEdge === 'LEFT'
+        touchingEdge === 'WEST'
           ? targetRoom.x - DOOR_WIDTH / 2
           : targetRoom.x + targetRoom.width - DOOR_WIDTH / 2;
       return { x, y };

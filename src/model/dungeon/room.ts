@@ -94,23 +94,23 @@ export const generateRoomAround = (
   const { width, height } = getRoomSizeForType(type, prng);
 
   const allowedEdges = targetRoom.allowedEdges || [
-    'TOP',
-    'BOTTOM',
-    'LEFT',
-    'RIGHT'
+    'NORTH',
+    'EAST',
+    'SOUTH',
+    'WEST'
   ];
 
   const sides = prng.shuffle(
     allowedEdges
       .map(edge => {
         switch (edge) {
-          case 'TOP':
+          case 'NORTH':
             return 0;
-          case 'RIGHT':
+          case 'EAST':
             return 1;
-          case 'BOTTOM':
+          case 'SOUTH':
             return 2;
-          case 'LEFT':
+          case 'WEST':
             return 3;
           default:
             return -1;

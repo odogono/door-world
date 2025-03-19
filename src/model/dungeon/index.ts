@@ -28,7 +28,7 @@ export const generateDungeon = (
     height: 100,
     type: RoomType.NORMAL,
     isCentral: true,
-    allowedEdges: ['TOP'],
+    allowedEdges: ['NORTH'],
     depth: 0
   };
   rooms.push(centralRoom);

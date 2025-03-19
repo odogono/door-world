@@ -15,7 +15,7 @@ export interface Room {
   height: number;
   type: RoomType;
   isCentral?: boolean;
-  allowedEdges?: ('TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT')[];
+  allowedEdges?: ('NORTH' | 'EAST' | 'SOUTH' | 'WEST')[];
   parent?: Room; // Reference to parent room
   depth?: number; // Distance from central room
 }
