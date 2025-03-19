@@ -211,7 +211,7 @@ const generateRoomAround = (
     }
 
     if (isValid) {
-      log.debug('Found valid room position', roomToString(newRoom));
+      // log.debug('Found valid room position', roomToString(newRoom));
       return newRoom;
     }
   }
@@ -277,7 +277,7 @@ const isPointInRoom = (
   );
 };
 
-const generateDungeon = (): Room[] => {
+const generateDungeon = (fillSpace: boolean = false): Room[] => {
   const rooms: Room[] = [];
 
   // Create central room with only TOP edge allowed
@@ -294,16 +294,34 @@ const generateDungeon = (): Room[] => {
 
   // Generate multiple rooms around the central room
   let attempts = 0;
-  const maxAttempts = 100;
+  const maxAttempts = fillSpace ? 1000 : 100; // More attempts when trying to fill space
   let roomsGenerated = 0;
+  let consecutiveFailures = 0;
+  const maxConsecutiveFailures = 50; // Stop if we can't find valid positions after this many attempts
 
-  while (attempts < maxAttempts && roomsGenerated < NUM_ROOMS_PER_CLICK) {
-    const newRoom = generateRoomAround(centralRoom, rooms);
+  while (
+    attempts < maxAttempts &&
+    roomsGenerated < (fillSpace ? Infinity : NUM_ROOMS_PER_CLICK)
+  ) {
+    // Randomly select a room to generate around
+    const targetRoom = rooms[prng.nextInt(0, rooms.length - 1)];
+    const newRoom = generateRoomAround(targetRoom, rooms);
 
     if (newRoom) {
-      log.debug('Found valid room position', roomToString(newRoom));
+      // log.debug('Found valid room position', roomToString(newRoom));
       rooms.push(newRoom);
       roomsGenerated++;
+      consecutiveFailures = 0; // Reset failure counter on success
+    } else {
+      consecutiveFailures++;
+      if (consecutiveFailures >= maxConsecutiveFailures) {
+        log.debug(
+          'Stopping room generation after',
+          consecutiveFailures,
+          'consecutive failures'
+        );
+        break;
+      }
     }
 
     attempts++;
@@ -456,7 +474,7 @@ export const World2D = () => {
   const [clickedRoom, setClickedRoom] = useState<Room | null>(null);
 
   useEffect(() => {
-    const initialRooms = generateDungeon();
+    const initialRooms = generateDungeon(false); // Set to true to fill the space
     log.debug('Initial rooms generated', initialRooms.length);
     setRooms(initialRooms);
   }, []);
