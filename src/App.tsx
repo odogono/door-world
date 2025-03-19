@@ -1,64 +1,56 @@
-import { Grid, OrbitControls, OrthographicCamera } from '@react-three/drei';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Grid, OrbitControls, Plane } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
 import './App.css';
 import { Door } from '@components/door';
-import { XYZAxis } from '@components/xyz-axis';
-import { useEffect } from 'react';
+import { ISO_ANGLE, IsometricCamera } from '@components/isometric-camera';
+import { createLog } from '@helpers/log';
+import { useState } from 'react';
+import { Vector3 } from 'three';
 
-const ISO_ANGLE = (Math.PI / 180) * 35.264;
-const DISTANCE = 10;
+const log = createLog('App');
 
-// IsometricCamera component to handle the camera setup
-const IsometricCamera = () => {
-  const { camera } = useThree();
+// GroundPlane component to handle clicks
+const GroundPlane = ({
+  onTargetPositionChange
+}: {
+  onTargetPositionChange: (pos: Vector3) => void;
+}) => {
+  const handleClick = (event: any) => {
+    event.stopPropagation();
 
-  useEffect(() => {
-    // Position the camera for isometric view
-    // camera.position.set(10, 10, 10);
+    // Get the intersection point
+    const point = event.point;
+    const newCameraTarget = new Vector3(point.x, 0, point.z);
 
-    camera.position.set(
-      DISTANCE * Math.cos(ISO_ANGLE),
-      DISTANCE,
-      DISTANCE * Math.sin(ISO_ANGLE)
-    );
+    log.debug('GroundPlane clicked', newCameraTarget);
+    onTargetPositionChange(newCameraTarget);
+  };
 
-    camera.lookAt(0, 0, 0);
-
-    // Update the camera's projection matrix
-    camera.updateProjectionMatrix();
-  }, [camera]);
-
-  return null;
+  return (
+    <Plane
+      args={[100, 100]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, 0, 0]}
+      onClick={handleClick}
+      visible={false}
+    >
+      <meshStandardMaterial transparent opacity={0} />
+    </Plane>
+  );
 };
 
 const App = () => {
+  const [targetPosition, setTargetPosition] = useState<Vector3 | null>(null);
+
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <Canvas gl={{ localClippingEnabled: true }}>
-        <OrthographicCamera
-          makeDefault
-          zoom={150}
-          position={[10, 10, 10]}
-          near={1}
-          far={2000}
-        />
-        <IsometricCamera />
-        <OrbitControls
-          enableRotate={true}
-          enableZoom={true}
-          enablePan={true}
-          minZoom={50}
-          maxZoom={300}
-          // Lock the vertical rotation by setting both angles to Math.PI/4 (45 degrees)
-          minPolarAngle={ISO_ANGLE}
-          maxPolarAngle={ISO_ANGLE}
-          // Optional: Restrict azimuth (horizontal) rotation if needed
-          // minAzimuthAngle={-Math.PI / 4} // Limit left rotation
-          // maxAzimuthAngle={Math.PI / 4} // Limit right rotation
-        />
-        <XYZAxis />
-        <Door position={[0, 0, 0]} />
-        <Door position={[-2, 0, -2]} rotationY={0} doorColor="#00f900" />
+        <IsometricCamera targetPosition={targetPosition} />
+
+        {/* <XYZAxis /> */}
+        <Door position={[0, 0, 2]} />
+        <Door position={[-2, 0, 0]} rotationY={0} doorColor="#00f900" />
+        <GroundPlane onTargetPositionChange={setTargetPosition} />
         <Grid
           infiniteGrid
           sectionSize={1}
