@@ -19,6 +19,8 @@ export const World2D = () => {
   const [fillSpace, setFillSpace] = useState(false);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1000000));
   const [showConnections, setShowConnections] = useState(true);
+  const [showRooms, setShowRooms] = useState(true);
+  const [showDoors, setShowDoors] = useState(true);
 
   const regenerateDungeon = () => {
     setDungeon(generateDungeon(fillSpace, selectedStrategy, seed));
@@ -44,36 +46,40 @@ export const World2D = () => {
     const colourIncrement = 1 / (dungeon.maxDepth || 1);
 
     // Draw rooms
-    dungeon.rooms.forEach(room => {
-      if (room.isCentral) {
-        ctx.fillStyle = '#4a9eff';
-      } else {
-        // Start with a light gray and darken based on depth
-        const baseColor = '#e0e0e0';
-        const depth = room.depth || 0;
-        ctx.fillStyle = darkenColor(baseColor, depth * colourIncrement); // Darken by 10% per depth level
-      }
-      ctx.fillRect(room.x, room.y, room.width, room.height);
+    if (showRooms) {
+      dungeon.rooms.forEach(room => {
+        if (room.isCentral) {
+          ctx.fillStyle = '#4a9eff';
+        } else {
+          // Start with a light gray and darken based on depth
+          const baseColor = '#e0e0e0';
+          const depth = room.depth || 0;
+          ctx.fillStyle = darkenColor(baseColor, depth * colourIncrement); // Darken by 10% per depth level
+        }
+        ctx.fillRect(room.x, room.y, room.width, room.height);
 
-      ctx.strokeStyle = '#AAA';
-      ctx.strokeRect(room.x, room.y, room.width, room.height);
+        ctx.strokeStyle = '#AAA';
+        ctx.strokeRect(room.x, room.y, room.width, room.height);
 
-      // Draw room text
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '12px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(
-        room.isCentral ? 'Start' : `${room.depth || 0}`,
-        room.x + room.width / 2,
-        room.y + room.height / 2
-      );
-    });
+        // Draw room text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+          room.isCentral ? 'Start' : `${room.depth || 0}`,
+          room.x + room.width / 2,
+          room.y + room.height / 2
+        );
+      });
+    }
 
     // Draw doors
-    ctx.fillStyle = '#FF893F';
-    dungeon.doors.forEach(door => {
-      ctx.fillRect(door.position.x, door.position.y, door.width, door.height);
-    });
+    if (showDoors) {
+      ctx.fillStyle = '#FF893F';
+      dungeon.doors.forEach(door => {
+        ctx.fillRect(door.position.x, door.position.y, door.width, door.height);
+      });
+    }
 
     // Draw room connection indicators if enabled
     if (showConnections) {
@@ -89,7 +95,7 @@ export const World2D = () => {
         ctx.stroke();
       });
     }
-  }, [dungeon, showConnections]);
+  }, [dungeon, showConnections, showRooms, showDoors]);
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!dungeon) return;
@@ -145,6 +151,22 @@ export const World2D = () => {
             onChange={e => setShowConnections(e.target.checked)}
           />
           Show Connections
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showRooms}
+            onChange={e => setShowRooms(e.target.checked)}
+          />
+          Show Rooms
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showDoors}
+            onChange={e => setShowDoors(e.target.checked)}
+          />
+          Show Doors
         </label>
         <button onClick={regenerateDungeon}>Regenerate</button>
       </div>
