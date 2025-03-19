@@ -1,14 +1,14 @@
 import { Grid, OrbitControls, Plane, Sphere, Text } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import './App.css';
+import './index.css';
 import { Door } from '@components/door';
-import { ISO_ANGLE, IsometricCamera } from '@components/isometric-camera';
+import { GroundText } from '@components/ground-text';
+import { IsometricCamera } from '@components/isometric-camera';
 import { createLog } from '@helpers/log';
-import { Suspense, useState } from 'react';
+import { useState } from 'react';
 import { Vector3 } from 'three';
-import { GroundText } from './components/ground-text';
 
-const log = createLog('App');
+const log = createLog('World3D');
 
 // ClickMarker component to show where the ground was clicked
 const ClickMarker = ({ position }: { position: Vector3 }) => {
@@ -49,7 +49,7 @@ const GroundPlane = ({
   );
 };
 
-const App = () => {
+export const World3D = () => {
   const [targetPosition, setTargetPosition] = useState<Vector3 | null>(null);
   const [clickedPosition, setClickedPosition] = useState<Vector3 | null>(null);
 
@@ -93,5 +93,3 @@ const App = () => {
     </div>
   );
 };
-
-export default App;
