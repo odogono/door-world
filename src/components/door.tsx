@@ -2,12 +2,18 @@ import { createLog } from '@helpers/log';
 import { Plane, useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Mesh, Object3D, Plane as ThreePlane, Vector3 } from 'three';
+import {
+  Mesh,
+  Object3D,
+  Plane as ThreePlane,
+  Vector3,
+  Vector3Tuple
+} from 'three';
 import { applyColor } from '../helpers/object-3d';
 
 interface DoorProps {
-  position?: [number, number, number];
-  scale?: [number, number, number];
+  position?: Vector3Tuple;
+  scale?: Vector3Tuple;
   rotationY?: number;
   frameColor?: string;
   doorColor?: string;
