@@ -34,7 +34,7 @@ const IsometricCamera = () => {
 const App = () => {
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
-      <Canvas>
+      <Canvas gl={{ localClippingEnabled: true }}>
         <OrthographicCamera
           makeDefault
           zoom={150}
@@ -57,7 +57,8 @@ const App = () => {
           // maxAzimuthAngle={Math.PI / 4} // Limit right rotation
         />
         <XYZAxis />
-        <Door />
+        <Door position={[0, -0.5, 0]} />
+        <Door position={[2.5, 0, 0]} doorColor="#00f900" />
         <Grid
           infiniteGrid
           sectionSize={1}

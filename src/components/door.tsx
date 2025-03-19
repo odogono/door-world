@@ -1,8 +1,8 @@
 import { createLog } from '@helpers/log';
-import { useGLTF } from '@react-three/drei';
+import { Plane, useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useRef, useState } from 'react';
-import { Object3D } from 'three';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Mesh, Object3D, Plane as ThreePlane, Vector3 } from 'three';
 import { applyColor } from '../helpers/object-3d';
 
 interface DoorProps {
@@ -18,13 +18,22 @@ const log = createLog('Door');
 const ROTATION_THRESHOLD = 0.01; // Threshold to determine if animation is complete
 
 export const Door = ({
-  position = [0, 0.5, 0],
+  position = [0, 0, 0],
   scale = [1, 1, 1],
   rotation = [0, -Math.PI / 2, 0],
   doorColor = '#83D5FF',
   frameColor = '#FFF'
 }: DoorProps) => {
-  const { scene } = useGLTF('/vbasic.door.glb');
+  const gltf = useGLTF('/vbasic.door.glb');
+
+  // clone the scene to avoid mutating the original
+  const scene = useMemo(() => gltf.scene.clone(), [gltf.scene]);
+
+  const localClippingPlane = useMemo(
+    () => new ThreePlane(new Vector3(0, 1, 0), 0),
+    []
+  );
+
   const [isOpen, setIsOpen] = useState(false);
   const doorRef = useRef<Object3D>(null);
   const frameRef = useRef<Object3D>(null);
@@ -51,10 +60,14 @@ export const Door = ({
       applyColor(frameNode, frameColor);
     }
 
-    // Cleanup function to dispose of the model when component unmounts
-    return () => {
-      useGLTF.preload('/vbasic.door.glb');
-    };
+    scene.traverse(child => {
+      if (child instanceof Mesh) {
+        child.material = child.material.clone();
+        child.material.clipShadows = true;
+        child.material.clippingPlanes = [localClippingPlane];
+        child.material.needsUpdate = true;
+      }
+    });
   }, [scene, frameColor]);
 
   useFrame((_state, delta) => {
@@ -81,20 +94,21 @@ export const Door = ({
   };
 
   return (
-    <>
+    <group position={position}>
       <primitive
         object={scene}
-        position={position}
+        position={[0, 0.5, 0]}
         scale={scale}
         rotation={rotation}
       />
-      <mesh position={position} onClick={handleClick} visible={false}>
+
+      <mesh position={[0, 0.5, 0]} onClick={handleClick} visible={false}>
         <boxGeometry args={[0.8, 1, 0.4]} />
         <meshBasicMaterial color="red" />
       </mesh>
-    </>
+    </group>
   );
 };
 
 // Preload the model
-useGLTF.preload('/vbasic.door.glb');
+// useGLTF.preload('/vbasic.door.glb');

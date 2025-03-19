@@ -1,6 +1,6 @@
 import { Html } from '@react-three/drei';
 
-const AXIS_LENGTH = 2;
+const AXIS_LENGTH = 1;
 
 // XYZAxis component to display coordinate system
 export const XYZAxis = () => {
