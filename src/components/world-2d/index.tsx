@@ -47,7 +47,7 @@ const DOOR_WIDTH = 8;
 const DOOR_HEIGHT = 12;
 
 // Create a single PRNG instance for the entire application
-const prng = new PRNG(1974);
+const prng = new PRNG();
 
 const getRoomSizeForType = (
   type: RoomType
@@ -237,8 +237,103 @@ const isPointInRoom = (
   );
 };
 
-const generateDungeon = (fillSpace: boolean = false): Room[] => {
+// Room generation strategy interface
+interface RoomGenerationStrategy {
+  selectTargetRoom(rooms: Room[]): Room;
+  shouldContinueGeneration(
+    attempts: number,
+    maxAttempts: number,
+    roomsGenerated: number,
+    maxRooms: number,
+    consecutiveFailures: number,
+    maxConsecutiveFailures: number
+  ): boolean;
+}
+
+// Random strategy (current implementation)
+class RandomStrategy implements RoomGenerationStrategy {
+  selectTargetRoom(rooms: Room[]): Room {
+    return rooms[prng.nextInt(0, rooms.length - 1)];
+  }
+
+  shouldContinueGeneration(
+    attempts: number,
+    maxAttempts: number,
+    roomsGenerated: number,
+    maxRooms: number,
+    consecutiveFailures: number,
+    maxConsecutiveFailures: number
+  ): boolean {
+    return (
+      attempts < maxAttempts &&
+      roomsGenerated < maxRooms &&
+      consecutiveFailures < maxConsecutiveFailures
+    );
+  }
+}
+
+// Growth direction strategy
+class GrowthDirectionStrategy implements RoomGenerationStrategy {
+  private getRoomFrontier(room: Room): number {
+    // Calculate how close the room is to the edges
+    const distanceToLeft = room.x;
+    const distanceToRight = CANVAS_SIZE - (room.x + room.width);
+    const distanceToTop = room.y;
+    const distanceToBottom = CANVAS_SIZE - (room.y + room.height);
+
+    // Return the minimum distance to any edge
+    return Math.min(
+      distanceToLeft,
+      distanceToRight,
+      distanceToTop,
+      distanceToBottom
+    );
+  }
+
+  selectTargetRoom(rooms: Room[]): Room {
+    // Sort rooms by their distance to the edges (closest first)
+    const sortedRooms = [...rooms].sort(
+      (a, b) => this.getRoomFrontier(a) - this.getRoomFrontier(b)
+    );
+
+    // Select from the 3 rooms closest to the edges
+    const candidates = sortedRooms.slice(0, Math.min(3, sortedRooms.length));
+    return candidates[prng.nextInt(0, candidates.length - 1)];
+  }
+
+  shouldContinueGeneration(
+    attempts: number,
+    maxAttempts: number,
+    roomsGenerated: number,
+    maxRooms: number,
+    consecutiveFailures: number,
+    maxConsecutiveFailures: number
+  ): boolean {
+    return (
+      attempts < maxAttempts &&
+      roomsGenerated < maxRooms &&
+      consecutiveFailures < maxConsecutiveFailures
+    );
+  }
+}
+
+// Strategy factory
+const createStrategy = (type: 'random' | 'growth'): RoomGenerationStrategy => {
+  switch (type) {
+    case 'growth':
+      return new GrowthDirectionStrategy();
+    case 'random':
+    default:
+      return new RandomStrategy();
+  }
+};
+
+const generateDungeon = (
+  fillSpace: boolean = false,
+  strategy: 'random' | 'growth' = 'random'
+): Room[] => {
   const rooms: Room[] = [];
+  const generationStrategy = createStrategy(strategy);
 
   // Create central room with only TOP edge allowed
   const centralRoom: Room = {
@@ -254,24 +349,29 @@ const generateDungeon = (fillSpace: boolean = false): Room[] => {
 
   // Generate multiple rooms around the central room
   let attempts = 0;
-  const maxAttempts = fillSpace ? 1000 : 100; // More attempts when trying to fill space
+  const maxAttempts = fillSpace ? 1000 : 100;
   let roomsGenerated = 0;
   let consecutiveFailures = 0;
-  const maxConsecutiveFailures = 50; // Stop if we can't find valid positions after this many attempts
+  const maxConsecutiveFailures = 50;
 
   while (
-    attempts < maxAttempts &&
-    roomsGenerated < (fillSpace ? Infinity : NUM_ROOMS_PER_CLICK)
+    generationStrategy.shouldContinueGeneration(
+      attempts,
+      maxAttempts,
+      roomsGenerated,
+      fillSpace ? Infinity : NUM_ROOMS_PER_CLICK,
+      consecutiveFailures,
+      maxConsecutiveFailures
+    )
   ) {
-    // Randomly select a room to generate around
-    const targetRoom = rooms[prng.nextInt(0, rooms.length - 1)];
+    // Select target room using the strategy
+    const targetRoom = generationStrategy.selectTargetRoom(rooms);
     const newRoom = generateRoomAround(targetRoom, rooms);
 
     if (newRoom) {
-      // log.debug('Found valid room position', roomToString(newRoom));
       rooms.push(newRoom);
       roomsGenerated++;
-      consecutiveFailures = 0; // Reset failure counter on success
+      consecutiveFailures = 0;
     } else {
       consecutiveFailures++;
       if (consecutiveFailures >= maxConsecutiveFailures) {
@@ -434,7 +534,7 @@ export const World2D = () => {
   const [clickedRoom, setClickedRoom] = useState<Room | null>(null);
 
   useEffect(() => {
-    const initialRooms = generateDungeon(false); // Set to true to fill the space
+    const initialRooms = generateDungeon(true, 'growth'); // Using growth strategy
     log.debug('Initial rooms generated', initialRooms.length);
     setRooms(initialRooms);
   }, []);
