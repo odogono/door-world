@@ -7,6 +7,10 @@ import {
 } from './constants';
 import { Room, RoomType } from './types';
 
+export const getMaxRoomDepth = (rooms: Room[]): number => {
+  return Math.max(...rooms.map(room => room.depth || 0));
+};
+
 export const getRoomSizeForType = (
   type: RoomType,
   prng: PRNG

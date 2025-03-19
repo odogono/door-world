@@ -1,5 +1,5 @@
 import { DOOR_HEIGHT, DOOR_WIDTH } from './constants';
-import { roomsTouch } from './room-utils';
+import { roomsTouch } from './room';
 import { Door, Room } from './types';
 
 export const findDoorPosition = (

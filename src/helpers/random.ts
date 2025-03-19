@@ -9,6 +9,10 @@ export class PRNG {
     this.seed = seed;
   }
 
+  getSeed(): number {
+    return this.seed;
+  }
+
   next(): number {
     this.seed = (this.a * this.seed + this.c) % this.m;
     return this.seed / this.m;
