@@ -1,6 +1,8 @@
 import { Grid, OrbitControls, OrthographicCamera } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import './App.css';
+import { Door } from '@components/door';
+import { XYZAxis } from '@components/xyz-axis';
 import { useEffect } from 'react';
 
 const ISO_ANGLE = (Math.PI / 180) * 35.264;
@@ -48,16 +50,14 @@ const App = () => {
           minZoom={50}
           maxZoom={300}
           // Lock the vertical rotation by setting both angles to Math.PI/4 (45 degrees)
-          minPolarAngle={Math.PI / 4}
-          maxPolarAngle={Math.PI / 4}
+          minPolarAngle={ISO_ANGLE}
+          maxPolarAngle={ISO_ANGLE}
           // Optional: Restrict azimuth (horizontal) rotation if needed
-          minAzimuthAngle={-Math.PI / 4} // Limit left rotation
-          maxAzimuthAngle={Math.PI / 4} // Limit right rotation
+          // minAzimuthAngle={-Math.PI / 4} // Limit left rotation
+          // maxAzimuthAngle={Math.PI / 4} // Limit right rotation
         />
-        <mesh>
-          <boxGeometry />
-          <meshStandardMaterial color="blue" />
-        </mesh>
+        <XYZAxis />
+        <Door />
         <Grid
           infiniteGrid
           sectionSize={1}
