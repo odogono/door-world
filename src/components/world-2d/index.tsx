@@ -1,6 +1,7 @@
 import { createLog } from '@helpers/log';
 import { useEffect, useRef, useState } from 'react';
 import './index.css';
+import { PRNG } from '@helpers/random';
 
 const log = createLog('World2D');
 
@@ -41,53 +42,12 @@ const ROOM_SIZE_LARGE: RoomSizeRange = [80, 120];
 const ROOM_MIN_SIZE = 10;
 const ROOM_MAX_SIZE = 100;
 const NUM_ROOMS_PER_CLICK = 3;
-const CANVAS_SIZE = 800;
+const CANVAS_SIZE = 1024;
 const DOOR_WIDTH = 8;
 const DOOR_HEIGHT = 12;
 
-// Pseudo-random number generator
-class PRNG {
-  private seed: number;
-  private readonly a = 1664525;
-  private readonly c = 1013904223;
-  private readonly m = Math.pow(2, 32);
-
-  constructor(seed: number = Date.now()) {
-    this.seed = seed;
-  }
-
-  next(): number {
-    this.seed = (this.a * this.seed + this.c) % this.m;
-    return this.seed / this.m;
-  }
-
-  // Generate a random integer between min (inclusive) and max (inclusive)
-  nextInt(min: number, max: number): number {
-    return Math.floor(this.next() * (max - min + 1)) + min;
-  }
-
-  nextIntRange(range: [number, number]): number {
-    return this.nextInt(range[0], range[1]);
-  }
-
-  // Generate a random float between min (inclusive) and max (exclusive)
-  nextFloat(min: number, max: number): number {
-    return this.next() * (max - min) + min;
-  }
-
-  // Shuffle an array using Fisher-Yates algorithm
-  shuffle<T>(array: T[]): T[] {
-    const result = [...array];
-    for (let i = result.length - 1; i > 0; i--) {
-      const j = this.nextInt(0, i);
-      [result[i], result[j]] = [result[j], result[i]];
-    }
-    return result;
-  }
-}
-
 // Create a single PRNG instance for the entire application
-const prng = new PRNG();
+const prng = new PRNG(1974);
 
 const getRoomSizeForType = (
   type: RoomType
