@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import './index.css';
+import { darkenColor } from '@helpers/colour';
 import {
   DungeonData,
   generateDungeon,
@@ -40,12 +41,21 @@ export const World2D = () => {
     ctx.fillStyle = '#1e1e1e';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    const colourIncrement = 1 / (dungeon.maxDepth || 1);
+
     // Draw rooms
     dungeon.rooms.forEach(room => {
-      ctx.fillStyle = room.isCentral ? '#4a9eff' : '#2d2d2d';
+      if (room.isCentral) {
+        ctx.fillStyle = '#4a9eff';
+      } else {
+        // Start with a light gray and darken based on depth
+        const baseColor = '#e0e0e0';
+        const depth = room.depth || 0;
+        ctx.fillStyle = darkenColor(baseColor, depth * colourIncrement); // Darken by 10% per depth level
+      }
       ctx.fillRect(room.x, room.y, room.width, room.height);
 
-      ctx.strokeStyle = '#888';
+      ctx.strokeStyle = '#AAA';
       ctx.strokeRect(room.x, room.y, room.width, room.height);
 
       // Draw room text

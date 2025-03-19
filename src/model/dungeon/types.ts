@@ -5,6 +5,7 @@ export interface DungeonData {
   doors: Door[];
   strategy: RoomGenerationStrategy;
   seed: number;
+  maxDepth: number;
 }
 
 export interface Room {

@@ -1,15 +1,15 @@
 import { PRNG } from '@helpers/random';
 import { CANVAS_SIZE, NUM_ROOMS_PER_CLICK } from './constants';
-import { findDoors } from './door-utils';
-import { generateRoomAround } from './room-utils';
+import { findDoors } from './door';
+import { generateRoomAround, getMaxRoomDepth } from './room';
 import { createStrategy } from './strategies';
 import { DungeonData, Room, RoomType } from './types';
 
 export * from './types';
 export * from './constants';
 export * from './strategies';
-export * from './room-utils';
-export * from './door-utils';
+export * from './room';
+export * from './door';
 
 export const generateDungeon = (
   fillSpace: boolean = false,
@@ -74,7 +74,8 @@ export const generateDungeon = (
     rooms,
     doors: findDoors(rooms),
     strategy: generationStrategy,
-    seed
+    seed: dungeonPrng.getSeed(),
+    maxDepth: getMaxRoomDepth(rooms)
   };
 };
 
@@ -116,6 +117,7 @@ export const generateRoomsAround = (
     rooms,
     doors: findDoors(rooms),
     strategy: dungeon.strategy,
-    seed: dungeon.seed
+    seed: dungeonPrng.getSeed(),
+    maxDepth: getMaxRoomDepth(rooms)
   };
 };
