@@ -13,6 +13,8 @@ interface Room {
   type: RoomType;
   isCentral?: boolean;
   allowedEdges?: ('TOP' | 'BOTTOM' | 'LEFT' | 'RIGHT')[];
+  parent?: Room; // Reference to parent room
+  depth?: number; // Distance from central room
 }
 
 interface Door {
@@ -39,8 +41,6 @@ const ROOM_SIZE_SMALL: RoomSizeRange = [45, 50];
 const ROOM_SIZE_MEDIUM: RoomSizeRange = [50, 80];
 const ROOM_SIZE_LARGE: RoomSizeRange = [80, 120];
 
-const ROOM_MIN_SIZE = 10;
-const ROOM_MAX_SIZE = 100;
 const NUM_ROOMS_PER_CLICK = 3;
 const CANVAS_SIZE = 1024;
 const DOOR_WIDTH = 8;
@@ -138,7 +138,15 @@ const generateRoomAround = (
     x = Math.max(0, Math.min(CANVAS_SIZE - width, x));
     y = Math.max(0, Math.min(CANVAS_SIZE - height, y));
 
-    const newRoom = { x, y, width, height, type };
+    const newRoom = {
+      x,
+      y,
+      width,
+      height,
+      type,
+      parent: targetRoom,
+      depth: (targetRoom.depth || 0) + 1
+    };
 
     // Check if this position is valid
     let isValid = true;
@@ -407,15 +415,98 @@ class RoomTypeStrategy implements RoomGenerationStrategy {
   }
 }
 
+// Branching strategy
+class BranchingStrategy implements RoomGenerationStrategy {
+  private getBranchScore(room: Room, allRooms: Room[]): number {
+    // Calculate a score that favors rooms that:
+    // 1. Are at a good depth (not too shallow, not too deep)
+    // 2. Have fewer children
+    // 3. Are not too close to other branches
+
+    const depth = room.depth || 0;
+    const maxDepth = 5; // Maximum desired depth
+    const idealDepth = 3; // Ideal depth for new branches
+
+    // Calculate depth score (favor rooms at ideal depth)
+    const depthScore = Math.max(0, 1 - Math.abs(depth - idealDepth));
+
+    // Count children (rooms that have this room as parent)
+    const childrenCount = this.getChildrenCount(room, allRooms);
+
+    // Calculate spacing score (distance from other branches)
+    const spacingScore = this.getSpacingScore(room, allRooms);
+
+    // Combine scores (favor rooms with fewer children and good spacing)
+    const combinedScore =
+      depthScore * 2 + (1 - childrenCount / 4) * 3 + spacingScore;
+
+    return combinedScore;
+  }
+
+  private getChildrenCount(room: Room, allRooms: Room[]): number {
+    // Count how many rooms have this room as their parent
+    return allRooms.filter(r => r.parent === room).length;
+  }
+
+  private getSpacingScore(room: Room, allRooms: Room[]): number {
+    // Calculate how well spaced this room is from other branches
+    let minDistance = Infinity;
+    const center = getRoomCenter(room);
+
+    for (const otherRoom of allRooms) {
+      if (otherRoom === room || otherRoom.parent === room.parent) continue;
+
+      const otherCenter = getRoomCenter(otherRoom);
+      const distance = Math.sqrt(
+        Math.pow(otherCenter.x - center.x, 2) +
+          Math.pow(otherCenter.y - center.y, 2)
+      );
+
+      minDistance = Math.min(minDistance, distance);
+    }
+
+    // Normalize distance to a score between 0 and 1
+    return Math.min(1, minDistance / 200);
+  }
+
+  selectTargetRoom(rooms: Room[]): Room {
+    // Sort rooms by their branch score (highest first)
+    const sortedRooms = [...rooms].sort(
+      (a, b) => this.getBranchScore(b, rooms) - this.getBranchScore(a, rooms)
+    );
+
+    // Select from the 5 rooms with the highest scores
+    const candidates = sortedRooms.slice(0, Math.min(5, sortedRooms.length));
+    return candidates[prng.nextInt(0, candidates.length - 1)];
+  }
+
+  shouldContinueGeneration(
+    attempts: number,
+    maxAttempts: number,
+    roomsGenerated: number,
+    maxRooms: number,
+    consecutiveFailures: number,
+    maxConsecutiveFailures: number
+  ): boolean {
+    return (
+      attempts < maxAttempts &&
+      roomsGenerated < maxRooms &&
+      consecutiveFailures < maxConsecutiveFailures
+    );
+  }
+}
+
 // Strategy factory
 const createStrategy = (
-  type: 'random' | 'growth' | 'type'
+  type: 'random' | 'growth' | 'type' | 'branch'
 ): RoomGenerationStrategy => {
   switch (type) {
     case 'growth':
       return new GrowthDirectionStrategy();
     case 'type':
       return new RoomTypeStrategy();
+    case 'branch':
+      return new BranchingStrategy();
     case 'random':
     default:
       return new RandomStrategy();
@@ -424,7 +515,7 @@ const createStrategy = (
 
 const generateDungeon = (
   fillSpace: boolean = false,
-  strategy: 'random' | 'growth' | 'type' = 'random'
+  strategy: 'random' | 'growth' | 'type' | 'branch' = 'random'
 ): Room[] => {
   const rooms: Room[] = [];
   const generationStrategy = createStrategy(strategy);
@@ -437,7 +528,8 @@ const generateDungeon = (
     height: 100,
     type: RoomType.NORMAL,
     isCentral: true,
-    allowedEdges: ['TOP']
+    allowedEdges: ['TOP'],
+    depth: 0
   };
   rooms.push(centralRoom);
 
@@ -628,7 +720,7 @@ export const World2D = () => {
   const [clickedRoom, setClickedRoom] = useState<Room | null>(null);
 
   useEffect(() => {
-    const initialRooms = generateDungeon(true, 'type'); // Using type strategy
+    const initialRooms = generateDungeon(true, 'branch'); // Using branching strategy
     log.debug('Initial rooms generated', initialRooms.length);
     setRooms(initialRooms);
   }, []);
@@ -674,7 +766,7 @@ export const World2D = () => {
       ctx.font = '12px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(
-        room.isCentral ? 'Start' : '',
+        room.isCentral ? 'Start' : `${room.depth || 0}`,
         room.x + room.width / 2,
         room.y + room.height / 2
       );
