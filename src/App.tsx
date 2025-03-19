@@ -57,8 +57,8 @@ const App = () => {
           // maxAzimuthAngle={Math.PI / 4} // Limit right rotation
         />
         <XYZAxis />
-        <Door position={[0, -0.5, 0]} />
-        <Door position={[2.5, 0, 0]} doorColor="#00f900" />
+        <Door position={[0, 0, 0]} />
+        <Door position={[-2, 0, -2]} rotationY={0} doorColor="#00f900" />
         <Grid
           infiniteGrid
           sectionSize={1}
