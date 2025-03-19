@@ -87,3 +87,10 @@ body {
 .world-2d canvas:active {
   cursor: grabbing;
 }
+
+.world-2d .controls-toggle-group {
+  display       : flex;
+  flex-direction: column;
+  gap           : 1px;
+  width         : 16vw;
+}

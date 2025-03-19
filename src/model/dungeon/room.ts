@@ -143,8 +143,8 @@ export const generateRoomAround = (
     }
 
     // Allow rooms to be placed anywhere in the world
-    x = Math.max(-WORLD_SIZE / 2, Math.min(WORLD_SIZE / 2 - width, x));
-    y = Math.max(-WORLD_SIZE / 2, Math.min(WORLD_SIZE / 2 - height, y));
+    // x = Math.max(-WORLD_SIZE / 2, Math.min(WORLD_SIZE / 2 - width, x));
+    // y = Math.max(-WORLD_SIZE / 2, Math.min(WORLD_SIZE / 2 - height, y));
 
     const newRoom = {
       x,
