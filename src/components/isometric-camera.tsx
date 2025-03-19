@@ -95,7 +95,7 @@ export const IsometricCamera = ({
       <OrthographicCamera
         ref={cameraRef}
         makeDefault
-        zoom={150}
+        zoom={100}
         position={[10, 10, 10]}
         near={1}
         far={2000}
