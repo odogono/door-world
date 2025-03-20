@@ -3,12 +3,13 @@ import { PRNG } from '@helpers/random';
 export interface DungeonData {
   rooms: Room[];
   doors: Door[];
-  strategy: RoomGenerationStrategy;
+  strategy?: RoomGenerationStrategy | undefined;
   seed: number;
   maxDepth: number;
 }
 
 export interface Room {
+  id: number;
   x: number;
   y: number;
   width: number;

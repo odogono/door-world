@@ -1,16 +1,15 @@
-import { darkenColor } from '@helpers/colour';
 import { createLog } from '@helpers/log';
 import {
   DungeonData,
   generateDungeon,
   generateRoomsAround,
-  getRoomCenter,
   isPointInRoom,
   Room,
   StrategyType
 } from '@model/dungeon';
 import { useEffect, useRef, useState } from 'react';
 import { ControlsPanel } from './components/controls-panel';
+import { renderConnections, renderDoors, renderRooms } from './helpers';
 
 const log = createLog('World2D');
 
@@ -89,60 +88,19 @@ export const World2D = () => {
     ctx.save();
     ctx.translate(viewportOffset.x, viewportOffset.y);
 
-    const colourIncrement = 1 / (dungeon.maxDepth || 1);
-
     // Draw rooms
     if (showRooms) {
-      dungeon.rooms.forEach(room => {
-        if (room.isCentral) {
-          ctx.fillStyle = '#4a9eff';
-        } else {
-          const baseColor = '#e0e0e0';
-          const depth = room.depth || 0;
-          ctx.fillStyle = darkenColor(baseColor, depth * colourIncrement);
-        }
-        ctx.fillRect(room.x, room.y, room.width, room.height);
-
-        if (room === highlightedRoom) {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-          ctx.fillRect(room.x, room.y, room.width, room.height);
-        }
-
-        ctx.strokeStyle = room === highlightedRoom ? '#ffffff' : '#AAA';
-        ctx.lineWidth = room === highlightedRoom ? 2 : 1;
-        ctx.strokeRect(room.x, room.y, room.width, room.height);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '12px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(
-          room.isCentral ? 'Start' : `${room.depth || 0}`,
-          room.x + room.width / 2,
-          room.y + room.height / 2
-        );
-      });
+      renderRooms(ctx, dungeon, highlightedRoom);
     }
 
     // Draw doors
     if (showDoors) {
-      ctx.fillStyle = '#FF893F';
-      dungeon.doors.forEach(door => {
-        ctx.fillRect(door.position.x, door.position.y, door.width, door.height);
-      });
+      renderDoors(ctx, dungeon);
     }
 
     // Draw connections
     if (showConnections) {
-      ctx.strokeStyle = '#00ff00aa';
-      ctx.lineWidth = 2;
-      dungeon.doors.forEach(door => {
-        const center1 = getRoomCenter(door.room1);
-        const center2 = getRoomCenter(door.room2);
-        ctx.beginPath();
-        ctx.moveTo(center1.x, center1.y);
-        ctx.lineTo(center2.x, center2.y);
-        ctx.stroke();
-      });
+      renderConnections(ctx, dungeon);
     }
 
     ctx.restore();
@@ -184,11 +142,11 @@ export const World2D = () => {
     setGenerationProgress(0);
 
     try {
-      const newDungeon = await generateDungeon(
+      const newDungeon = await generateDungeon({
         fillSpace,
-        selectedStrategy,
+        strategy: selectedStrategy,
         seed,
-        intermediateDungeon => {
+        onProgress: intermediateDungeon => {
           setDungeon(intermediateDungeon);
           // Calculate progress based on room count
           const maxRooms = fillSpace ? 100 : 20; // Approximate max rooms
@@ -198,7 +156,7 @@ export const World2D = () => {
           );
           setGenerationProgress(progress);
         }
-      );
+      });
       setDungeon(newDungeon);
     } finally {
       setIsGenerating(false);
