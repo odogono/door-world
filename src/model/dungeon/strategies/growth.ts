@@ -1,6 +1,6 @@
-import { PRNG } from '@helpers/random';
+import { prngIntRange } from '@helpers/random';
 import { CANVAS_SIZE } from '../constants';
-import { Room, RoomGenerationStrategy } from '../types';
+import { DungeonData, Room, RoomGenerationStrategy } from '../types';
 
 // Growth direction strategy
 export class GrowthDirectionStrategy implements RoomGenerationStrategy {
@@ -34,13 +34,17 @@ export class GrowthDirectionStrategy implements RoomGenerationStrategy {
     return combinedScore;
   }
 
-  selectTargetRoom(rooms: Room[], prng: PRNG): Room {
+  selectTargetRoom(dungeon: DungeonData, rooms: Room[]): Room {
     const sortedRooms = [...rooms].sort(
       (a, b) => this.getRoomGrowthScore(b) - this.getRoomGrowthScore(a)
     );
 
     const candidates = sortedRooms.slice(0, Math.min(5, sortedRooms.length));
-    return candidates[prng.nextInt(0, candidates.length - 1)];
+
+    const [seed, index] = prngIntRange(dungeon.seed, 0, candidates.length - 1);
+    dungeon.seed = seed;
+
+    return candidates[index];
   }
 
   shouldContinueGeneration(

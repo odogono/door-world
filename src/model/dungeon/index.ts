@@ -1,5 +1,5 @@
 import { createLog } from '@helpers/log';
-import { PRNG, randomUnsignedInt } from '@helpers/random';
+import { randomUnsignedInt } from '@helpers/random';
 import { MAX_ROOMS, NUM_ROOMS_PER_CLICK } from './constants';
 import { findDoors } from './door';
 import { generateRoomAround, getMaxRoomDepth } from './room';
@@ -73,7 +73,7 @@ export function* generateDungeonGenerator(
 
   log.debug('Generating dungeon', { seed, fillSpace, strategy });
 
-  const dungeonPrng = new PRNG(seed);
+  // const dungeonPrng = new PRNG(seed);
   const rooms = [...dungeon.rooms];
   const generationStrategy = createStrategy(strategy);
 
@@ -94,8 +94,8 @@ export function* generateDungeonGenerator(
       maxConsecutiveFailures
     )
   ) {
-    const targetRoom = generationStrategy.selectTargetRoom(rooms, dungeonPrng);
-    const newRoom = generateRoomAround(targetRoom, rooms, dungeonPrng);
+    const targetRoom = generationStrategy.selectTargetRoom(dungeon, rooms);
+    const newRoom = generateRoomAround(dungeon, targetRoom, rooms);
 
     if (newRoom) {
       rooms.push(newRoom);
@@ -120,7 +120,6 @@ export function* generateDungeonGenerator(
         rooms: [...rooms],
         doors: findDoors(rooms),
         strategy: generationStrategy,
-        seed: dungeonPrng.getSeed(),
         maxDepth: getMaxRoomDepth(rooms)
       };
     }
@@ -132,7 +131,6 @@ export function* generateDungeonGenerator(
     rooms,
     doors: findDoors(rooms),
     strategy: generationStrategy,
-    seed: dungeonPrng.getSeed(),
     maxDepth: getMaxRoomDepth(rooms)
   };
 }
@@ -178,7 +176,7 @@ export const generateRoomsAround = ({
   roomCount = NUM_ROOMS_PER_CLICK,
   recurseCount = 1
 }: GenerateRoomsAroundProps): DungeonData => {
-  const dungeonPrng = new PRNG(dungeon.seed);
+  // const dungeonPrng = new PRNG(dungeon.seed);
   const rooms = [...dungeon.rooms];
   let roomsGenerated = 0;
 
@@ -213,7 +211,7 @@ export const generateRoomsAround = ({
         )
       ) {
         levelAttempts++;
-        const newRoom = generateRoomAround(currentRoom, rooms, dungeonPrng);
+        const newRoom = generateRoomAround(dungeon, currentRoom, rooms);
 
         if (newRoom) {
           rooms.push(newRoom);
@@ -233,10 +231,10 @@ export const generateRoomsAround = ({
   }
 
   return {
+    ...dungeon,
     rooms,
     doors: findDoors(rooms),
     strategy: dungeon.strategy,
-    seed: dungeonPrng.getSeed(),
     maxDepth: getMaxRoomDepth(rooms)
   };
 };

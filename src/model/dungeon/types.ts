@@ -1,5 +1,3 @@
-import { PRNG } from '@helpers/random';
-
 export interface DungeonData {
   rooms: Room[];
   doors: Door[];
@@ -39,7 +37,7 @@ export type RoomSizeRange = [number, number];
 
 // Room generation strategy interface
 export interface RoomGenerationStrategy {
-  selectTargetRoom(rooms: Room[], prng: PRNG): Room;
+  selectTargetRoom(dungeon: DungeonData, rooms: Room[]): Room;
   shouldContinueGeneration(
     attempts: number,
     maxAttempts: number,

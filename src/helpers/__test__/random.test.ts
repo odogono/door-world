@@ -1,6 +1,5 @@
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import {
-  PRNG,
   prng,
   prngBoolean,
   prngDouble,
@@ -12,66 +11,7 @@ import {
   randomUnsignedInt
 } from '../random';
 
-describe('PRNG Class', () => {
-  let prngInstance: PRNG;
-  const testSeed = 12345;
-
-  beforeEach(() => {
-    prngInstance = new PRNG(testSeed);
-  });
-
-  test('should initialize with a seed', () => {
-    expect(prngInstance.getSeed()).toBe(testSeed);
-  });
-
-  test('should generate consistent sequence with same seed', () => {
-    const prng1 = new PRNG(testSeed);
-    const prng2 = new PRNG(testSeed);
-
-    for (let i = 0; i < 5; i++) {
-      expect(prng1.next()).toBe(prng2.next());
-    }
-  });
-
-  test('nextInt should generate numbers within range', () => {
-    const min = 1;
-    const max = 10;
-    for (let i = 0; i < 100; i++) {
-      const value = prngInstance.nextInt(min, max);
-      expect(value).toBeGreaterThanOrEqual(min);
-      expect(value).toBeLessThanOrEqual(max);
-    }
-  });
-
-  test('nextIntRange should generate numbers within range array', () => {
-    const range: [number, number] = [1, 10];
-    for (let i = 0; i < 100; i++) {
-      const value = prngInstance.nextIntRange(range);
-      expect(value).toBeGreaterThanOrEqual(range[0]);
-      expect(value).toBeLessThanOrEqual(range[1]);
-    }
-  });
-
-  test('nextFloat should generate numbers within range', () => {
-    const min = 0;
-    const max = 1;
-    for (let i = 0; i < 100; i++) {
-      const value = prngInstance.nextFloat(min, max);
-      expect(value).toBeGreaterThanOrEqual(min);
-      expect(value).toBeLessThan(max);
-    }
-  });
-
-  test('shuffle should maintain array length and elements', () => {
-    const original = [1, 2, 3, 4, 5];
-    const shuffled = prngInstance.shuffle([...original]);
-
-    expect(shuffled).toHaveLength(original.length);
-    expect(shuffled.sort()).toEqual(original.sort());
-  });
-});
-
-describe('Individual Random Functions', () => {
+describe('PRNG Random Functions', () => {
   const testSeed = 12345;
 
   test('prng should generate consistent values', () => {
@@ -133,7 +73,7 @@ describe('Individual Random Functions', () => {
 
   test('prngShuffle should maintain array elements', () => {
     const original = [1, 2, 3, 4, 5];
-    const shuffled = prngShuffle(testSeed, [...original]);
+    const [, shuffled] = prngShuffle(testSeed, [...original]);
     expect(shuffled).toHaveLength(original.length);
     expect(shuffled.sort()).toEqual(original.sort());
   });
