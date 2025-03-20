@@ -1,10 +1,12 @@
+import { isNumber } from '@helpers/number';
 import { prngIntRange, prngShuffle } from '@helpers/random';
 import {
   ROOM_SIZE_LARGE,
   ROOM_SIZE_MEDIUM,
   ROOM_SIZE_SMALL
 } from './constants';
-import { DungeonData, Room, RoomType } from './types';
+import { getDungeonRoomById, getRoomId } from './helpers';
+import { DungeonData, Position, Room, RoomId, RoomType } from './types';
 
 export const getMaxRoomDepth = (rooms: Room[]): number => {
   return Math.max(...rooms.map(room => room.depth || 0));
@@ -55,16 +57,29 @@ export const roomsTouch = (room1: Room, room2: Room): boolean => {
   return touchesHorizontally || touchesVertically;
 };
 
-export const getRoomCenter = (room: Room): { x: number; y: number } => {
+export const getRoomCenter = (
+  dungeon: DungeonData,
+  room: Room | RoomId
+): Position => {
+  const target = isNumber(room) ? getDungeonRoomById(dungeon, room) : room;
+
+  if (!target) {
+    throw new Error(`Room ${room} not found`);
+  }
+
   return {
-    x: room.x + room.width / 2,
-    y: room.y + room.height / 2
+    x: target.x + target.width / 2,
+    y: target.y + target.height / 2
   };
 };
 
-export const getDistanceBetweenRooms = (room1: Room, room2: Room): number => {
-  const center1 = getRoomCenter(room1);
-  const center2 = getRoomCenter(room2);
+export const getDistanceBetweenRooms = (
+  dungeon: DungeonData,
+  room1: Room | RoomId,
+  room2: Room | RoomId
+): number => {
+  const center1 = getRoomCenter(dungeon, room1);
+  const center2 = getRoomCenter(dungeon, room2);
   return Math.sqrt(
     Math.pow(center2.x - center1.x, 2) + Math.pow(center2.y - center1.y, 2)
   );
@@ -146,7 +161,7 @@ export const generateRoomAround = (
     }
 
     const newRoom = {
-      id: existingRooms.length + 1,
+      id: 0,
       x,
       y,
       width,
@@ -170,7 +185,10 @@ export const generateRoomAround = (
     }
 
     if (isValid) {
-      return newRoom;
+      return {
+        ...newRoom,
+        id: getRoomId(dungeon)
+      };
     }
   }
 

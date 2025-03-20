@@ -31,8 +31,8 @@ export const renderConnections = (
   ctx.lineWidth = 2;
 
   dungeon.doors.forEach(door => {
-    const center1 = getRoomCenter(door.room1);
-    const center2 = getRoomCenter(door.room2);
+    const center1 = getRoomCenter(dungeon, door.room1);
+    const center2 = getRoomCenter(dungeon, door.room2);
     ctx.beginPath();
     ctx.moveTo(center1.x, center1.y);
     ctx.lineTo(center2.x, center2.y);

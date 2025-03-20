@@ -1,8 +1,15 @@
+export type RoomId = number;
+
+export type Position = { x: number; y: number };
+export type Size = { width: number; height: number };
+export type Area = { x: number; y: number; width: number; height: number };
+
 export interface DungeonData {
+  idInc: number;
+  seed: number;
   rooms: Room[];
   doors: Door[];
   strategy?: RoomGenerationStrategy | undefined;
-  seed: number;
   maxDepth: number;
 }
 
@@ -14,14 +21,14 @@ export interface Room {
   height: number;
   type: RoomType;
   isCentral?: boolean;
-  allowedEdges?: ('NORTH' | 'EAST' | 'SOUTH' | 'WEST')[];
+  allowedEdges?: CompassDirection[];
   parent?: Room; // Reference to parent room
   depth?: number; // Distance from central room
 }
 
 export interface Door {
-  room1: Room;
-  room2: Room;
+  room1: RoomId;
+  room2: RoomId;
   position: { x: number; y: number };
   width: number;
   height: number;
@@ -49,3 +56,5 @@ export interface RoomGenerationStrategy {
 }
 
 export type StrategyType = 'random' | 'growth' | 'type' | 'branch';
+
+export type CompassDirection = 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';

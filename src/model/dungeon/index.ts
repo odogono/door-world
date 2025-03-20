@@ -2,6 +2,7 @@ import { createLog } from '@helpers/log';
 import { randomUnsignedInt } from '@helpers/random';
 import { MAX_ROOMS, NUM_ROOMS_PER_CLICK } from './constants';
 import { findDoors } from './door';
+import { createDungeon } from './helpers';
 import { generateRoomAround, getMaxRoomDepth } from './room';
 import { createStrategy } from './strategies';
 import { DungeonData, Room, RoomType, StrategyType } from './types';
@@ -16,7 +17,8 @@ export * from './door';
 
 type GenerateDungeonOptions = {
   dungeon?: DungeonData;
-  fillSpace: boolean;
+  maxRooms: number;
+  maxAttempts: number;
   strategy: StrategyType;
   seed: number;
   onProgress?: (dungeon: DungeonData) => void;
@@ -28,7 +30,7 @@ export const generateDungeon = async (
   const { dungeon, seed } = props;
 
   if (!dungeon) {
-    const dungeon = createDungeonData(seed);
+    const dungeon = createDungeon(seed);
 
     // Create central room at world center
     const centralRoom: Room = {
@@ -50,28 +52,17 @@ export const generateDungeon = async (
   return generateDungeonAsync(props);
 };
 
-export const createDungeonData = (
-  seed: number = randomUnsignedInt(0, 1000000)
-): DungeonData => {
-  return {
-    rooms: [],
-    doors: [],
-    seed,
-    maxDepth: 0
-  };
-};
-
 // Generator function for dungeon generation
 export function* generateDungeonGenerator(
   props: GenerateDungeonOptions
 ): Generator<DungeonData, DungeonData> {
-  const { dungeon, seed, fillSpace, strategy } = props;
+  const { dungeon, seed, strategy, maxRooms, maxAttempts } = props;
 
   if (!dungeon) {
     throw new Error('Dungeon is required');
   }
 
-  log.debug('Generating dungeon', { seed, fillSpace, strategy });
+  log.debug('Generating dungeon', { seed, strategy, maxRooms });
 
   // const dungeonPrng = new PRNG(seed);
   const rooms = [...dungeon.rooms];
@@ -79,7 +70,6 @@ export function* generateDungeonGenerator(
 
   // Generate multiple rooms around the central room
   let attempts = 0;
-  const maxAttempts = fillSpace ? 1000 : 100;
   let roomsGenerated = 0;
   let consecutiveFailures = 0;
   const maxConsecutiveFailures = 50;
@@ -89,7 +79,7 @@ export function* generateDungeonGenerator(
       attempts,
       maxAttempts,
       roomsGenerated,
-      fillSpace ? MAX_ROOMS : NUM_ROOMS_PER_CLICK,
+      maxRooms,
       consecutiveFailures,
       maxConsecutiveFailures
     )

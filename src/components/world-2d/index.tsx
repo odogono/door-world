@@ -4,6 +4,8 @@ import {
   generateDungeon,
   generateRoomsAround,
   isPointInRoom,
+  MAX_ROOMS,
+  NUM_ROOMS_PER_CLICK,
   Room,
   StrategyType
 } from '@model/dungeon';
@@ -143,9 +145,10 @@ export const World2D = () => {
 
     try {
       const newDungeon = await generateDungeon({
-        fillSpace,
         strategy: selectedStrategy,
         seed,
+        maxRooms: fillSpace ? MAX_ROOMS : 5,
+        maxAttempts: fillSpace ? 1000 : 100,
         onProgress: intermediateDungeon => {
           setDungeon(intermediateDungeon);
           // Calculate progress based on room count
