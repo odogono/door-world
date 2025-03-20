@@ -142,6 +142,7 @@ export const generateRoomAround = (
     }
 
     const newRoom = {
+      id: existingRooms.length + 1,
       x,
       y,
       width,
