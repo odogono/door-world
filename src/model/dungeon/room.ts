@@ -1,37 +1,36 @@
-import { PRNG } from '@helpers/random';
+import { prngIntRange, prngShuffle } from '@helpers/random';
 import {
   ROOM_SIZE_LARGE,
   ROOM_SIZE_MEDIUM,
   ROOM_SIZE_SMALL
 } from './constants';
-import { Room, RoomType } from './types';
+import { DungeonData, Room, RoomType } from './types';
 
 export const getMaxRoomDepth = (rooms: Room[]): number => {
   return Math.max(...rooms.map(room => room.depth || 0));
 };
 
-export const getRoomSizeForType = (
-  type: RoomType,
-  prng: PRNG
-): { width: number; height: number } => {
+const getRangeForRoomType = (type: RoomType) => {
   switch (type) {
     case RoomType.LARGE:
-      return {
-        width: prng.nextIntRange(ROOM_SIZE_LARGE),
-        height: prng.nextIntRange(ROOM_SIZE_LARGE)
-      };
+      return ROOM_SIZE_LARGE;
     case RoomType.SMALL:
-      return {
-        width: prng.nextIntRange(ROOM_SIZE_SMALL),
-        height: prng.nextIntRange(ROOM_SIZE_SMALL)
-      };
+      return ROOM_SIZE_SMALL;
     case RoomType.NORMAL:
     default:
-      return {
-        width: prng.nextIntRange(ROOM_SIZE_MEDIUM),
-        height: prng.nextIntRange(ROOM_SIZE_MEDIUM)
-      };
+      return ROOM_SIZE_MEDIUM;
   }
+};
+
+export const getRoomSizeForType = (
+  type: RoomType,
+  seed: number
+): [number, { width: number; height: number }] => {
+  const range = getRangeForRoomType(type);
+  const [seedA, width] = prngIntRange(seed, range[0], range[1]);
+  const [seedB, height] = prngIntRange(seedA, range[0], range[1]);
+
+  return [seedB, { width, height }];
 };
 
 export const roomsOverlap = (room1: Room, room2: Room): boolean => {
@@ -84,13 +83,15 @@ export const isPointInRoom = (
 };
 
 export const generateRoomAround = (
+  dungeon: DungeonData,
   targetRoom: Room,
-  existingRooms: Room[],
-  prng: PRNG
+  existingRooms: Room[]
 ): Room | null => {
   const types = Object.values(RoomType);
-  const type = types[prng.nextInt(0, types.length - 1)];
-  const { width, height } = getRoomSizeForType(type, prng);
+  const [seedA, index] = prngIntRange(dungeon.seed, 0, types.length - 1);
+  const type = types[index];
+
+  const [seedB, { width, height }] = getRoomSizeForType(type, seedA);
 
   const allowedEdges = targetRoom.allowedEdges || [
     'NORTH',
@@ -99,26 +100,29 @@ export const generateRoomAround = (
     'WEST'
   ];
 
-  const sides = prng.shuffle(
-    allowedEdges
-      .map(edge => {
-        switch (edge) {
-          case 'NORTH':
-            return 0;
-          case 'EAST':
-            return 1;
-          case 'SOUTH':
-            return 2;
-          case 'WEST':
-            return 3;
-          default:
-            return -1;
-        }
-      })
-      .filter(side => side !== -1)
-  );
+  const sides = allowedEdges
+    .map(edge => {
+      switch (edge) {
+        case 'NORTH':
+          return 0;
+        case 'EAST':
+          return 1;
+        case 'SOUTH':
+          return 2;
+        case 'WEST':
+          return 3;
+        default:
+          return -1;
+      }
+    })
+    .filter(side => side !== -1);
 
-  for (const side of sides) {
+  const [seedC, shuffledSides] = prngShuffle(seedB, sides);
+
+  // TODO return the dungeon
+  dungeon.seed = seedC;
+
+  for (const side of shuffledSides) {
     let x = 0;
     let y = 0;
 

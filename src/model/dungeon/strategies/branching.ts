@@ -1,5 +1,5 @@
-import { PRNG } from '@helpers/random';
-import { Room, RoomGenerationStrategy } from '../types';
+import { prngIntRange } from '@helpers/random';
+import { DungeonData, Room, RoomGenerationStrategy } from '../types';
 
 // Branching strategy
 export class BranchingStrategy implements RoomGenerationStrategy {
@@ -47,13 +47,17 @@ export class BranchingStrategy implements RoomGenerationStrategy {
     };
   }
 
-  selectTargetRoom(rooms: Room[], prng: PRNG): Room {
+  selectTargetRoom(dungeon: DungeonData, rooms: Room[]): Room {
     const sortedRooms = [...rooms].sort(
       (a, b) => this.getBranchScore(b, rooms) - this.getBranchScore(a, rooms)
     );
 
     const candidates = sortedRooms.slice(0, Math.min(5, sortedRooms.length));
-    return candidates[prng.nextInt(0, candidates.length - 1)];
+
+    const [seed, index] = prngIntRange(dungeon.seed, 0, candidates.length - 1);
+    dungeon.seed = seed;
+
+    return candidates[index];
   }
 
   shouldContinueGeneration(

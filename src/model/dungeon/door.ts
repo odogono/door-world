@@ -1,6 +1,9 @@
+import { createLog } from '@helpers/log';
 import { DOOR_HEIGHT, DOOR_WIDTH } from './constants';
 import { roomsTouch } from './room';
 import { Door, Room } from './types';
+
+const log = createLog('Dungeon.Door');
 
 export const findDoorPosition = (
   room1: Room,
@@ -78,6 +81,11 @@ export const findDoors = (rooms: Room[]): Door[] => {
       if (roomsTouch(rooms[i], rooms[j])) {
         const position = findDoorPosition(rooms[i], rooms[j]);
         if (position) {
+          log.debug('Found door', {
+            room1: rooms[i].id,
+            room2: rooms[j].id,
+            position
+          });
           doors.push({
             room1: rooms[i],
             room2: rooms[j],
