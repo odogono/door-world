@@ -32,7 +32,7 @@ const GroundPlane = ({
     const point = event.point;
     const newCameraTarget = new Vector3(point.x, 0, point.z);
 
-    log.debug('GroundPlane clicked', newCameraTarget);
+    // log.debug('GroundPlane clicked', newCameraTarget);
     onTargetPositionChange(newCameraTarget);
   };
 
@@ -59,7 +59,7 @@ export const World3D = () => {
   };
 
   return (
-    <div style={{ height: '100vh', width: '100vw' }}>
+    <div className="w-screen h-screen bg-[#1e1e1e]">
       <Canvas gl={{ localClippingEnabled: true }}>
         <IsometricCamera targetPosition={targetPosition} />
 
