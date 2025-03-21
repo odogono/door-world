@@ -10,7 +10,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          rthree: ['@react-three/drei', '@react-three/fiber'],
+          rthree: [
+            '@react-three/drei',
+            '@react-three/fiber',
+            '@react-spring/three'
+          ],
           state: ['jotai'],
           three: ['three'],
           vendor: ['react', 'react-dom']
