@@ -1,9 +1,9 @@
 import { createLog } from '@helpers/log';
-import { DungeonData, generateDungeon } from '@model/dungeon';
+import { generateDungeon } from '@model/dungeon';
 import { generateRoomsAround as generateRoomsAroundHelper } from '@model/dungeon/generateRoomsAround';
 import { StrategyType } from '@model/dungeon/types';
 import { useCallback, useEffect, useState } from 'react';
-import { useDungeonSeed } from './atoms';
+import { useDungeonAtom, useDungeonSeed } from './atoms';
 import { DungeonContext } from './context';
 import type {
   GenerateRoomsAroundProps,
@@ -16,51 +16,55 @@ const log = createLog('DungeonProvider');
 export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
-  const [dungeon, setDungeon] = useState<DungeonData | null>(null);
+  const { dungeon, setDungeon } = useDungeonAtom();
+  // const [dungeon, setDungeon] = useState<DungeonData | null>(null);
   const [generationProgress, setGenerationProgress] = useState(100);
 
   const { seed, setSeed } = useDungeonSeed();
 
-  const regenerate = useCallback(async (options: RegenerateDungeonOptions) => {
-    const {
-      maxRooms = 50,
-      seed = Math.floor(Math.random() * 1_000_000),
-      strategy = 'random'
-    } = options;
+  const regenerate = useCallback(
+    async (options: RegenerateDungeonOptions) => {
+      const {
+        maxRooms = 50,
+        seed = Math.floor(Math.random() * 1_000_000),
+        strategy = 'random'
+      } = options;
 
-    setGenerationProgress(0);
+      setGenerationProgress(0);
 
-    const result = await generateDungeon({
-      maxAttempts: maxRooms * 2,
-      maxRooms,
-      onProgress: intermediateDungeon => {
-        // Calculate progress based on room count
-        const progress = Math.min(
-          100,
-          (intermediateDungeon.rooms.length / maxRooms) * 100
-        );
-        setGenerationProgress(progress);
+      const result = await generateDungeon({
+        maxAttempts: maxRooms * 2,
+        maxRooms,
+        onProgress: intermediateDungeon => {
+          // Calculate progress based on room count
+          const progress = Math.min(
+            100,
+            (intermediateDungeon.rooms.length / maxRooms) * 100
+          );
+          setGenerationProgress(progress);
 
-        // log.debug('Dungeon generation progress', {
-        //   progress,
-        //   rooms: intermediateDungeon.rooms.length
-        // });
+          // log.debug('Dungeon generation progress', {
+          //   progress,
+          //   rooms: intermediateDungeon.rooms.length
+          // });
 
-        setDungeon(intermediateDungeon);
-      },
-      seed,
-      strategy
-    });
+          setDungeon(intermediateDungeon);
+        },
+        seed,
+        strategy
+      });
 
-    setGenerationProgress(100);
-    setDungeon(result);
+      setGenerationProgress(100);
+      setDungeon(result);
 
-    log.debug('Dungeon regenerated', {
-      dungeon: result,
-      seed,
-      strategy
-    });
-  }, []);
+      log.debug('Dungeon regenerated', {
+        dungeon: result,
+        seed,
+        strategy
+      });
+    },
+    [setDungeon]
+  );
 
   const generateRooms = useCallback(
     async (options: GenerateRoomsOptions) => {
@@ -87,7 +91,7 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setDungeon(result);
     },
-    [dungeon]
+    [dungeon, setDungeon]
   );
 
   const generateRoomsAround = useCallback(
@@ -104,7 +108,7 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setDungeon(result);
     },
-    [dungeon]
+    [dungeon, setDungeon]
   );
 
   useEffect(() => {

@@ -100,7 +100,7 @@ export function* generateDungeonGenerator(
         doors: findDoors(rooms),
         maxDepth: getMaxRoomDepth(rooms),
         rooms: [...rooms],
-        strategy: generationStrategy
+        strategy
       };
     }
   }
@@ -111,7 +111,7 @@ export function* generateDungeonGenerator(
     doors: findDoors(rooms),
     maxDepth: getMaxRoomDepth(rooms),
     rooms,
-    strategy: generationStrategy
+    strategy
   };
 }
 

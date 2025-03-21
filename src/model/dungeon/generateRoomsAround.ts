@@ -23,9 +23,9 @@ export const generateRoomsAround = ({
   const rooms = [...dungeon.rooms];
   let roomsGenerated = 0;
 
-  if (!dungeon.strategy) {
-    throw new Error('Strategy is required');
-  }
+  // if (!dungeon.strategy) {
+  //   throw new Error('Strategy is required');
+  // }
 
   // Queue of rooms to process for each recursion level
   const roomQueue: Room[][] = Array(recurseCount)
@@ -72,7 +72,6 @@ export const generateRoomsAround = ({
     ...dungeon,
     doors: findDoors(rooms),
     maxDepth: getMaxRoomDepth(rooms),
-    rooms,
-    strategy: dungeon.strategy
+    rooms
   };
 };
