@@ -1,42 +1,43 @@
 export type RoomId = number;
 
 export type Position = { x: number; y: number };
-export type Size = { width: number; height: number };
-export type Area = { x: number; y: number; width: number; height: number };
+export type Size = { height: number; width: number };
+export type Area = { height: number; width: number; x: number; y: number };
 
 export interface DungeonData {
-  idInc: number;
-  seed: number;
-  rooms: Room[];
   doors: Door[];
-  strategy?: RoomGenerationStrategy | undefined;
+  idInc: number;
   maxDepth: number;
+  rooms: Room[];
+  seed: number;
+  strategy?: RoomGenerationStrategy | undefined;
 }
 
 export interface Room {
-  id: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  type: RoomType;
-  isCentral?: boolean;
   allowedEdges?: CompassDirection[];
-  parent?: Room; // Reference to parent room
-  depth?: number; // Distance from central room
+  // Reference to parent room
+  depth?: number;
+  height: number;
+  id: number;
+  isCentral?: boolean;
+  parent?: Room;
+  type: RoomType;
+  width: number;
+  x: number;
+  y: number; // Distance from central room
 }
 
 export interface Door {
+  height: number;
+  position: { x: number; y: number };
   room1: RoomId;
   room2: RoomId;
-  position: { x: number; y: number };
   width: number;
-  height: number;
 }
 
 export enum RoomType {
-  NORMAL = 'normal',
   LARGE = 'large',
+  NORMAL = 'normal',
   SMALL = 'small'
 }
 

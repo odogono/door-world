@@ -1,5 +1,5 @@
-import { Grid, OrbitControls, Plane, Sphere, Text } from '@react-three/drei';
-import { Canvas } from '@react-three/fiber';
+import { Grid, Plane, Sphere } from '@react-three/drei';
+import { Canvas, ThreeEvent } from '@react-three/fiber';
 import './index.css';
 import { Door } from '@components/door';
 import { GroundText } from '@components/ground-text';
@@ -25,7 +25,7 @@ const GroundPlane = ({
 }: {
   onTargetPositionChange: (pos: Vector3) => void;
 }) => {
-  const handleClick = (event: any) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
 
     // Get the intersection point
@@ -39,12 +39,12 @@ const GroundPlane = ({
   return (
     <Plane
       args={[100, 100]}
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, 0, 0]}
       onClick={handleClick}
+      position={[0, 0, 0]}
+      rotation={[-Math.PI / 2, 0, 0]}
       visible={false}
     >
-      <meshStandardMaterial transparent opacity={0} />
+      <meshStandardMaterial opacity={0} />
     </Plane>
   );
 };
@@ -59,36 +59,36 @@ export const World3D = () => {
   };
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ height: '100vh', width: '100vw' }}>
       <Canvas gl={{ localClippingEnabled: true }}>
         <IsometricCamera targetPosition={targetPosition} />
 
         {/* <XYZAxis /> */}
         <Door position={[0, 0, 4]} />
-        <Door position={[-4, 0, 0]} rotationY={0} doorColor="#00f900" isOpen />
-        <Door position={[0, 0, -4]} doorColor="#7F42FF" />
+        <Door doorColor="#00f900" isOpen position={[-4, 0, 0]} rotationY={0} />
+        <Door doorColor="#7F42FF" position={[0, 0, -4]} />
         <GroundPlane onTargetPositionChange={handleTargetPositionChange} />
         {clickedPosition && (
           <>
             <ClickMarker position={clickedPosition} />
             <GroundText
+              onEnterSpeed={0.01}
               position={clickedPosition}
               text="Clicked here!"
-              onEnterSpeed={0.01}
             />
           </>
         )}
         <Grid
-          infiniteGrid
-          sectionSize={1}
-          sectionColor="black"
           cellSize={0.1}
+          infiniteGrid
+          sectionColor="black"
+          sectionSize={1}
         />
 
         <GroundText position={[0, 0, 0]} text="Open Door Go North" />
 
         <ambientLight intensity={0.1} />
-        <directionalLight position={[10, 10, 5]} intensity={2} />
+        <directionalLight intensity={2} position={[10, 10, 5]} />
       </Canvas>
     </div>
   );

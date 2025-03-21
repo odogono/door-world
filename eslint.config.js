@@ -1,40 +1,57 @@
-import js from '@eslint/js';
-import eslintConfigPrettier from 'eslint-config-prettier/flat';
-import reactHooks from 'eslint-plugin-react-hooks';
-import reactRefresh from 'eslint-plugin-react-refresh';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
+import { resolve } from 'node:path';
+import nkzw from '@nkzw/eslint-config';
+import { ReactThreeFiber } from '@react-three/fiber';
 
-export default tseslint.config(
-  { ignores: ['dist'] },
+export default [
   {
-    extends: [
-      js.configs.recommended,
-      ...tseslint.configs.recommended,
-      eslintConfigPrettier
-    ],
-    files: ['**/*.{ts,tsx}'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser
-    },
+    ignores: ['**/dist/*']
+  },
+  {
     plugins: {
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh
-    },
+      '@react-three': ReactThreeFiber
+    }
+  },
+  ...nkzw,
+  {
     rules: {
-      ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true }
-      ],
-      'func-style': ['error', 'arrow'],
-      'arrow-body-style': ['error', 'as-needed'],
-      'arrow-parens': ['error', 'as-needed'],
-      'arrow-spacing': ['error', { before: true, after: true }],
+      'func-style': ['error', 'declaration', { allowArrowFunctions: true }],
       'prefer-arrow-callback': 'error',
-      'no-var': 'error',
-      'prefer-const': 'error'
+      'react/no-unknown-property': 'off'
+    },
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: resolve(process.cwd(), './tsconfig.app.json')
+        }
+      }
     }
   }
-);
+  // { ignores: ['dist'] },
+  // {
+  //   extends: [js.configs.recommended, eslintConfigPrettier],
+  //   files: ['**/*.{ts,tsx}'],
+  //   languageOptions: {
+  //     ecmaVersion: 2020,
+  //     globals: globals.browser
+  //   },
+  //   plugins: {
+  //     'react-hooks': reactHooks,
+  //     'react-refresh': reactRefresh
+  //   },
+  //   rules: {
+  //     ...nkzw.rules,
+  //     ...reactHooks.configs.recommended.rules,
+  //     'arrow-body-style': ['error', 'as-needed'],
+  //     'arrow-parens': ['error', 'as-needed'],
+  //     'arrow-spacing': ['error', { after: true, before: true }],
+  //     'func-style': ['error', 'arrow'],
+  //     'no-var': 'error',
+  //     'prefer-arrow-callback': 'error',
+  //     'prefer-const': 'error',
+  //     'react-refresh/only-export-components': [
+  //       'warn',
+  //       { allowConstantExport: true }
+  //     ]
+  //   }
+  // }
+];

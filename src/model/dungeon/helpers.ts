@@ -6,14 +6,14 @@ export const getRoomId = (dungeon: DungeonData) => {
 };
 
 export const createDungeon = (
-  seed: number = randomUnsignedInt(0, 1000000)
+  seed: number = randomUnsignedInt(0, 1_000_000)
 ): DungeonData => {
   return {
-    idInc: 10,
-    rooms: [],
     doors: [],
-    seed,
-    maxDepth: 0
+    idInc: 10,
+    maxDepth: 0,
+    rooms: [],
+    seed
   };
 };
 

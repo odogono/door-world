@@ -26,7 +26,9 @@ export class BranchingStrategy implements RoomGenerationStrategy {
     const center = this.getRoomCenter(room);
 
     for (const otherRoom of allRooms) {
-      if (otherRoom === room || otherRoom.parent === room.parent) continue;
+      if (otherRoom === room || otherRoom.parent === room.parent) {
+        continue;
+      }
 
       const otherCenter = this.getRoomCenter(otherRoom);
       const distance = Math.sqrt(

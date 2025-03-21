@@ -45,9 +45,6 @@
       "@model/*": [
         "./src/model/*"
       ],
-      "@/*": [
-        "./src/*"
-      ],
       "@types": [
         "./src/types.ts"
       ]

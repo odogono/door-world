@@ -1,5 +1,82 @@
 import { darkenColor } from '@helpers/colour';
 import { DungeonData, getRoomCenter, Room } from '@model/dungeon';
+import { Position } from '@model/dungeon/types';
+
+type RenderDungeonOptions = {
+  generationProgress?: number;
+  isGenerating?: boolean;
+  showConnections?: boolean;
+  showDoors?: boolean;
+  showLegend?: boolean;
+  showRooms?: boolean;
+};
+
+export const renderDungeon = (
+  canvas: HTMLCanvasElement | null,
+  dungeon: DungeonData | null,
+  viewportOffset: Position,
+  options: RenderDungeonOptions = {}
+) => {
+  const {
+    generationProgress = 0,
+    isGenerating = false,
+    showConnections = true,
+    showDoors = true,
+    showLegend = true,
+    showRooms = true
+  } = options;
+
+  if (!canvas || !dungeon) {
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return;
+  }
+
+  // Clear canvas
+  ctx.fillStyle = '#1e1e1e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Apply viewport transform
+  ctx.save();
+  ctx.translate(viewportOffset.x, viewportOffset.y);
+
+  if (showRooms) {
+    renderRooms(ctx, dungeon, null);
+  }
+  if (showDoors) {
+    renderDoors(ctx, dungeon);
+  }
+  if (showConnections) {
+    renderConnections(ctx, dungeon);
+  }
+
+  ctx.restore();
+
+  if (showLegend) {
+    // Draw room count and generation progress
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(
+      `Rooms: ${dungeon.rooms.length}`,
+      canvas.width - 10,
+      canvas.height - 10
+    );
+
+    if (isGenerating) {
+      ctx.textAlign = 'left';
+      ctx.fillText(
+        `Generating... ${Math.round(generationProgress)}%`,
+        10,
+        canvas.height - 10
+      );
+    }
+  }
+
+  return ctx;
+};
 
 export const renderRooms = (
   ctx: CanvasRenderingContext2D,
@@ -9,7 +86,7 @@ export const renderRooms = (
   const colourIncrement = 1 / (dungeon.maxDepth || 1);
 
   dungeon.rooms.forEach(room => {
-    renderRoom({ ctx, room, highlightedRoom, colourIncrement });
+    renderRoom({ colourIncrement, ctx, highlightedRoom, room });
   });
 };
 
@@ -41,17 +118,17 @@ export const renderConnections = (
 };
 
 type RenderRoomProps = {
-  ctx: CanvasRenderingContext2D;
-  room: Room;
-  highlightedRoom: Room | null;
   colourIncrement: number;
+  ctx: CanvasRenderingContext2D;
+  highlightedRoom: Room | null;
+  room: Room;
 };
 
 export const renderRoom = ({
+  colourIncrement,
   ctx,
-  room,
   highlightedRoom,
-  colourIncrement
+  room
 }: RenderRoomProps) => {
   if (room.isCentral) {
     ctx.fillStyle = '#4a9eff';
