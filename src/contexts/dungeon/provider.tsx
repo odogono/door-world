@@ -1,9 +1,6 @@
 import { createLog } from '@helpers/log';
-import {
-  DungeonData,
-  generateDungeon,
-  generateRoomsAround as generateRoomsAroundHelper
-} from '@model/dungeon';
+import { DungeonData, generateDungeon } from '@model/dungeon';
+import { generateRoomsAround as generateRoomsAroundHelper } from '@model/dungeon/generateRoomsAround';
 import { StrategyType } from '@model/dungeon/types';
 import { useCallback, useEffect, useState } from 'react';
 import { useDungeonSeed } from './atoms';
@@ -94,13 +91,14 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const generateRoomsAround = useCallback(
-    async ({ recurseCount = 1, room }: GenerateRoomsAroundProps) => {
+    async ({ recurseCount = 1, room, roomCount }: GenerateRoomsAroundProps) => {
       if (!dungeon) {
         throw new Error('No dungeon exists. Call regenerate first.');
       }
       const result = generateRoomsAroundHelper({
         dungeon,
         recurseCount,
+        roomCount,
         targetRoom: room
       });
 

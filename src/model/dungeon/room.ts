@@ -9,6 +9,9 @@ import { getDungeonRoomById, getRoomId } from './helpers';
 import { DungeonData, Position, Room, RoomId, RoomType } from './types';
 
 export const getMaxRoomDepth = (rooms: Room[]): number => {
+  if (rooms.length === 0) {
+    return 0;
+  }
   return Math.max(...rooms.map(room => room.depth || 0));
 };
 

@@ -9,19 +9,4 @@ export class RandomStrategy implements RoomGenerationStrategy {
 
     return rooms[index];
   }
-
-  shouldContinueGeneration(
-    attempts: number,
-    maxAttempts: number,
-    roomsGenerated: number,
-    maxRooms: number,
-    consecutiveFailures: number,
-    maxConsecutiveFailures: number
-  ): boolean {
-    return (
-      attempts < maxAttempts &&
-      roomsGenerated < maxRooms &&
-      consecutiveFailures < maxConsecutiveFailures
-    );
-  }
 }

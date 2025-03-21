@@ -197,7 +197,7 @@ export const World2D = () => {
     );
 
     if (clickedRoom) {
-      generateRoomsAround({ recurseCount, room: clickedRoom });
+      generateRoomsAround({ recurseCount, room: clickedRoom, roomCount: 3 });
     }
   };
 
