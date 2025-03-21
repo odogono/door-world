@@ -36,25 +36,33 @@ export const getRoomSizeForType = (
 };
 
 export const roomsOverlap = (room1: Room, room2: Room): boolean => {
+  const { area: area1 } = room1;
+  const { area: area2 } = room2;
+
   return (
-    room1.x < room2.x + room2.width &&
-    room1.x + room1.width > room2.x &&
-    room1.y < room2.y + room2.height &&
-    room1.y + room1.height > room2.y
+    area1.x < area2.x + area2.width &&
+    area1.x + area1.width > area2.x &&
+    area1.y < area2.y + area2.height &&
+    area1.y + area1.height > area2.y
   );
 };
 
 export const roomsTouch = (room1: Room, room2: Room): boolean => {
+  const { area: area1 } = room1;
+  const { area: area2 } = room2;
   const touchesHorizontally =
-    (room1.x + room1.width === room2.x || room2.x + room2.width === room1.x) &&
-    !(room1.y + room1.height < room2.y || room2.y + room2.height < room1.y);
+    (area1.x + area1.width === area2.x || area2.x + area2.width === area1.x) &&
+    !(area1.y + area1.height < area2.y || area2.y + area2.height < area1.y);
+  if (touchesHorizontally) {
+    return true;
+  }
 
   const touchesVertically =
-    (room1.y + room1.height === room2.y ||
-      room2.y + room2.height === room1.y) &&
-    !(room1.x + room1.width < room2.x || room2.x + room2.width < room1.x);
+    (area1.y + area1.height === area2.y ||
+      area2.y + area2.height === area1.y) &&
+    !(area1.x + area1.width < area2.x || area2.x + area2.width < area1.x);
 
-  return touchesHorizontally || touchesVertically;
+  return touchesVertically;
 };
 
 export const getRoomCenter = (
@@ -68,8 +76,8 @@ export const getRoomCenter = (
   }
 
   return {
-    x: target.x + target.width / 2,
-    y: target.y + target.height / 2
+    x: target.area.x + target.area.width / 2,
+    y: target.area.y + target.area.height / 2
   };
 };
 
@@ -90,10 +98,10 @@ export const isPointInRoom = (
   room: Room
 ): boolean => {
   return (
-    point.x >= room.x &&
-    point.x <= room.x + room.width &&
-    point.y >= room.y &&
-    point.y <= room.y + room.height
+    point.x >= room.area.x &&
+    point.x <= room.area.x + room.area.width &&
+    point.y >= room.area.y &&
+    point.y <= room.area.y + room.area.height
   );
 };
 
@@ -143,32 +151,29 @@ export const generateRoomAround = (
 
     switch (side) {
       case 0: // Top
-        x = targetRoom.x;
-        y = targetRoom.y - height;
+        x = targetRoom.area.x;
+        y = targetRoom.area.y - height;
         break;
       case 1: // Right
-        x = targetRoom.x + targetRoom.width;
-        y = targetRoom.y;
+        x = targetRoom.area.x + targetRoom.area.width;
+        y = targetRoom.area.y;
         break;
       case 2: // Bottom
-        x = targetRoom.x;
-        y = targetRoom.y + targetRoom.height;
+        x = targetRoom.area.x;
+        y = targetRoom.area.y + targetRoom.area.height;
         break;
       case 3: // Left
-        x = targetRoom.x - width;
-        y = targetRoom.y;
+        x = targetRoom.area.x - width;
+        y = targetRoom.area.y;
         break;
     }
 
     const newRoom = {
+      area: { height, width, x, y },
       depth: (targetRoom.depth || 0) + 1,
-      height,
       id: 0,
       parent: targetRoom,
-      type,
-      width,
-      x,
-      y
+      type
     };
 
     let isValid = true;

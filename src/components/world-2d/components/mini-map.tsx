@@ -33,10 +33,10 @@ export const MiniMap = ({ dungeon, size = 200 }: MiniMapProps) => {
     let maxY = -Infinity;
 
     dungeon.rooms.forEach(room => {
-      minX = Math.min(minX, room.x);
-      minY = Math.min(minY, room.y);
-      maxX = Math.max(maxX, room.x + room.width);
-      maxY = Math.max(maxY, room.y + room.height);
+      minX = Math.min(minX, room.area.x);
+      minY = Math.min(minY, room.area.y);
+      maxX = Math.max(maxX, room.area.x + room.area.width);
+      maxY = Math.max(maxY, room.area.y + room.area.height);
     });
 
     // Calculate scale based on the maximum extent from origin in any direction

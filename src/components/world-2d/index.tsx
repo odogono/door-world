@@ -128,9 +128,9 @@ export const World2D = () => {
     });
   };
 
-  useEffect(() => {
-    regenerateDungeon();
-  }, [seed, selectedStrategy, regenerateDungeon]);
+  // useEffect(() => {
+  //   regenerateDungeon();
+  // }, [seed, selectedStrategy, regenerateDungeon]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);

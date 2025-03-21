@@ -5,10 +5,10 @@ import { DungeonData, Room, RoomGenerationStrategy } from '../types';
 // Growth direction strategy
 export class GrowthDirectionStrategy implements RoomGenerationStrategy {
   private getRoomFrontier(room: Room): number {
-    const distanceToLeft = room.x;
-    const distanceToRight = CANVAS_SIZE - (room.x + room.width);
-    const distanceToTop = room.y;
-    const distanceToBottom = CANVAS_SIZE - (room.y + room.height);
+    const distanceToLeft = room.area.x;
+    const distanceToRight = CANVAS_SIZE - (room.area.x + room.area.width);
+    const distanceToTop = room.area.y;
+    const distanceToBottom = CANVAS_SIZE - (room.area.y + room.area.height);
 
     return Math.min(
       distanceToLeft,
@@ -21,8 +21,8 @@ export class GrowthDirectionStrategy implements RoomGenerationStrategy {
   private getRoomGrowthScore(room: Room): number {
     const frontier = this.getRoomFrontier(room);
     const center = CANVAS_SIZE / 2;
-    const roomCenterX = room.x + room.width / 2;
-    const roomCenterY = room.y + room.height / 2;
+    const roomCenterX = room.area.x + room.area.width / 2;
+    const roomCenterY = room.area.y + room.area.height / 2;
     const distanceFromCenter = Math.sqrt(
       Math.pow(roomCenterX - center, 2) + Math.pow(roomCenterY - center, 2)
     );

@@ -44,8 +44,8 @@ export class BranchingStrategy implements RoomGenerationStrategy {
 
   private getRoomCenter(room: Room): { x: number; y: number } {
     return {
-      x: room.x + room.width / 2,
-      y: room.y + room.height / 2
+      x: room.area.x + room.area.width / 2,
+      y: room.area.y + room.area.height / 2
     };
   }
 

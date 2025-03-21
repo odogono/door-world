@@ -15,24 +15,25 @@ export interface DungeonData {
 
 export interface Room {
   allowedEdges?: CompassDirection[];
+  area: Area;
   // Reference to parent room
   depth?: number;
-  height: number;
+  // height: number;
   id: number;
   isCentral?: boolean;
   parent?: Room;
   type: RoomType;
-  width: number;
-  x: number;
-  y: number; // Distance from central room
+  // width: number;
+  // x: number;
+  // y: number; // Distance from central room
 }
 
 export interface Door {
-  height: number;
-  position: { x: number; y: number };
+  // height: number;
+  position: Position;
   room1: RoomId;
   room2: RoomId;
-  width: number;
+  // width: number;
 }
 
 export enum RoomType {

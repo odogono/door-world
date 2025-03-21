@@ -32,16 +32,16 @@ export class RoomTypeStrategy implements RoomGenerationStrategy {
 
   private getRoomCenter(room: Room): { x: number; y: number } {
     return {
-      x: room.x + room.width / 2,
-      y: room.y + room.height / 2
+      x: room.area.x + room.area.width / 2,
+      y: room.area.y + room.area.height / 2
     };
   }
 
   private getRoomTypeScore(room: Room, allRooms: Room[]): number {
     const density = this.getRoomDensity(room, allRooms);
     const center = CANVAS_SIZE / 2;
-    const roomCenterX = room.x + room.width / 2;
-    const roomCenterY = room.y + room.height / 2;
+    const roomCenterX = room.area.x + room.area.width / 2;
+    const roomCenterY = room.area.y + room.area.height / 2;
     const distanceFromCenter = Math.sqrt(
       Math.pow(roomCenterX - center, 2) + Math.pow(roomCenterY - center, 2)
     );

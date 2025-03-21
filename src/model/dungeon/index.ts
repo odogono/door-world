@@ -34,14 +34,11 @@ export const generateDungeon = async (
     // Create central room at world center
     const centralRoom: Room = {
       allowedEdges: ['NORTH'],
+      area: { height: 100, width: 100, x: -50, y: -50 },
       depth: 0,
-      height: 100,
       id: 1,
       isCentral: true,
-      type: RoomType.NORMAL,
-      width: 100,
-      x: -50,
-      y: -50
+      type: RoomType.NORMAL
     };
     dungeon.rooms.push(centralRoom);
 
