@@ -42,6 +42,9 @@
       "@model/*": [
         "./src/model/*"
       ],
+      "@screens/*": [
+        "./src/screens/*"
+      ],
       "@types": [
         "./src/types.ts"
       ]

@@ -195,7 +195,7 @@ export const World2D = () => {
   };
 
   return (
-    <div className="relative flex flex-col items-center gap-4 w-screen h-screen bg-[#1e1e1e] overflow-hidden">
+    <>
       <ControlsPanel
         fillSpace={fillSpace}
         isGenerating={isGenerating}
@@ -228,6 +228,6 @@ export const World2D = () => {
         }}
       />
       <MiniMap dungeon={dungeon} />
-    </div>
+    </>
   );
 };
