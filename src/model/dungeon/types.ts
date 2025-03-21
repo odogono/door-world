@@ -10,7 +10,7 @@ export interface DungeonData {
   maxDepth: number;
   rooms: Room[];
   seed: number;
-  strategy?: RoomGenerationStrategy | undefined;
+  strategy?: StrategyType;
 }
 
 export interface Room {
@@ -49,6 +49,6 @@ export interface RoomGenerationStrategy {
   selectTargetRoom(dungeon: DungeonData, rooms: Room[]): Room;
 }
 
-export type StrategyType = 'random' | 'growth' | 'type' | 'branch';
+export type StrategyType = 'random' | 'growth' | 'type' | 'branch' | 'simple';
 
 export type CompassDirection = 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';
