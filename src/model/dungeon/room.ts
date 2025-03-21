@@ -27,12 +27,12 @@ const getRangeForRoomType = (type: RoomType) => {
 export const getRoomSizeForType = (
   type: RoomType,
   seed: number
-): [number, { width: number; height: number }] => {
+): [number, { height: number; width: number }] => {
   const range = getRangeForRoomType(type);
   const [seedA, width] = prngIntRange(seed, range[0], range[1]);
   const [seedB, height] = prngIntRange(seedA, range[0], range[1]);
 
-  return [seedB, { width, height }];
+  return [seedB, { height, width }];
 };
 
 export const roomsOverlap = (room1: Room, room2: Room): boolean => {
@@ -106,7 +106,7 @@ export const generateRoomAround = (
   const [seedA, index] = prngIntRange(dungeon.seed, 0, types.length - 1);
   const type = types[index];
 
-  const [seedB, { width, height }] = getRoomSizeForType(type, seedA);
+  const [seedB, { height, width }] = getRoomSizeForType(type, seedA);
 
   const allowedEdges = targetRoom.allowedEdges || [
     'NORTH',
@@ -161,14 +161,14 @@ export const generateRoomAround = (
     }
 
     const newRoom = {
-      id: 0,
-      x,
-      y,
-      width,
+      depth: (targetRoom.depth || 0) + 1,
       height,
-      type,
+      id: 0,
       parent: targetRoom,
-      depth: (targetRoom.depth || 0) + 1
+      type,
+      width,
+      x,
+      y
     };
 
     let isValid = true;

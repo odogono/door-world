@@ -10,18 +10,18 @@ export const XYZAxis = () => {
       <line>
         <bufferGeometry>
           <bufferAttribute
+            args={[new Float32Array([0, 0, 0, AXIS_LENGTH, 0, 0]), 3]}
+            array={new Float32Array([0, 0, 0, AXIS_LENGTH, 0, 0])}
             attach="attributes.position"
             count={2}
-            array={new Float32Array([0, 0, 0, AXIS_LENGTH, 0, 0])}
             itemSize={3}
-            args={[new Float32Array([0, 0, 0, AXIS_LENGTH, 0, 0]), 3]}
           />
         </bufferGeometry>
         <lineBasicMaterial color="red" linewidth={2} />
       </line>
       <Html
-        position={[AXIS_LENGTH + 0.2, 0, 0]}
         center
+        position={[AXIS_LENGTH + 0.2, 0, 0]}
         style={{
           color: 'red',
           fontSize: '20px',
@@ -36,18 +36,18 @@ export const XYZAxis = () => {
       <line>
         <bufferGeometry>
           <bufferAttribute
+            args={[new Float32Array([0, 0, 0, 0, AXIS_LENGTH, 0]), 3]}
+            array={new Float32Array([0, 0, 0, 0, AXIS_LENGTH, 0])}
             attach="attributes.position"
             count={2}
-            array={new Float32Array([0, 0, 0, 0, AXIS_LENGTH, 0])}
             itemSize={3}
-            args={[new Float32Array([0, 0, 0, 0, AXIS_LENGTH, 0]), 3]}
           />
         </bufferGeometry>
         <lineBasicMaterial color="green" linewidth={2} />
       </line>
       <Html
-        position={[0, AXIS_LENGTH + 0.2, 0]}
         center
+        position={[0, AXIS_LENGTH + 0.2, 0]}
         style={{
           color: 'green',
           fontSize: '20px',
@@ -62,18 +62,18 @@ export const XYZAxis = () => {
       <line>
         <bufferGeometry>
           <bufferAttribute
+            args={[new Float32Array([0, 0, 0, 0, 0, AXIS_LENGTH]), 3]}
+            array={new Float32Array([0, 0, 0, 0, 0, AXIS_LENGTH])}
             attach="attributes.position"
             count={2}
-            array={new Float32Array([0, 0, 0, 0, 0, AXIS_LENGTH])}
             itemSize={3}
-            args={[new Float32Array([0, 0, 0, 0, 0, AXIS_LENGTH]), 3]}
           />
         </bufferGeometry>
         <lineBasicMaterial color="blue" linewidth={2} />
       </line>
       <Html
-        position={[0, 0, AXIS_LENGTH + 0.2]}
         center
+        position={[0, 0, AXIS_LENGTH + 0.2]}
         style={{
           color: 'blue',
           fontSize: '20px',

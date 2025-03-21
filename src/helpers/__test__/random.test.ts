@@ -12,7 +12,7 @@ import {
 } from '../random';
 
 describe('PRNG Random Functions', () => {
-  const testSeed = 12345;
+  const testSeed = 12_345;
 
   test('prng should generate consistent values', () => {
     const value1 = prng(testSeed);
@@ -29,7 +29,7 @@ describe('PRNG Random Functions', () => {
   test('prngUnsignedInt should return positive numbers', () => {
     const [, value] = prngUnsignedInt(testSeed);
     expect(value).toBeGreaterThanOrEqual(0);
-    expect(value).toBeLessThanOrEqual(0x7fffffff);
+    expect(value).toBeLessThanOrEqual(0x7f_ff_ff_ff);
   });
 
   test('prngDouble should return values between 0 and 1', () => {

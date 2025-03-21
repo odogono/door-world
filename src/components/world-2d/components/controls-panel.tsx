@@ -5,89 +5,89 @@ import { NumberInput } from './number-input';
 import { StrategySelect } from './strategy-select';
 
 interface ControlsPanelProps {
-  selectedStrategy: StrategyType;
-  onStrategyChange: (strategy: StrategyType) => void;
   fillSpace: boolean;
-  onFillSpaceChange: (fillSpace: boolean) => void;
-  seed: number;
-  onSeedChange: (seed: number) => void;
-  recurseCount: number;
-  onRecurseCountChange: (count: number) => void;
-  showConnections: boolean;
-  onShowConnectionsChange: (show: boolean) => void;
-  showRooms: boolean;
-  onShowRoomsChange: (show: boolean) => void;
-  showDoors: boolean;
-  onShowDoorsChange: (show: boolean) => void;
   isGenerating: boolean;
+  onFillSpaceChange: (fillSpace: boolean) => void;
+  onRecurseCountChange: (count: number) => void;
   onRegenerate: () => void;
   onResetView: () => void;
+  onSeedChange: (seed: number) => void;
+  onShowConnectionsChange: (show: boolean) => void;
+  onShowDoorsChange: (show: boolean) => void;
+  onShowRoomsChange: (show: boolean) => void;
+  onStrategyChange: (strategy: StrategyType) => void;
+  recurseCount: number;
+  seed: number;
+  selectedStrategy: StrategyType;
+  showConnections: boolean;
+  showDoors: boolean;
+  showRooms: boolean;
 }
 
 export const ControlsPanel = ({
-  selectedStrategy,
-  onStrategyChange,
   fillSpace,
-  onFillSpaceChange,
-  seed,
-  onSeedChange,
-  recurseCount,
-  onRecurseCountChange,
-  showConnections,
-  onShowConnectionsChange,
-  showRooms,
-  onShowRoomsChange,
-  showDoors,
-  onShowDoorsChange,
   isGenerating,
+  onFillSpaceChange,
+  onRecurseCountChange,
   onRegenerate,
-  onResetView
+  onResetView,
+  onSeedChange,
+  onShowConnectionsChange,
+  onShowDoorsChange,
+  onShowRoomsChange,
+  onStrategyChange,
+  recurseCount,
+  seed,
+  selectedStrategy,
+  showConnections,
+  showDoors,
+  showRooms
 }: ControlsPanelProps) => {
   return (
     <div className="flex flex-wrap gap-4 items-center p-2 bg-[#2a2a2a] rounded fixed top-5 left-1/2 -translate-x-1/2 z-50">
-      <StrategySelect value={selectedStrategy} onChange={onStrategyChange} />
+      <StrategySelect onChange={onStrategyChange} value={selectedStrategy} />
 
       <CheckboxControl
-        label="Fill Space"
         checked={fillSpace}
+        label="Fill Space"
         onChange={onFillSpaceChange}
       />
 
       <NumberInput
-        value={seed}
+        label="Seed"
         onChange={onSeedChange}
         placeholder="Enter seed"
-        label="Seed"
+        value={seed}
       />
 
       <NumberInput
-        value={recurseCount}
-        onChange={onRecurseCountChange}
-        placeholder="Recurse count"
         label="Recurse"
         min={1}
+        onChange={onRecurseCountChange}
+        placeholder="Recurse count"
+        value={recurseCount}
       />
 
       <div className="flex gap-4">
         <CheckboxControl
-          label="Show Connections"
           checked={showConnections}
+          label="Show Connections"
           onChange={onShowConnectionsChange}
         />
         <CheckboxControl
-          label="Show Rooms"
           checked={showRooms}
+          label="Show Rooms"
           onChange={onShowRoomsChange}
         />
         <CheckboxControl
-          label="Show Doors"
           checked={showDoors}
+          label="Show Doors"
           onChange={onShowDoorsChange}
         />
       </div>
 
       <div className="flex gap-2">
-        <ActionButton onClick={onRegenerate} disabled={isGenerating}>
+        <ActionButton disabled={isGenerating} onClick={onRegenerate}>
           {isGenerating ? 'Generating...' : 'Regenerate'}
         </ActionButton>
         <ActionButton onClick={onResetView}>Reset View</ActionButton>

@@ -82,11 +82,11 @@ export const findDoors = (rooms: Room[]): Door[] => {
         const position = findDoorPosition(rooms[i], rooms[j]);
         if (position) {
           doors.push({
+            height: DOOR_HEIGHT,
+            position,
             room1: rooms[i].id,
             room2: rooms[j].id,
-            position,
-            width: DOOR_WIDTH,
-            height: DOOR_HEIGHT
+            width: DOOR_WIDTH
           });
         }
       }

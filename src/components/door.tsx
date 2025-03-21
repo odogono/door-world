@@ -1,23 +1,17 @@
 import { createLog } from '@helpers/log';
-import { Plane, useGLTF } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Mesh,
-  Object3D,
-  Plane as ThreePlane,
-  Vector3,
-  Vector3Tuple
-} from 'three';
-import { applyColor } from '../helpers/object-3d';
+import { applyClippingPlanesToMesh, applyColor, isMesh } from '@helpers/three';
+import { useGLTF } from '@react-three/drei';
+import { ThreeEvent, useFrame } from '@react-three/fiber';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Object3D, Plane as ThreePlane, Vector3, Vector3Tuple } from 'three';
 
 interface DoorProps {
-  position?: Vector3Tuple;
-  scale?: Vector3Tuple;
-  rotationY?: number;
-  frameColor?: string;
   doorColor?: string;
+  frameColor?: string;
   isOpen?: boolean;
+  position?: Vector3Tuple;
+  rotationY?: number;
+  scale?: Vector3Tuple;
 }
 
 const log = createLog('Door');
@@ -27,12 +21,12 @@ const POSITION_THRESHOLD = 0.01; // Threshold for position animation
 const MOUNT_ANIMATION_SPEED = 8; // Controls how fast the door rises when mounting (higher = faster)
 
 export const Door = ({
-  position = [0, 0, 0],
-  scale = [1, 1, 1],
-  rotationY = -Math.PI / 2,
   doorColor = '#83D5FF',
   frameColor = '#FFF',
-  isOpen: isOpenProp = false
+  isOpen: isOpenProp = false,
+  position = [0, 0, 0],
+  rotationY = -Math.PI / 2,
+  scale = [1, 1, 1]
 }: DoorProps) => {
   const gltf = useGLTF('/vbasic.door.glb');
 
@@ -44,10 +38,13 @@ export const Door = ({
     []
   );
 
-  const [isOpen, setIsOpen] = useState(isOpenProp);
+  const isOpen = useRef(isOpenProp);
+  const targetRotation = useRef(isOpen.current ? Math.PI / 2 : 0);
+
+  // const [isOpen, setIsOpen] = useState(isOpenProp);
   const doorRef = useRef<Object3D>(null);
   const frameRef = useRef<Object3D>(null);
-  const targetRotation = isOpen ? Math.PI / 2 : 0;
+  // const targetRotation = isOpen.current ? Math.PI / 2 : 0;
   const [isAnimating, setIsAnimating] = useState(false);
   const [isEntering, setIsEntering] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
@@ -66,7 +63,7 @@ export const Door = ({
 
     if (doorNode) {
       doorRef.current = doorNode;
-      doorRef.current.rotation.y = targetRotation;
+      doorRef.current.rotation.y = targetRotation.current;
       applyColor(doorNode, doorColor);
     }
 
@@ -76,17 +73,16 @@ export const Door = ({
     }
 
     scene.traverse(child => {
-      if (child instanceof Mesh) {
-        child.material = child.material.clone();
-        child.material.clipShadows = true;
-        child.material.clippingPlanes = [localClippingPlane];
-        child.material.needsUpdate = true;
+      if (isMesh(child)) {
+        applyClippingPlanesToMesh(child, [localClippingPlane]);
       }
     });
-  }, [scene, frameColor]);
+  }, [scene, frameColor, doorColor, localClippingPlane]);
 
   useFrame((_state, delta) => {
-    if (!doorRef.current || !groupRef.current) return;
+    if (!doorRef.current || !groupRef.current) {
+      return;
+    }
 
     // Handle mounting animation
     if (isEntering) {
@@ -120,35 +116,50 @@ export const Door = ({
     // Handle door rotation animation
     if (isAnimating) {
       doorRef.current.rotation.y +=
-        (targetRotation - doorRef.current.rotation.y) * delta * 2;
+        (targetRotation.current - doorRef.current.rotation.y) * delta * 2;
 
+      // log.debug('Door rotation', {
+      //   current: doorRef.current.rotation.y,
+      //   target: targetRotation
+      // });
       if (
-        Math.abs(doorRef.current.rotation.y - targetRotation) <
+        Math.abs(doorRef.current.rotation.y - targetRotation.current) <
         ROTATION_THRESHOLD
       ) {
-        doorRef.current.rotation.y = targetRotation;
+        doorRef.current.rotation.y = targetRotation.current;
         setIsAnimating(false);
       }
     }
   });
 
-  const handleClick = (event: any) => {
-    event.stopPropagation();
-    setIsOpen(!isOpen);
-    setIsAnimating(true);
-    log.debug('Door clicked', { isOpen, targetRotation });
-  };
+  const handleClick = useCallback(
+    (event: ThreeEvent<MouseEvent>) => {
+      event.stopPropagation();
+      isOpen.current = !isOpen.current;
+      targetRotation.current = isOpen.current ? Math.PI / 2 : 0;
+      setIsAnimating(true);
+      log.debug('Door clicked', { isOpen, targetRotation });
+    },
+    [isOpen, targetRotation]
+  );
+
+  // log.debug('Door', {
+  //   isAnimating,
+  //   isEntering,
+  //   isExiting,
+  //   isOpen: isOpen.current
+  // });
 
   return (
     <group position={[position[0], -1.1, position[2]]} ref={groupRef}>
       <primitive
         object={scene}
         position={[0, 0.5, 0]}
-        scale={scale}
         rotation={[0, rotationY, 0]}
+        scale={scale}
       />
 
-      <mesh position={[0, 0.5, 0]} onClick={handleClick} visible={false}>
+      <mesh onClick={handleClick} position={[0, 0.5, 0]} visible={false}>
         <boxGeometry args={[0.8, 1, 0.4]} />
       </mesh>
     </group>

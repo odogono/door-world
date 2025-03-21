@@ -1,29 +1,27 @@
+import { useDungeon } from '@contexts/dungeon/use-dungeon';
 import { createLog } from '@helpers/log';
-import {
-  DungeonData,
-  generateDungeon,
-  generateRoomsAround,
-  isPointInRoom,
-  MAX_ROOMS,
-  NUM_ROOMS_PER_CLICK,
-  Room,
-  StrategyType
-} from '@model/dungeon';
-import { useEffect, useRef, useState } from 'react';
+import { isPointInRoom, MAX_ROOMS, Room, StrategyType } from '@model/dungeon';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ControlsPanel } from './components/controls-panel';
-import { renderConnections, renderDoors, renderRooms } from './helpers';
+import { MiniMap } from './components/mini-map';
+import { renderDungeon } from './helpers';
 
 const log = createLog('World2D');
 
 export const World2D = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [dungeon, setDungeon] = useState<DungeonData | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
+  const {
+    dungeon,
+    generateRoomsAround,
+    generationProgress,
+    isGenerating,
+    regenerate
+  } = useDungeon();
+
   const [selectedStrategy, setSelectedStrategy] =
     useState<StrategyType>('random');
   const [fillSpace, setFillSpace] = useState(false);
-  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1000000));
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
   const [showConnections, setShowConnections] = useState(true);
   const [showRooms, setShowRooms] = useState(true);
   const [showDoors, setShowDoors] = useState(true);
@@ -36,14 +34,14 @@ export const World2D = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isOverRoom, setIsOverRoom] = useState(false);
   const [highlightedRoom, setHighlightedRoom] = useState<Room | null>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [canvasSize, setCanvasSize] = useState({ height: 0, width: 0 });
 
   // Handle window resize
   useEffect(() => {
     const updateCanvasSize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      setCanvasSize({ width, height });
+      setCanvasSize({ height, width });
     };
 
     // Initial size
@@ -59,7 +57,9 @@ export const World2D = () => {
   // Update canvas dimensions when size changes
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      return;
+    }
 
     // Set canvas dimensions to match window size
     canvas.width = canvasSize.width;
@@ -76,55 +76,11 @@ export const World2D = () => {
 
   // Draw dungeon
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !dungeon) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Clear canvas
-    ctx.fillStyle = '#1e1e1e';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Apply viewport transform
-    ctx.save();
-    ctx.translate(viewportOffset.x, viewportOffset.y);
-
-    // Draw rooms
-    if (showRooms) {
-      renderRooms(ctx, dungeon, highlightedRoom);
-    }
-
-    // Draw doors
-    if (showDoors) {
-      renderDoors(ctx, dungeon);
-    }
-
-    // Draw connections
-    if (showConnections) {
-      renderConnections(ctx, dungeon);
-    }
-
-    ctx.restore();
-
-    // Draw room count and generation progress
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '14px monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(
-      `Rooms: ${dungeon.rooms.length}`,
-      canvas.width - 10,
-      canvas.height - 10
-    );
-
-    if (isGenerating) {
-      ctx.textAlign = 'left';
-      ctx.fillText(
-        `Generating... ${Math.round(generationProgress)}%`,
-        10,
-        canvas.height - 10
-      );
-    }
+    renderDungeon(canvasRef.current, dungeon, viewportOffset, {
+      showConnections,
+      showDoors,
+      showRooms
+    });
   }, [
     canvasSize,
     dungeon,
@@ -137,42 +93,27 @@ export const World2D = () => {
     generationProgress
   ]);
 
-  const regenerateDungeon = async () => {
+  const regenerateDungeon = useCallback(async () => {
     const start = performance.now();
-    log.debug('Regenerating dungeon');
-    setIsGenerating(true);
-    setGenerationProgress(0);
+    resetView();
 
     try {
-      const newDungeon = await generateDungeon({
-        strategy: selectedStrategy,
-        seed,
+      await regenerate({
         maxRooms: fillSpace ? MAX_ROOMS : 5,
-        maxAttempts: fillSpace ? 1000 : 100,
-        onProgress: intermediateDungeon => {
-          setDungeon(intermediateDungeon);
-          // Calculate progress based on room count
-          const maxRooms = fillSpace ? 100 : 20; // Approximate max rooms
-          const progress = Math.min(
-            100,
-            (intermediateDungeon.rooms.length / maxRooms) * 100
-          );
-          setGenerationProgress(progress);
-        }
+        seed,
+        strategy: selectedStrategy
       });
-      setDungeon(newDungeon);
     } finally {
-      setIsGenerating(false);
-      setGenerationProgress(0);
       const end = performance.now();
       log.debug(`Dungeon generated in ${end - start}ms`);
-      resetView();
     }
-  };
+  }, [fillSpace, seed, selectedStrategy, regenerate]);
 
   const resetView = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      return;
+    }
 
     setViewportOffset({
       x: canvas.width / 2,
@@ -182,7 +123,7 @@ export const World2D = () => {
 
   useEffect(() => {
     regenerateDungeon();
-  }, [seed, selectedStrategy]);
+  }, [seed, selectedStrategy, regenerateDungeon]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -194,10 +135,14 @@ export const World2D = () => {
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!dungeon) return;
+    if (!dungeon) {
+      return;
+    }
 
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      return;
+    }
 
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left - viewportOffset.x;
@@ -210,7 +155,9 @@ export const World2D = () => {
     setIsOverRoom(!!roomUnderPointer);
     setHighlightedRoom(roomUnderPointer || null);
 
-    if (!isDragging) return;
+    if (!isDragging) {
+      return;
+    }
 
     setViewportOffset({
       x: event.clientX - dragStart.x,
@@ -224,10 +171,14 @@ export const World2D = () => {
   };
 
   const handlePointerClick = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!dungeon || isDragging) return;
+    if (!dungeon || isDragging) {
+      return;
+    }
 
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      return;
+    }
 
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left - viewportOffset.x;
@@ -239,48 +190,44 @@ export const World2D = () => {
     );
 
     if (clickedRoom) {
-      const newDungeon = generateRoomsAround({
-        dungeon,
-        targetRoom: clickedRoom,
-        recurseCount
-      });
-      setDungeon(newDungeon);
+      generateRoomsAround({ recurseCount, room: clickedRoom });
     }
   };
 
   return (
     <div className="relative flex flex-col items-center gap-4 w-screen h-screen bg-[#1e1e1e] overflow-hidden">
       <ControlsPanel
-        selectedStrategy={selectedStrategy}
-        onStrategyChange={setSelectedStrategy}
         fillSpace={fillSpace}
-        onFillSpaceChange={setFillSpace}
-        seed={seed}
-        onSeedChange={setSeed}
-        recurseCount={recurseCount}
-        onRecurseCountChange={setRecurseCount}
-        showConnections={showConnections}
-        onShowConnectionsChange={setShowConnections}
-        showRooms={showRooms}
-        onShowRoomsChange={setShowRooms}
-        showDoors={showDoors}
-        onShowDoorsChange={setShowDoors}
         isGenerating={isGenerating}
+        onFillSpaceChange={setFillSpace}
+        onRecurseCountChange={setRecurseCount}
         onRegenerate={regenerateDungeon}
         onResetView={resetView}
+        onSeedChange={setSeed}
+        onShowConnectionsChange={setShowConnections}
+        onShowDoorsChange={setShowDoors}
+        onShowRoomsChange={setShowRooms}
+        onStrategyChange={setSelectedStrategy}
+        recurseCount={recurseCount}
+        seed={seed}
+        selectedStrategy={selectedStrategy}
+        showConnections={showConnections}
+        showDoors={showDoors}
+        showRooms={showRooms}
       />
       <canvas
-        ref={canvasRef}
+        className="absolute inset-0 border-none bg-[#1e1e1e] cursor-grab active:cursor-grabbing"
         onClick={handlePointerClick}
+        onPointerCancel={handlePointerUp}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        className="absolute inset-0 border-none bg-[#1e1e1e] cursor-grab active:cursor-grabbing"
+        ref={canvasRef}
         style={{
           cursor: isDragging ? 'grabbing' : isOverRoom ? 'pointer' : 'grab'
         }}
       />
+      <MiniMap dungeon={dungeon} />
     </div>
   );
 };

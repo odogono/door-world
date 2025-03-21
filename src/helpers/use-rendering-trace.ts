@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef } from 'react';
 
 /**
@@ -27,13 +28,13 @@ export const useRenderingTrace = (
   const prev = useRef(propsAndStates);
 
   useEffect(() => {
-    const changedProps: { [key: string]: { old: any; new: any } } =
+    const changedProps: { [key: string]: { new: any; old: any } } =
       Object.entries(propsAndStates).reduce(
         (property: any, [key, value]: [string, any]) => {
           if (prev.current[key] !== value) {
             property[key] = {
-              old: prev.current[key],
-              new: value
+              new: value,
+              old: prev.current[key]
             };
           }
           return property;

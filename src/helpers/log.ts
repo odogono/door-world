@@ -31,8 +31,8 @@ const logTypes: LogTypes[] = [
 const ignorePrefixTypes = ['group', 'groupCollapsed', 'groupEnd', 'table'];
 
 export type LoggerBase = {
-  _prefix: string | null;
   _isDisabled: LogTypes[];
+  _prefix: string | null;
 };
 
 export type LogFn = (...args: any[]) => void;
@@ -55,7 +55,7 @@ export const createLog = (
   for (const logType of logTypes) {
     result[logType] = (...args: any[]) => {
       const now = Date.now();
-      if (now - logTime > 10000) {
+      if (now - logTime > 10_000) {
         logTime = now;
       }
       const delta = now - logTime;
@@ -70,7 +70,7 @@ export const createLog = (
         } else if (ignorePrefixTypes.includes(logType)) {
           console[logType](...args);
         } else {
-          console[logType](...[logPrefix, ...args]);
+          console[logType](logPrefix, ...args);
         }
       }
     };

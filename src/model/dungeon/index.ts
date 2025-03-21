@@ -1,6 +1,5 @@
 import { createLog } from '@helpers/log';
-import { randomUnsignedInt } from '@helpers/random';
-import { MAX_ROOMS, NUM_ROOMS_PER_CLICK } from './constants';
+import { NUM_ROOMS_PER_CLICK } from './constants';
 import { findDoors } from './door';
 import { createDungeon } from './helpers';
 import { generateRoomAround, getMaxRoomDepth } from './room';
@@ -17,11 +16,11 @@ export * from './door';
 
 type GenerateDungeonOptions = {
   dungeon?: DungeonData;
-  maxRooms: number;
   maxAttempts: number;
-  strategy: StrategyType;
-  seed: number;
+  maxRooms: number;
   onProgress?: (dungeon: DungeonData) => void;
+  seed: number;
+  strategy: StrategyType;
 };
 
 export const generateDungeon = async (
@@ -34,15 +33,15 @@ export const generateDungeon = async (
 
     // Create central room at world center
     const centralRoom: Room = {
-      id: 1,
-      x: -50, // Center the room at (0,0)
-      y: -50,
-      width: 100,
-      height: 100,
-      type: RoomType.NORMAL,
-      isCentral: true,
       allowedEdges: ['NORTH'],
-      depth: 0
+      depth: 0,
+      height: 100,
+      id: 1,
+      isCentral: true,
+      type: RoomType.NORMAL,
+      width: 100,
+      x: -50,
+      y: -50
     };
     dungeon.rooms.push(centralRoom);
 
@@ -56,13 +55,13 @@ export const generateDungeon = async (
 export function* generateDungeonGenerator(
   props: GenerateDungeonOptions
 ): Generator<DungeonData, DungeonData> {
-  const { dungeon, seed, strategy, maxRooms, maxAttempts } = props;
+  const { dungeon, maxAttempts, maxRooms, seed, strategy } = props;
 
   if (!dungeon) {
     throw new Error('Dungeon is required');
   }
 
-  log.debug('Generating dungeon', { seed, strategy, maxRooms });
+  log.debug('Generating dungeon', { maxRooms, seed, strategy });
 
   // const dungeonPrng = new PRNG(seed);
   const rooms = [...dungeon.rooms];
@@ -107,10 +106,10 @@ export function* generateDungeonGenerator(
     if (roomsGenerated % 5 === 0) {
       yield {
         ...dungeon,
-        rooms: [...rooms],
         doors: findDoors(rooms),
-        strategy: generationStrategy,
-        maxDepth: getMaxRoomDepth(rooms)
+        maxDepth: getMaxRoomDepth(rooms),
+        rooms: [...rooms],
+        strategy: generationStrategy
       };
     }
   }
@@ -118,10 +117,10 @@ export function* generateDungeonGenerator(
   // Final yield with complete dungeon
   return {
     ...dungeon,
-    rooms,
     doors: findDoors(rooms),
-    strategy: generationStrategy,
-    maxDepth: getMaxRoomDepth(rooms)
+    maxDepth: getMaxRoomDepth(rooms),
+    rooms,
+    strategy: generationStrategy
   };
 }
 
@@ -134,7 +133,7 @@ export const generateDungeonAsync = async (
   let result: DungeonData;
 
   while (true) {
-    const { value, done } = generator.next();
+    const { done, value } = generator.next();
     if (done) {
       result = value;
       break;
@@ -151,20 +150,20 @@ export const generateDungeonAsync = async (
 
 interface GenerateRoomsAroundProps {
   dungeon: DungeonData;
-  targetRoom: Room;
   maxAttempts?: number;
   maxConsecutiveFailures?: number;
-  roomCount?: number;
   recurseCount?: number;
+  roomCount?: number;
+  targetRoom: Room;
 }
 
 export const generateRoomsAround = ({
   dungeon,
-  targetRoom,
   maxAttempts = 20,
   maxConsecutiveFailures = 10,
+  recurseCount = 1,
   roomCount = NUM_ROOMS_PER_CLICK,
-  recurseCount = 1
+  targetRoom
 }: GenerateRoomsAroundProps): DungeonData => {
   // const dungeonPrng = new PRNG(dungeon.seed);
   const rooms = [...dungeon.rooms];
@@ -222,9 +221,9 @@ export const generateRoomsAround = ({
 
   return {
     ...dungeon,
-    rooms,
     doors: findDoors(rooms),
-    strategy: dungeon.strategy,
-    maxDepth: getMaxRoomDepth(rooms)
+    maxDepth: getMaxRoomDepth(rooms),
+    rooms,
+    strategy: dungeon.strategy
   };
 };

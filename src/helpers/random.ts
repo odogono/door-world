@@ -1,4 +1,4 @@
-export const prng = (seed: number) => (seed * 16807) % 2147483647;
+export const prng = (seed: number) => (seed * 16_807) % 2_147_483_647;
 
 /**
  * provides the next psuedo-random number as
@@ -16,7 +16,7 @@ export const prngInt = (seed: number) => {
  */
 export const prngUnsignedInt = (seed: number) => {
   const [next, value] = prngInt(seed);
-  return [next, value & 0x7fffffff];
+  return [next, value & 0x7f_ff_ff_ff];
 };
 
 /**
@@ -24,7 +24,7 @@ export const prngUnsignedInt = (seed: number) => {
  */
 export const prngDouble = (seed: number) => {
   const next = prng(seed);
-  return [next, seed / 2147483647];
+  return [next, seed / 2_147_483_647];
 };
 
 export const prngBoolean = (seed: number) => {

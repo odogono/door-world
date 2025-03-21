@@ -9,7 +9,9 @@ export class RoomTypeStrategy implements RoomGenerationStrategy {
     let nearbyRooms = 0;
 
     for (const otherRoom of allRooms) {
-      if (otherRoom === room) continue;
+      if (otherRoom === room) {
+        continue;
+      }
 
       const distance = this.getDistanceBetweenRooms(room, otherRoom);
       if (distance < radius) {

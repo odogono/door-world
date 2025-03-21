@@ -1,6 +1,6 @@
 import { createLog } from '@helpers/log';
-import { OrbitControls, OrthographicCamera } from '@react-three/drei';
-import { useEffect, useRef, useState } from 'react';
+import { OrthographicCamera } from '@react-three/drei';
+import { useEffect, useRef } from 'react';
 import { OrthographicCamera as OrthographicCameraImpl, Vector3 } from 'three';
 
 const log = createLog('IsometricCamera');
@@ -9,12 +9,13 @@ export const ISO_ANGLE = (Math.PI / 180) * 35; //.264;
 const DISTANCE = 10;
 const CAMERA_MOVE_SPEED = 2;
 
+type IsometricCameraProps = {
+  targetPosition?: Vector3 | null;
+};
+
 // IsometricCamera component to handle the camera setup
-export const IsometricCamera = ({
-  targetPosition
-}: {
-  targetPosition: Vector3 | null;
-}) => {
+export const IsometricCamera = ({ targetPosition }: IsometricCameraProps) => {
+  targetPosition = targetPosition ?? new Vector3();
   // const [isAnimating, setIsAnimating] = useState(false);
   // const { camera } = useThree();
   const cameraRef = useRef<OrthographicCameraImpl>(null);
@@ -31,8 +32,9 @@ export const IsometricCamera = ({
   const animationFrameId = useRef<number>(0);
 
   useEffect(() => {
-    if (!cameraRef.current) return;
-    targetPosition = targetPosition ?? new Vector3();
+    if (!cameraRef.current) {
+      return;
+    }
     // Set initial camera position
     cameraRef.current.position.copy(initialPosition.current);
     cameraRef.current.lookAt(targetPosition);
@@ -43,11 +45,9 @@ export const IsometricCamera = ({
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [cameraRef]);
+  }, [cameraRef, targetPosition]);
 
   useEffect(() => {
-    targetPosition = targetPosition ?? new Vector3();
-
     cameraPosition.current = new Vector3(
       targetPosition.x + DISTANCE * Math.cos(ISO_ANGLE),
       DISTANCE,
@@ -61,10 +61,14 @@ export const IsometricCamera = ({
 
   // Animation loop for camera movement
   useEffect(() => {
-    if (!targetPosition) return;
+    if (!targetPosition) {
+      return;
+    }
 
     const animate = () => {
-      if (!cameraRef.current || !targetPosition) return;
+      if (!cameraRef.current || !targetPosition) {
+        return;
+      }
       const currentPos = cameraRef.current.position;
 
       const distance = currentPos.distanceTo(cameraPosition.current);
@@ -93,12 +97,12 @@ export const IsometricCamera = ({
     <>
       {' '}
       <OrthographicCamera
-        ref={cameraRef}
-        makeDefault
-        zoom={100}
-        position={[10, 10, 10]}
-        near={1}
         far={2000}
+        makeDefault
+        near={1}
+        position={[10, 10, 10]}
+        ref={cameraRef}
+        zoom={100}
       />
       {/* <OrbitControls
         // enableRotate={true}

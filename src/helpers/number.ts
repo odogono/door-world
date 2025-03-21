@@ -10,23 +10,25 @@ export const safeParseInt = (
   value: string | undefined,
   defaultTo: number = -1
 ): number => {
-  if (!value) return defaultTo;
-  const parsed = parseInt(value, 10);
-  return isNaN(parsed) ? defaultTo : parsed;
+  if (!value) {
+    return defaultTo;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? defaultTo : parsed;
 };
 
 export const safeParseFloat = (
   value: string,
   defaultTo: number = 0
 ): number => {
-  const parsed = parseFloat(value);
-  return isNaN(parsed) ? defaultTo : parsed;
+  const parsed = Number.parseFloat(value);
+  return Number.isNaN(parsed) ? defaultTo : parsed;
 };
 
 export const integerToString = (value: number = 0) => {
   return Math.round(value).toString();
 };
 
-export const isNumber = (value: any): value is number => {
-  return typeof value === 'number' && !isNaN(value);
+export const isNumber = (value: unknown): value is number => {
+  return typeof value === 'number' && !Number.isNaN(value);
 };
