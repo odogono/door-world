@@ -1,6 +1,7 @@
 import { createLog } from '@helpers/log';
 import { Door, DungeonData, Room } from '@model/dungeon';
 import { Vector3 } from 'three';
+import { useDungeonCurrentRoom } from '../../../contexts/dungeon/atoms';
 import { Door as Door3d } from './door';
 import { Room as Room3d } from './room';
 
@@ -13,7 +14,9 @@ type DungeonProps = {
 
 const SCALE = 0.06;
 
-export const Dungeon = ({ currentRoom, dungeon }: DungeonProps) => {
+export const Dungeon = () => {
+  const { currentRoom, dungeon } = useDungeonCurrentRoom();
+
   if (!dungeon) {
     return null;
   }

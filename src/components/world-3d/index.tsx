@@ -1,13 +1,17 @@
 // import './index.css';
 import { GroundText } from '@components/world-3d/components/ground-text';
-import { IsometricCamera } from '@components/world-3d/components/isometric-camera';
+import {
+  IsometricCamera,
+  IsometricCameraRef
+} from '@components/world-3d/components/isometric-camera';
+import { useDungeonCurrentRoom } from '@contexts/dungeon/atoms';
 import { useDungeon } from '@contexts/dungeon/use-dungeon';
 import { createLog } from '@helpers/log';
+import { vector3ToTuple } from '@helpers/three';
 import { Grid } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Vector3 } from 'three';
-import { useDungeonCurrentRoom } from '../../contexts/dungeon/atoms';
 import { MiniMap } from '../world-2d/components/mini-map';
 import { ClickMarker, ClickPlane } from './components/click-plane';
 import { Dungeon } from './components/dungeon';
@@ -15,24 +19,30 @@ import { Dungeon } from './components/dungeon';
 const log = createLog('World3D');
 
 export const World3D = () => {
+  const cameraRef = useRef<IsometricCameraRef>(null);
   const { dungeon } = useDungeon();
   const { currentRoom } = useDungeonCurrentRoom();
 
-  const [targetPosition, setTargetPosition] = useState<Vector3 | null>(null);
+  // const [targetPosition, setTargetPosition] = useState<Vector3 | null>(null);
   const [clickedPosition, setClickedPosition] = useState<Vector3 | null>(null);
 
-  const handleTargetPositionChange = (pos: Vector3) => {
-    setTargetPosition(pos);
+  const handleTargetPositionChange = async (pos: Vector3) => {
+    // setTargetPosition(pos);
     setClickedPosition(pos);
+    await cameraRef.current?.moveTo({
+      position: vector3ToTuple(pos),
+      zoom: 200
+    });
+    log.debug('Moved to', pos);
   };
 
   return (
     <div className="w-full h-full">
       <Canvas gl={{ localClippingEnabled: true }}>
-        <IsometricCamera targetPosition={targetPosition} />
+        <IsometricCamera ref={cameraRef} />
 
         {/* <XYZAxis /> */}
-        <Dungeon currentRoom={currentRoom} dungeon={dungeon} />
+        <Dungeon />
         {/* <Door position={[0, 0, 4]} /> */}
         {/* <Door doorColor="#00f900" isOpen position={[-4, 0, 0]} rotationY={0} /> */}
         {/* <Door doorColor="#7F42FF" position={[0, 0, -4]} /> */}

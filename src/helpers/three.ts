@@ -1,4 +1,12 @@
-import { Material, Mesh, MeshStandardMaterial, Object3D, Plane } from 'three';
+import {
+  Material,
+  Mesh,
+  MeshStandardMaterial,
+  Object3D,
+  Plane,
+  Vector3,
+  Vector3Tuple
+} from 'three';
 
 export const applyMaterial = (object: Object3D, material: Material) => {
   object.traverse(child => {
@@ -38,4 +46,12 @@ export const applyClippingPlanesToMesh = (
     m.needsUpdate = true;
     mesh.material = m;
   }
+};
+
+export const vector3ToTuple = (vector3: Vector3): Vector3Tuple => {
+  return [vector3.x, vector3.y, vector3.z];
+};
+
+export const tupleToVector3 = (tuple: Vector3Tuple): Vector3 => {
+  return new Vector3(tuple[0], tuple[1], tuple[2]);
 };

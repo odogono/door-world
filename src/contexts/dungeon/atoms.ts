@@ -31,6 +31,7 @@ export const useDungeonCurrentRoom = () => {
 
   return {
     currentRoom,
+    dungeon,
     roomId,
     setRoomId
   };

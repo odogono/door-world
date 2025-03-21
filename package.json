@@ -15,6 +15,7 @@
     "check": "npm-run-all --parallel tsc lint lint:format"
   },
   "dependencies": {
+    "@react-spring/three": "^9.7.5",
     "@react-three/drei": "^10.0.4",
     "@react-three/fiber": "^9.1.0",
     "@tailwindcss/postcss": "^4.0.15",
