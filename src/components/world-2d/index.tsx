@@ -1,4 +1,5 @@
 import { useDungeon } from '@contexts/dungeon/use-dungeon';
+import { useTheme } from '@contexts/theme/context';
 import { createLog } from '@helpers/log';
 import { isPointInRoom, MAX_ROOMS, Room, StrategyType } from '@model/dungeon';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,19 +10,23 @@ import { renderDungeon } from './helpers';
 const log = createLog('World2D');
 
 export const World2D = () => {
+  const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const {
     dungeon,
     generateRoomsAround,
     generationProgress,
     isGenerating,
-    regenerate
+    regenerate,
+    seed,
+    setSeed
   } = useDungeon();
 
   const [selectedStrategy, setSelectedStrategy] =
     useState<StrategyType>('random');
   const [fillSpace, setFillSpace] = useState(false);
-  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
+  // const [seed, setSeed] = useState(dungeon?.seed || 1);
+  // const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
   const [showConnections, setShowConnections] = useState(true);
   const [showRooms, setShowRooms] = useState(true);
   const [showDoors, setShowDoors] = useState(true);
@@ -79,7 +84,8 @@ export const World2D = () => {
     renderDungeon(canvasRef.current, dungeon, viewportOffset, {
       showConnections,
       showDoors,
-      showRooms
+      showRooms,
+      theme
     });
   }, [
     canvasSize,
@@ -90,7 +96,8 @@ export const World2D = () => {
     viewportOffset,
     highlightedRoom,
     isGenerating,
-    generationProgress
+    generationProgress,
+    theme
   ]);
 
   const regenerateDungeon = useCallback(async () => {
@@ -216,7 +223,7 @@ export const World2D = () => {
         showRooms={showRooms}
       />
       <canvas
-        className="absolute inset-0 border-none bg-[#1e1e1e] cursor-grab active:cursor-grabbing"
+        className="absolute inset-0 border-none cursor-grab active:cursor-grabbing"
         onClick={handlePointerClick}
         onPointerCancel={handlePointerUp}
         onPointerDown={handlePointerDown}

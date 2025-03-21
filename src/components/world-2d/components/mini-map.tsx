@@ -1,3 +1,4 @@
+import { useTheme } from '@contexts/theme/context';
 import { DungeonData } from '@model/dungeon';
 import { useEffect, useRef } from 'react';
 import { renderDungeon } from '../helpers';
@@ -9,6 +10,7 @@ type MiniMapProps = {
 
 export const MiniMap = ({ dungeon, size = 200 }: MiniMapProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -67,16 +69,17 @@ export const MiniMap = ({ dungeon, size = 200 }: MiniMapProps) => {
       showConnections: false,
       showDoors: false,
       showLegend: false,
-      showRooms: true
+      showRooms: true,
+      theme
     });
 
     // Restore the context state
     ctx.restore();
-  }, [dungeon, size]);
+  }, [dungeon, size, theme]);
 
   return (
     <canvas
-      className="absolute bottom-14 right-4 bg-[#1e1e1e] border border-gray-600 rounded-lg"
+      className="absolute bottom-14 right-4 border border-gray-600 rounded-lg"
       height={size}
       ref={canvasRef}
       width={size}
