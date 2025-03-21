@@ -18,8 +18,12 @@ export const createDungeon = (
 };
 
 export const getDungeonRoomById = (
-  dungeon: DungeonData,
-  id: number
+  dungeon?: DungeonData | null,
+  id?: number
 ): Room | undefined => {
+  if (!dungeon || !id) {
+    return undefined;
+  }
+
   return dungeon.rooms.find(room => room.id === id);
 };
