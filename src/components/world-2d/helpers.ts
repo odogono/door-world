@@ -1,6 +1,12 @@
 import { Theme } from '@contexts/theme/types';
 import { darkenColor } from '@helpers/colour';
-import { DungeonData, getRoomCenter, Room } from '@model/dungeon';
+import {
+  DOOR_HEIGHT,
+  DOOR_WIDTH,
+  DungeonData,
+  getRoomCenter,
+  Room
+} from '@model/dungeon';
 import { Position } from '@model/dungeon/types';
 
 type RenderDungeonOptions = {
@@ -99,7 +105,7 @@ export const renderDoors = (
 ) => {
   dungeon.doors.forEach(door => {
     ctx.fillStyle = '#FF893F';
-    ctx.fillRect(door.position.x, door.position.y, door.width, door.height);
+    ctx.fillRect(door.position.x, door.position.y, DOOR_WIDTH, DOOR_HEIGHT);
   });
 };
 
@@ -140,23 +146,23 @@ export const renderRoom = ({
     const depth = room.depth || 0;
     ctx.fillStyle = darkenColor(baseColor, depth * colourIncrement);
   }
-  ctx.fillRect(room.x, room.y, room.width, room.height);
+  ctx.fillRect(room.area.x, room.area.y, room.area.width, room.area.height);
 
   if (room === highlightedRoom) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.fillRect(room.x, room.y, room.width, room.height);
+    ctx.fillRect(room.area.x, room.area.y, room.area.width, room.area.height);
   }
 
   ctx.strokeStyle = room === highlightedRoom ? '#ffffff' : '#AAA';
   ctx.lineWidth = room === highlightedRoom ? 2 : 1;
-  ctx.strokeRect(room.x, room.y, room.width, room.height);
+  ctx.strokeRect(room.area.x, room.area.y, room.area.width, room.area.height);
 
   ctx.fillStyle = '#ffffff';
   ctx.font = '12px monospace';
   ctx.textAlign = 'center';
   ctx.fillText(
     room.isCentral ? 'Start' : `${room.depth || 0}`,
-    room.x + room.width / 2,
-    room.y + room.height / 2
+    room.area.x + room.area.width / 2,
+    room.area.y + room.area.height / 2
   );
 };

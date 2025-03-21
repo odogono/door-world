@@ -21,13 +21,13 @@ export const findDoorPosition = (
 
   let touchingEdge: CompassDirection | null = null;
 
-  if (otherRoom.y + otherRoom.height === targetRoom.y) {
+  if (otherRoom.area.y + otherRoom.area.height === targetRoom.area.y) {
     touchingEdge = 'NORTH';
-  } else if (targetRoom.y + targetRoom.height === otherRoom.y) {
+  } else if (targetRoom.area.y + targetRoom.area.height === otherRoom.area.y) {
     touchingEdge = 'SOUTH';
-  } else if (otherRoom.x + otherRoom.width === targetRoom.x) {
+  } else if (otherRoom.area.x + otherRoom.area.width === targetRoom.area.x) {
     touchingEdge = 'WEST';
-  } else if (targetRoom.x + targetRoom.width === otherRoom.x) {
+  } else if (targetRoom.area.x + targetRoom.area.width === otherRoom.area.x) {
     touchingEdge = 'EAST';
   }
 
@@ -40,32 +40,36 @@ export const findDoorPosition = (
 
   if (touchingEdge === 'NORTH' || touchingEdge === 'SOUTH') {
     xOverlap =
-      Math.min(targetRoom.x + targetRoom.width, otherRoom.x + otherRoom.width) -
-      Math.max(targetRoom.x, otherRoom.x);
+      Math.min(
+        targetRoom.area.x + targetRoom.area.width,
+        otherRoom.area.x + otherRoom.area.width
+      ) - Math.max(targetRoom.area.x, otherRoom.area.x);
 
     if (xOverlap >= DOOR_WIDTH) {
       const x =
-        Math.max(targetRoom.x, otherRoom.x) + (xOverlap - DOOR_WIDTH) / 2;
+        Math.max(targetRoom.area.x, otherRoom.area.x) +
+        (xOverlap - DOOR_WIDTH) / 2;
       const y =
         touchingEdge === 'NORTH'
-          ? targetRoom.y - DOOR_HEIGHT / 2
-          : targetRoom.y + targetRoom.height - DOOR_HEIGHT / 2;
+          ? targetRoom.area.y - DOOR_HEIGHT / 2
+          : targetRoom.area.y + targetRoom.area.height - DOOR_HEIGHT / 2;
       return { x, y };
     }
   } else {
     yOverlap =
       Math.min(
-        targetRoom.y + targetRoom.height,
-        otherRoom.y + otherRoom.height
-      ) - Math.max(targetRoom.y, otherRoom.y);
+        targetRoom.area.y + targetRoom.area.height,
+        otherRoom.area.y + otherRoom.area.height
+      ) - Math.max(targetRoom.area.y, otherRoom.area.y);
 
     if (yOverlap >= DOOR_HEIGHT) {
       const y =
-        Math.max(targetRoom.y, otherRoom.y) + (yOverlap - DOOR_HEIGHT) / 2;
+        Math.max(targetRoom.area.y, otherRoom.area.y) +
+        (yOverlap - DOOR_HEIGHT) / 2;
       const x =
         touchingEdge === 'WEST'
-          ? targetRoom.x - DOOR_WIDTH / 2
-          : targetRoom.x + targetRoom.width - DOOR_WIDTH / 2;
+          ? targetRoom.area.x - DOOR_WIDTH / 2
+          : targetRoom.area.x + targetRoom.area.width - DOOR_WIDTH / 2;
       return { x, y };
     }
   }
@@ -82,11 +86,9 @@ export const findDoors = (rooms: Room[]): Door[] => {
         const position = findDoorPosition(rooms[i], rooms[j]);
         if (position) {
           doors.push({
-            height: DOOR_HEIGHT,
             position,
             room1: rooms[i].id,
-            room2: rooms[j].id,
-            width: DOOR_WIDTH
+            room2: rooms[j].id
           });
         }
       }
