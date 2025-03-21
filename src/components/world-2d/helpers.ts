@@ -1,3 +1,4 @@
+import { Theme } from '@contexts/theme/types';
 import { darkenColor } from '@helpers/colour';
 import { DungeonData, getRoomCenter, Room } from '@model/dungeon';
 import { Position } from '@model/dungeon/types';
@@ -9,6 +10,7 @@ type RenderDungeonOptions = {
   showDoors?: boolean;
   showLegend?: boolean;
   showRooms?: boolean;
+  theme?: Theme;
 };
 
 export const renderDungeon = (
@@ -23,7 +25,8 @@ export const renderDungeon = (
     showConnections = true,
     showDoors = true,
     showLegend = true,
-    showRooms = true
+    showRooms = true,
+    theme = 'dark'
   } = options;
 
   if (!canvas || !dungeon) {
@@ -35,7 +38,7 @@ export const renderDungeon = (
   }
 
   // Clear canvas
-  ctx.fillStyle = '#1e1e1e';
+  ctx.fillStyle = theme === 'dark' ? '#1e1e1e' : '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Apply viewport transform

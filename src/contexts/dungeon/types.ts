@@ -8,6 +8,8 @@ export interface DungeonContextType {
   generationProgress: number;
   isGenerating: boolean;
   regenerate: (options: RegenerateDungeonOptions) => Promise<void>;
+  seed: number;
+  setSeed: (seed: number) => void;
 }
 
 export interface RegenerateDungeonOptions {

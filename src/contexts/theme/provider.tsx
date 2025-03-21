@@ -1,12 +1,13 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { ThemeContext } from './context';
+import { Theme } from './types';
 
 interface ThemeProviderProps {
   children: ReactNode;
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+  const [theme, setTheme] = useState<Theme>(() => {
     // Check if theme was previously saved
     const savedTheme = localStorage.getItem('theme');
     // Check user's system preference if no saved theme
@@ -15,7 +16,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         ? 'dark'
         : 'light';
     }
-    return savedTheme as 'light' | 'dark';
+    return savedTheme as Theme;
   });
 
   useEffect(() => {
@@ -25,9 +26,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
