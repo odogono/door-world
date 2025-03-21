@@ -50,7 +50,7 @@ export class BranchingStrategy implements RoomGenerationStrategy {
   }
 
   selectTargetRoom(dungeon: DungeonData, rooms: Room[]): Room {
-    const sortedRooms = [...rooms].sort(
+    const sortedRooms = rooms.toSorted(
       (a, b) => this.getBranchScore(b, rooms) - this.getBranchScore(a, rooms)
     );
 
@@ -60,20 +60,5 @@ export class BranchingStrategy implements RoomGenerationStrategy {
     dungeon.seed = seed;
 
     return candidates[index];
-  }
-
-  shouldContinueGeneration(
-    attempts: number,
-    maxAttempts: number,
-    roomsGenerated: number,
-    maxRooms: number,
-    consecutiveFailures: number,
-    maxConsecutiveFailures: number
-  ): boolean {
-    return (
-      attempts < maxAttempts &&
-      roomsGenerated < maxRooms &&
-      consecutiveFailures < maxConsecutiveFailures
-    );
   }
 }

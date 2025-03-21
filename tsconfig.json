@@ -7,5 +7,36 @@
     {
       "path": "./tsconfig.node.json"
     }
-  ]
+  ],
+  "compilerOptions": {
+    "paths": {
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@contexts/*": [
+        "./src/contexts/*"
+      ],
+      "@db/*": [
+        "./src/db/*"
+      ],
+      "@helpers/*": [
+        "./src/helpers/*"
+      ],
+      "@helpers": [
+        "./src/helpers/index.ts"
+      ],
+      "@hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@model/*": [
+        "./src/model/*"
+      ],
+      "@screens/*": [
+        "./src/screens/*"
+      ],
+      "@types": [
+        "./src/types.ts"
+      ]
+    }
+  },
 }

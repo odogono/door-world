@@ -27,4 +27,5 @@ export interface GenerateRoomsOptions {
 export type GenerateRoomsAroundProps = {
   recurseCount?: number;
   room: Room;
+  roomCount: number;
 };

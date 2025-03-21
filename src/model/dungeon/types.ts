@@ -47,14 +47,6 @@ export type RoomSizeRange = [number, number];
 // Room generation strategy interface
 export interface RoomGenerationStrategy {
   selectTargetRoom(dungeon: DungeonData, rooms: Room[]): Room;
-  shouldContinueGeneration(
-    attempts: number,
-    maxAttempts: number,
-    roomsGenerated: number,
-    maxRooms: number,
-    consecutiveFailures: number,
-    maxConsecutiveFailures: number
-  ): boolean;
 }
 
 export type StrategyType = 'random' | 'growth' | 'type' | 'branch';

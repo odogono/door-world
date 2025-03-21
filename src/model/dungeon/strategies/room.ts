@@ -54,7 +54,7 @@ export class RoomTypeStrategy implements RoomGenerationStrategy {
   }
 
   selectTargetRoom(dungeon: DungeonData, rooms: Room[]): Room {
-    const sortedRooms = [...rooms].sort(
+    const sortedRooms = rooms.toSorted(
       (a, b) =>
         this.getRoomTypeScore(b, rooms) - this.getRoomTypeScore(a, rooms)
     );
@@ -65,20 +65,5 @@ export class RoomTypeStrategy implements RoomGenerationStrategy {
     dungeon.seed = seed;
 
     return candidates[index];
-  }
-
-  shouldContinueGeneration(
-    attempts: number,
-    maxAttempts: number,
-    roomsGenerated: number,
-    maxRooms: number,
-    consecutiveFailures: number,
-    maxConsecutiveFailures: number
-  ): boolean {
-    return (
-      attempts < maxAttempts &&
-      roomsGenerated < maxRooms &&
-      consecutiveFailures < maxConsecutiveFailures
-    );
   }
 }
