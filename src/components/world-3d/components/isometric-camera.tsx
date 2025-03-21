@@ -1,5 +1,5 @@
 import { createLog } from '@helpers/log';
-import { OrbitControls, OrthographicCamera } from '@react-three/drei';
+import { OrthographicCamera } from '@react-three/drei';
 import { useEffect, useRef } from 'react';
 import { OrthographicCamera as OrthographicCameraImpl, Vector3 } from 'three';
 
@@ -21,13 +21,13 @@ const calculateIsometricPosition = (targetPosition: Vector3) => {
   const phi = ISO_ANGLE; // angle from vertical
 
   // Convert from spherical to Cartesian coordinates
-  const offsetX = DISTANCE * Math.sin(phi) * Math.cos(theta);
-  const offsetY = DISTANCE * Math.cos(phi);
-  const offsetZ = DISTANCE * Math.sin(phi) * Math.sin(theta);
+  // const offsetX = DISTANCE * Math.sin(phi) * Math.cos(theta);
+  // const offsetY = DISTANCE * Math.cos(phi);
+  // const offsetZ = DISTANCE * Math.sin(phi) * Math.sin(theta);
 
-  // const offsetX = DISTANCE * Math.cos(phi);
-  // const offsetY = DISTANCE;
-  // const offsetZ = DISTANCE * Math.sin(phi);
+  const offsetX = DISTANCE * Math.cos(phi);
+  const offsetY = DISTANCE;
+  const offsetZ = DISTANCE * Math.sin(phi);
 
   // new Vector3(
   //   DISTANCE * Math.cos(ISO_ANGLE),
@@ -45,10 +45,7 @@ const calculateIsometricPosition = (targetPosition: Vector3) => {
 // IsometricCamera component to handle the camera setup
 export const IsometricCamera = ({ targetPosition }: IsometricCameraProps) => {
   targetPosition = targetPosition ?? new Vector3();
-  // const [isAnimating, setIsAnimating] = useState(false);
-  // const { camera } = useThree();
   const cameraRef = useRef<OrthographicCameraImpl>(null);
-  const controlsRef = useRef<typeof OrbitControls>(null);
   const animationFrameId = useRef<number>(0);
   const isInitial = useRef(true);
 
@@ -121,9 +118,9 @@ export const IsometricCamera = ({ targetPosition }: IsometricCameraProps) => {
   return (
     // <>
     <OrthographicCamera
-      far={2000}
+      far={100}
       makeDefault
-      near={1}
+      near={0.1}
       position={[10, 10, 10]}
       ref={cameraRef}
       zoom={100}

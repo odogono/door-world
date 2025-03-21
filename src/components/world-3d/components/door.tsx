@@ -8,8 +8,9 @@ import { Object3D, Plane as ThreePlane, Vector3, Vector3Tuple } from 'three';
 interface DoorProps {
   doorColor?: string;
   frameColor?: string;
+  id: string;
   isOpen?: boolean;
-  position?: Vector3Tuple;
+  position?: Vector3;
   rotationY?: number;
   scale?: Vector3Tuple;
 }
@@ -23,8 +24,9 @@ const MOUNT_ANIMATION_SPEED = 8; // Controls how fast the door rises when mounti
 export const Door = ({
   doorColor = '#83D5FF',
   frameColor = '#FFF',
+  id,
   isOpen: isOpenProp = false,
-  position = [0, 0, 0],
+  position = new Vector3(0, 0, 0),
   rotationY = -Math.PI / 2,
   scale = [1, 1, 1]
 }: DoorProps) => {
@@ -138,9 +140,9 @@ export const Door = ({
       isOpen.current = !isOpen.current;
       targetRotation.current = isOpen.current ? Math.PI / 2 : 0;
       setIsAnimating(true);
-      log.debug('Door clicked', { isOpen, targetRotation });
+      log.debug('Door clicked', { id, isOpen, targetRotation });
     },
-    [isOpen, targetRotation]
+    [isOpen, targetRotation, id]
   );
 
   // log.debug('Door', {
@@ -151,7 +153,7 @@ export const Door = ({
   // });
 
   return (
-    <group position={[position[0], -1.1, position[2]]} ref={groupRef}>
+    <group position={[position.x, -1.1, position.z]} ref={groupRef}>
       <primitive
         object={scene}
         position={[0, 0.5, 0]}

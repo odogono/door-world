@@ -1,5 +1,6 @@
 import type { DungeonData, RoomId, StrategyType } from '@model/dungeon';
-import { useAtom } from 'jotai';
+import { getDungeonRoomById } from '@model/dungeon/helpers';
+import { useAtom, useAtomValue } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
 export const dungeonAtom = atomWithStorage<DungeonData | null>('dungeon', null);
@@ -23,9 +24,13 @@ export const useDungeonSeed = () => {
 };
 
 export const useDungeonCurrentRoom = () => {
+  const dungeon = useAtomValue(dungeonAtom);
   const [roomId, setRoomId] = useAtom(dungeonCurrentRoomAtom);
 
+  const currentRoom = getDungeonRoomById(dungeon, roomId);
+
   return {
+    currentRoom,
     roomId,
     setRoomId
   };

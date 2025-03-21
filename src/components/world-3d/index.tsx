@@ -1,58 +1,22 @@
 // import './index.css';
-import { Door } from '@components/door';
-import { GroundText } from '@components/ground-text';
-import { IsometricCamera } from '@components/isometric-camera';
+import { GroundText } from '@components/world-3d/components/ground-text';
+import { IsometricCamera } from '@components/world-3d/components/isometric-camera';
 import { useDungeon } from '@contexts/dungeon/use-dungeon';
 import { createLog } from '@helpers/log';
-import { Grid, Plane, Sphere } from '@react-three/drei';
-import { Canvas, ThreeEvent } from '@react-three/fiber';
+import { Grid } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
 import { useState } from 'react';
 import { Vector3 } from 'three';
+import { useDungeonCurrentRoom } from '../../contexts/dungeon/atoms';
 import { MiniMap } from '../world-2d/components/mini-map';
+import { ClickMarker, ClickPlane } from './components/click-plane';
+import { Dungeon } from './components/dungeon';
 
 const log = createLog('World3D');
 
-// ClickMarker component to show where the ground was clicked
-const ClickMarker = ({ position }: { position: Vector3 }) => {
-  return (
-    <Sphere args={[0.1, 16, 16]} position={[position.x, 0.1, position.z]}>
-      <meshStandardMaterial color="red" />
-    </Sphere>
-  );
-};
-
-// GroundPlane component to handle clicks
-const GroundPlane = ({
-  onTargetPositionChange
-}: {
-  onTargetPositionChange: (pos: Vector3) => void;
-}) => {
-  const handleClick = (event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation();
-
-    // Get the intersection point
-    const point = event.point;
-    const newCameraTarget = new Vector3(point.x, 0, point.z);
-
-    // log.debug('GroundPlane clicked', newCameraTarget);
-    onTargetPositionChange(newCameraTarget);
-  };
-
-  return (
-    <Plane
-      args={[100, 100]}
-      onClick={handleClick}
-      position={[0, 0, 0]}
-      rotation={[-Math.PI / 2, 0, 0]}
-      visible={false}
-    >
-      <meshStandardMaterial opacity={0} />
-    </Plane>
-  );
-};
-
 export const World3D = () => {
   const { dungeon } = useDungeon();
+  const { currentRoom } = useDungeonCurrentRoom();
 
   const [targetPosition, setTargetPosition] = useState<Vector3 | null>(null);
   const [clickedPosition, setClickedPosition] = useState<Vector3 | null>(null);
@@ -68,10 +32,11 @@ export const World3D = () => {
         <IsometricCamera targetPosition={targetPosition} />
 
         {/* <XYZAxis /> */}
-        <Door position={[0, 0, 4]} />
-        <Door doorColor="#00f900" isOpen position={[-4, 0, 0]} rotationY={0} />
-        <Door doorColor="#7F42FF" position={[0, 0, -4]} />
-        <GroundPlane onTargetPositionChange={handleTargetPositionChange} />
+        <Dungeon currentRoom={currentRoom} dungeon={dungeon} />
+        {/* <Door position={[0, 0, 4]} /> */}
+        {/* <Door doorColor="#00f900" isOpen position={[-4, 0, 0]} rotationY={0} /> */}
+        {/* <Door doorColor="#7F42FF" position={[0, 0, -4]} /> */}
+        <ClickPlane onTargetPositionChange={handleTargetPositionChange} />
         {clickedPosition && (
           <>
             <ClickMarker position={clickedPosition} />
@@ -85,6 +50,7 @@ export const World3D = () => {
         <Grid
           cellSize={0.1}
           infiniteGrid
+          renderOrder={3}
           sectionColor="black"
           sectionSize={1}
         />

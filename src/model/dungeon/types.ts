@@ -29,11 +29,12 @@ export interface Room {
 }
 
 export interface Door {
+  // width: number;
+  dir: CompassDirection;
   // height: number;
   position: Position;
   room1: RoomId;
   room2: RoomId;
-  // width: number;
 }
 
 export enum RoomType {
@@ -52,3 +53,5 @@ export interface RoomGenerationStrategy {
 export type StrategyType = 'random' | 'growth' | 'type' | 'branch' | 'simple';
 
 export type CompassDirection = 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';
+
+export type DoorDirection = 'NORTH_SOUTH' | 'EAST_WEST';
