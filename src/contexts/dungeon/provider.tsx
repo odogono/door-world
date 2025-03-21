@@ -5,7 +5,7 @@ import {
   generateRoomsAround as generateRoomsAroundHelper
 } from '@model/dungeon';
 import { StrategyType } from '@model/dungeon/types';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DungeonContext } from './context';
 import type {
   GenerateRoomsAroundProps,
@@ -99,6 +99,14 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [dungeon]
   );
+
+  useEffect(() => {
+    regenerate({
+      maxRooms: 5,
+      seed: 1,
+      strategy: 'random'
+    });
+  }, [regenerate]);
 
   // log.debug('Dungeon generated', {
   //   progress: generationProgress,

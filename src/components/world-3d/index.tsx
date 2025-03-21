@@ -1,12 +1,14 @@
-import { Grid, Plane, Sphere } from '@react-three/drei';
-import { Canvas, ThreeEvent } from '@react-three/fiber';
-import './index.css';
+// import './index.css';
 import { Door } from '@components/door';
 import { GroundText } from '@components/ground-text';
 import { IsometricCamera } from '@components/isometric-camera';
+import { useDungeon } from '@contexts/dungeon/use-dungeon';
 import { createLog } from '@helpers/log';
+import { Grid, Plane, Sphere } from '@react-three/drei';
+import { Canvas, ThreeEvent } from '@react-three/fiber';
 import { useState } from 'react';
 import { Vector3 } from 'three';
+import { MiniMap } from '../world-2d/components/mini-map';
 
 const log = createLog('World3D');
 
@@ -50,6 +52,8 @@ const GroundPlane = ({
 };
 
 export const World3D = () => {
+  const { dungeon } = useDungeon();
+
   const [targetPosition, setTargetPosition] = useState<Vector3 | null>(null);
   const [clickedPosition, setClickedPosition] = useState<Vector3 | null>(null);
 
@@ -59,7 +63,7 @@ export const World3D = () => {
   };
 
   return (
-    <div className="w-screen h-screen bg-[#1e1e1e]">
+    <div className="w-full h-full">
       <Canvas gl={{ localClippingEnabled: true }}>
         <IsometricCamera targetPosition={targetPosition} />
 
@@ -90,6 +94,7 @@ export const World3D = () => {
         <ambientLight intensity={0.1} />
         <directionalLight intensity={2} position={[10, 10, 5]} />
       </Canvas>
+      <MiniMap dungeon={dungeon} />
     </div>
   );
 };
