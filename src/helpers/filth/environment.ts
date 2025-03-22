@@ -1,3 +1,4 @@
+import { UndefinedSymbolError } from './error';
 import { LispExpr } from './types';
 
 export class Environment {
@@ -20,6 +21,10 @@ export class Environment {
     if (this.parent) {
       return this.parent.lookup(name);
     }
-    throw new Error(`Undefined symbol: ${name}`);
+    throw new UndefinedSymbolError(name);
+  }
+
+  create(): Environment {
+    return new Environment(this);
   }
 }

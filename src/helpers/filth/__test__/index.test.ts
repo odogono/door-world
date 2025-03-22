@@ -1,40 +1,8 @@
 import { describe, expect, it } from 'bun:test';
+import { create } from '../create';
 import { Environment } from '../environment';
-import { evaluate, parse, setupEnvironment } from '../index';
 
 describe('Lisp Interpreter', () => {
-  describe('Parser', () => {
-    it('should parse atoms', () => {
-      expect(parse('123')).toBe(123);
-      expect(parse('abc')).toBe('abc');
-      expect(parse('nil')).toBe(null);
-    });
-
-    it('should parse lists', () => {
-      expect(parse('(1 2 3)')).toEqual({
-        elements: [1, 2, 3],
-        type: 'list'
-      });
-    });
-
-    it('should parse quoted expressions', () => {
-      expect(parse("'(1 2 3)")).toEqual({
-        type: 'quoted',
-        value: {
-          elements: [1, 2, 3],
-          type: 'list'
-        }
-      });
-    });
-
-    it('should parse nested structures', () => {
-      expect(parse('(1 (2 3) 4)')).toEqual({
-        elements: [1, { elements: [2, 3], type: 'list' }, 4],
-        type: 'list'
-      });
-    });
-  });
-
   describe('Environment', () => {
     it('should define and lookup variables', () => {
       const env = new Environment();
@@ -56,53 +24,53 @@ describe('Lisp Interpreter', () => {
   });
 
   describe('Evaluator', () => {
-    const env = setupEnvironment();
+    const env = create();
 
     it('should evaluate basic arithmetic', () => {
-      expect(evaluate(parse('(+ 1 2 3)'), env)).toBe(6);
-      expect(evaluate(parse('(- 10 3 2)'), env)).toBe(5);
-      expect(evaluate(parse('(* 2 3 4)'), env)).toBe(24);
-      expect(evaluate(parse('(/ 24 2 3)'), env)).toBe(4);
+      expect(env.eval('(+ 1 2 3)')).toBe(6);
+      expect(env.eval('(- 10 3 2)')).toBe(5);
+      expect(env.eval('(* 2 3 4)')).toBe(24);
+      expect(env.eval('(/ 24 2 3)')).toBe(4);
     });
 
     it('should evaluate list operations', () => {
-      expect(evaluate(parse("(car '(1 2 3))"), env)).toBe(1);
-      expect(evaluate(parse("(cdr '(1 2 3))"), env)).toEqual({
+      expect(env.eval("(car '(1 2 3))")).toBe(1);
+      expect(env.eval("(cdr '(1 2 3))")).toEqual({
         elements: [2, 3],
         type: 'list'
       });
-      expect(evaluate(parse("(cons 1 '(2 3))"), env)).toEqual({
+      expect(env.eval("(cons 1 '(2 3))")).toEqual({
         elements: [1, 2, 3],
         type: 'list'
       });
     });
 
     it('should evaluate conditional expressions', () => {
-      expect(evaluate(parse('(if true 1 2)'), env)).toBe(1);
-      expect(evaluate(parse('(if false 1 2)'), env)).toBe(2);
+      expect(env.eval('(if true 1 2)')).toBe(1);
+      expect(env.eval('(if false 1 2)')).toBe(2);
     });
 
     it('should evaluate variable definitions', () => {
-      const testEnv = setupEnvironment();
-      evaluate(parse('(define x 42)'), testEnv);
-      expect(evaluate(parse('x'), testEnv)).toBe(42);
+      const testEnv = create();
+      testEnv.eval('(define x 42)');
+      expect(testEnv.eval('x')).toBe(42);
     });
 
     it('should evaluate lambda expressions', () => {
-      const testEnv = setupEnvironment();
-      evaluate(parse('(define double (lambda (x) (* x 2)))'), testEnv);
-      expect(evaluate(parse('(double 21)'), testEnv)).toBe(42);
+      const testEnv = create();
+      testEnv.eval('(define double (lambda (x) (* x 2)))');
+      expect(testEnv.eval('(double 21)')).toBe(42);
     });
 
     it('should evaluate list predicates', () => {
-      expect(evaluate(parse("(list? '(1 2 3))"), env)).toBe(true);
-      expect(evaluate(parse("(null? '())"), env)).toBe(true);
-      expect(evaluate(parse("(null? '(1 2 3))"), env)).toBe(false);
+      expect(env.eval("(list? '(1 2 3))")).toBe(true);
+      expect(env.eval("(null? '())")).toBe(true);
+      expect(env.eval("(null? '(1 2 3))")).toBe(false);
     });
 
     it('should evaluate equality checks', () => {
-      expect(evaluate(parse("(equal? '(1 2 3) '(1 2 3))"), env)).toBe(true);
-      expect(evaluate(parse("(equal? '(1 2) '(1 2 3))"), env)).toBe(false);
+      expect(env.eval("(equal? '(1 2 3) '(1 2 3))")).toBe(true);
+      expect(env.eval("(equal? '(1 2) '(1 2 3))")).toBe(false);
     });
   });
 });

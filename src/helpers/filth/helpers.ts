@@ -8,11 +8,6 @@ import {
   QuotedExpr
 } from './types';
 
-export function parseAtom(token: string): number | string {
-  const num = Number(token);
-  return Number.isNaN(num) ? token : num;
-}
-
 export const isString = (expr: LispExpr): expr is string =>
   typeof expr === 'string';
 
@@ -59,16 +54,3 @@ export const isTruthy = (value: null | false | undefined | string | LispExpr) =>
 
 export const isFalsey = (value: null | false | undefined | string | LispExpr) =>
   value === null || value === false || value === undefined || value === 'false';
-
-export function parseLambdaParams(params: LispExpr): string[] {
-  if (!isList(params)) {
-    throw new Error('Lambda parameters must be a list');
-  }
-
-  return params.elements.map(param => {
-    if (typeof param !== 'string') {
-      throw new Error('Lambda parameters must be symbols');
-    }
-    return param;
-  });
-}
