@@ -1,31 +1,19 @@
 /* eslint-disable no-case-declarations */
 
-import { LispExpr, LispList } from './types';
+import { createLog } from '@helpers/log';
+import { Environment as EnvironmentImpl } from './environment';
+import {
+  isLispBasicValue,
+  isLispFunction,
+  isList,
+  isString,
+  isTruthy,
+  parseAtom,
+  parseLambdaParams
+} from './helpers';
+import { LispExpr } from './types';
 
-// Environment to store variables and functions
-export class Environment {
-  private parent: Environment | null;
-  private bindings: Map<string, LispExpr>;
-
-  constructor(parent: Environment | null = null) {
-    this.parent = parent;
-    this.bindings = new Map();
-  }
-
-  define(name: string, value: LispExpr): void {
-    this.bindings.set(name, value);
-  }
-
-  lookup(name: string): LispExpr {
-    if (this.bindings.has(name)) {
-      return this.bindings.get(name)!;
-    }
-    if (this.parent) {
-      return this.parent.lookup(name);
-    }
-    throw new Error(`Undefined symbol: ${name}`);
-  }
-}
+const log = createLog('filth');
 
 // Enhanced parser with quote support
 export function parse(input: string): LispExpr {
@@ -36,11 +24,6 @@ export function parse(input: string): LispExpr {
     .trim();
   const tokens = input.split(/\s+/);
   return parseTokens(tokens);
-}
-
-function parseAtom(token: string): number | string {
-  const num = Number(token);
-  return Number.isNaN(num) ? token : num;
 }
 
 function parseTokens(tokens: string[]): LispExpr {
@@ -81,17 +64,18 @@ function parseTokens(tokens: string[]): LispExpr {
 }
 
 // Enhanced evaluator with quote and list support
-export function evaluate(expr: LispExpr, env: Environment): any {
-  if (expr === null) {
-    return null;
-  }
-
-  if (typeof expr === 'number') {
+export function evaluate(expr: LispExpr, env: EnvironmentImpl): LispExpr {
+  if (isLispBasicValue(expr)) {
     return expr;
   }
 
-  if (typeof expr === 'string') {
-    return env.lookup(expr);
+  if (isString(expr)) {
+    const value = env.lookup(expr);
+    if (isString(value)) {
+      // If the value is another symbol, look it up recursively
+      return evaluate(value, env);
+    }
+    return value;
   }
 
   if ('type' in expr) {
@@ -102,10 +86,6 @@ export function evaluate(expr: LispExpr, env: Environment): any {
     if (expr.type === 'list') {
       const [operator, ...args] = expr.elements;
 
-      if (operator === 'quote') {
-        return args[0];
-      }
-
       if (typeof operator === 'string') {
         switch (operator) {
           case 'define':
@@ -113,12 +93,22 @@ export function evaluate(expr: LispExpr, env: Environment): any {
             if (typeof name !== 'string') {
               throw new Error('First argument to define must be a symbol');
             }
-            env.define(name, evaluate(value, env));
-            return null;
+            const evaluatedValue = evaluate(value, env);
+            env.define(name, evaluatedValue);
+            return evaluatedValue;
 
           case 'if':
             const [condition, consequent, alternate] = args;
-            return evaluate(condition, env)
+            const evaluatedCondition = evaluate(condition, env);
+
+            // log.debug('[if]', { alternate, condition, consequent });
+            // log.debug('[if]', { evaluatedCondition });
+            // log.debug(
+            //   '[if]',
+            //   evaluatedCondition !== null && evaluatedCondition !== false
+            // );
+            // In Lisp, any non-nil value is considered true
+            return isTruthy(evaluatedCondition)
               ? evaluate(consequent, env)
               : evaluate(alternate, env);
 
@@ -167,28 +157,50 @@ export function evaluate(expr: LispExpr, env: Environment): any {
                 body.length === 1
                   ? body[0]
                   : { elements: ['begin', ...body], type: 'list' },
-              env,
+              env: new EnvironmentImpl(env),
               params: parameters,
               type: 'function'
             };
 
           default:
-            const fn = evaluate(operator, env);
-            const evaluatedArgs = args.map(arg => evaluate(arg, env));
-            if (
+            // For non-special forms, evaluate the operator and apply it
+            const fn = env.lookup(operator);
+            if (typeof fn === 'function') {
+              // Handle built-in functions
+              return fn(...args.map(arg => evaluate(arg, env)));
+            } else if (
               fn &&
               typeof fn === 'object' &&
               'type' in fn &&
               fn.type === 'function'
             ) {
               // Handle lambda function application
-              const newEnv = new Environment(fn.env); // Use the closure environment as parent
+              const newEnv = new EnvironmentImpl(fn.env);
               fn.params.forEach((param: string, i: number) => {
-                newEnv.define(param, evaluatedArgs[i]);
+                newEnv.define(param, evaluate(args[i], env));
               });
               return evaluate(fn.body, newEnv);
+            } else {
+              throw new Error(
+                `Cannot apply ${JSON.stringify(fn)} as a function`
+              );
             }
-            return fn(...evaluatedArgs);
+        }
+      } else {
+        // If the operator is not a string, evaluate it and apply it
+        const fn = evaluate(operator, env);
+        if (isLispFunction(fn)) {
+          // Handle lambda function application
+          const newEnv = new EnvironmentImpl(fn.env);
+          fn.params.forEach((param: string, i: number) => {
+            newEnv.define(param, evaluate(args[i], newEnv));
+          });
+          return evaluate(fn.body, newEnv);
+        } else if (typeof fn === 'function') {
+          // Handle built-in functions
+          return fn(...args.map(arg => evaluate(arg, env)));
+        } else {
+          throw new Error(`Cannot apply ${JSON.stringify(fn)} as a function`);
         }
       }
     }
@@ -197,65 +209,52 @@ export function evaluate(expr: LispExpr, env: Environment): any {
   throw new Error(`Cannot evaluate expression: ${JSON.stringify(expr)}`);
 }
 
-// Helper function to check if something is a list
-const isList = (expr: any): expr is LispList =>
-  expr && typeof expr === 'object' && 'type' in expr && expr.type === 'list';
-
-const parseLambdaParams = (params: LispExpr): string[] => {
-  if (!isList(params)) {
-    throw new Error('Lambda parameters must be a list');
-  }
-
-  return params.elements.map(param => {
-    if (typeof param !== 'string') {
-      throw new Error('Lambda parameters must be symbols');
-    }
-    return param;
-  });
-};
-
 // Enhanced environment setup with list operations
-export function setupEnvironment(): Environment {
-  const env = new Environment();
+export function setupEnvironment(): EnvironmentImpl {
+  const env = new EnvironmentImpl();
 
   // Boolean literals
   env.define('true', true);
   env.define('false', false);
 
   // Basic arithmetic operations
-  env.define('+', (...args: number[]) => args.reduce((a, b) => a + b, 0));
-  env.define('-', (...args: number[]) => {
+  env.define('+', (...args: LispExpr[]) =>
+    args.reduce((a, b) => (a as number) + (b as number), 0)
+  );
+  env.define('-', (...args: LispExpr[]) => {
     if (args.length === 0) {
       return 0;
     }
     if (args.length === 1) {
-      return -args[0];
+      return -(args[0] as number);
     }
-    return args.reduce((a, b) => a - b);
+    return args.reduce((a, b) => (a as number) - (b as number));
   });
-  env.define('*', (...args: number[]) => args.reduce((a, b) => a * b, 1));
-  env.define('/', (...args: number[]) => {
+  env.define('*', (...args: LispExpr[]) =>
+    args.reduce((a, b) => (a as number) * (b as number), 1)
+  );
+  env.define('/', (...args: LispExpr[]) => {
     if (args.length === 0) {
       return 1;
     }
     if (args.length === 1) {
-      return 1 / args[0];
+      return 1 / (args[0] as number);
     }
-    return args.reduce((a, b) => a / b);
+    return args.reduce((a, b) => (a as number) / (b as number));
   });
 
   // List predicates
-  env.define('list?', (x: any) => isList(x));
+  env.define('list?', (x: LispExpr) => isList(x));
   env.define(
     'equal?',
-    (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b)
+    (a: LispExpr, b: LispExpr) => JSON.stringify(a) === JSON.stringify(b)
   );
 
   return env;
 }
 
 // REPL function
-export const evalString = (input: string, env: Environment): any =>
+export const evalString = (input: string, env: EnvironmentImpl): LispExpr =>
   evaluate(parse(input), env);
 
 // // Example usage

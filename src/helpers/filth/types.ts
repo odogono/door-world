@@ -1,11 +1,23 @@
-// Extended types to support lists and quoted expressions
-export type LispExpr =
-  | number
-  | string
-  | LispList
-  | QuotedExpr
-  | null
-  | LispFunction;
+import { Environment } from './environment';
+
+// Base types
+export type LispBasicValue = number | boolean | null;
+export type LispValue = number | string | boolean | null;
+
+// List types
+export type LispList = {
+  elements: LispExpr[];
+  type: 'list';
+};
+
+// Quote type
+export type QuotedExpr = {
+  type: 'quoted';
+  value: LispExpr;
+};
+
+// Function types
+export type LispBuiltinFunction = (...args: LispExpr[]) => LispExpr;
 
 export type LispFunction = {
   body: LispExpr;
@@ -14,12 +26,10 @@ export type LispFunction = {
   type: 'function';
 };
 
-export type LispList = {
-  elements: LispExpr[];
-  type: 'list';
-};
-
-export type QuotedExpr = {
-  type: 'quoted';
-  value: LispExpr;
-};
+// Combined expression type
+export type LispExpr =
+  | LispValue
+  | LispBuiltinFunction
+  | LispList
+  | QuotedExpr
+  | LispFunction;
