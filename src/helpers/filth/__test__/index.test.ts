@@ -26,51 +26,152 @@ describe('Lisp Interpreter', () => {
   describe('Evaluator', () => {
     const env = create();
 
-    it('should evaluate basic arithmetic', () => {
-      expect(env.eval('(+ 1 2 3)')).toBe(6);
-      expect(env.eval('(- 10 3 2)')).toBe(5);
-      expect(env.eval('(* 2 3 4)')).toBe(24);
-      expect(env.eval('(/ 24 2 3)')).toBe(4);
+    it('should evaluate basic arithmetic', async () => {
+      expect(await env.eval('(+ 1 2 3)')).toBe(6);
+      expect(await env.eval('(- 10 3 2)')).toBe(5);
+      expect(await env.eval('(* 2 3 4)')).toBe(24);
+      expect(await env.eval('(/ 24 2 3)')).toBe(4);
     });
 
-    it('should evaluate list operations', () => {
-      expect(env.eval("(car '(1 2 3))")).toBe(1);
-      expect(env.eval("(cdr '(1 2 3))")).toEqual({
+    it('should evaluate list operations', async () => {
+      expect(await env.eval("(car '(1 2 3))")).toBe(1);
+      expect(await env.eval("(cdr '(1 2 3))")).toEqual({
         elements: [2, 3],
         type: 'list'
       });
-      expect(env.eval("(cons 1 '(2 3))")).toEqual({
+      expect(await env.eval("(cons 1 '(2 3))")).toEqual({
         elements: [1, 2, 3],
         type: 'list'
       });
     });
 
-    it('should evaluate conditional expressions', () => {
-      expect(env.eval('(if true 1 2)')).toBe(1);
-      expect(env.eval('(if false 1 2)')).toBe(2);
+    it('should evaluate conditional expressions', async () => {
+      expect(await env.eval('(if true 1 2)')).toBe(1);
+      expect(await env.eval('(if false 1 2)')).toBe(2);
     });
 
-    it('should evaluate variable definitions', () => {
+    it('should evaluate variable definitions', async () => {
       const testEnv = create();
-      testEnv.eval('(define x 42)');
-      expect(testEnv.eval('x')).toBe(42);
+      await testEnv.eval('(define x 42)');
+      expect(await testEnv.eval('x')).toBe(42);
     });
 
-    it('should evaluate lambda expressions', () => {
+    it('should evaluate lambda expressions', async () => {
       const testEnv = create();
-      testEnv.eval('(define double (lambda (x) (* x 2)))');
-      expect(testEnv.eval('(double 21)')).toBe(42);
+      await testEnv.eval('(define double (lambda (x) (* x 2)))');
+      expect(await testEnv.eval('(double 21)')).toBe(42);
     });
 
-    it('should evaluate list predicates', () => {
-      expect(env.eval("(list? '(1 2 3))")).toBe(true);
-      expect(env.eval("(null? '())")).toBe(true);
-      expect(env.eval("(null? '(1 2 3))")).toBe(false);
+    it('should evaluate list predicates', async () => {
+      expect(await env.eval("(list? '(1 2 3))")).toBe(true);
+      expect(await env.eval("(null? '())")).toBe(true);
+      expect(await env.eval("(null? '(1 2 3))")).toBe(false);
     });
 
-    it('should evaluate equality checks', () => {
-      expect(env.eval("(equal? '(1 2 3) '(1 2 3))")).toBe(true);
-      expect(env.eval("(equal? '(1 2) '(1 2 3))")).toBe(false);
+    it('should evaluate equality checks', async () => {
+      expect(await env.eval("(equal? '(1 2 3) '(1 2 3))")).toBe(true);
+      expect(await env.eval("(equal? '(1 2) '(1 2 3))")).toBe(false);
+    });
+
+    it('should handle async functions', async () => {
+      const start = Date.now();
+      await env.eval('(wait 100)');
+      const end = Date.now();
+      expect(end - start).toBeGreaterThanOrEqual(100);
+    });
+  });
+
+  describe('begin', () => {
+    it('should handle begin expressions', async () => {
+      const env = create();
+      expect(await env.eval('(begin (+ 1 2) (* 3 4) (- 10 5))')).toBe(5);
+    });
+
+    it('should handle define with function with parameters', async () => {
+      const env = create();
+      const result = await env.eval(`
+        (define (print-and-square x)
+          (begin
+            (log "Calculating square...")
+            (* x x)))
+
+        (print-and-square 5)
+      `);
+      expect(result).toBe(25);
+    });
+  });
+
+  describe('Promises', () => {
+    it('should handle promises', async () => {
+      const env = create();
+      await env.eval(
+        '(define wait-and-log (lambda () (wait 100) (log "Hello, world!")))'
+      );
+      await env.eval('(wait-and-log)');
+    });
+
+    it('should handle begin expressions', async () => {
+      const env = create();
+      // begin should execute expressions in sequence and return the last value
+      expect(await env.eval('(begin (+ 1 2) (* 3 4) (- 10 5))')).toBe(5);
+
+      // begin with a single expression should return that expression's value
+      expect(await env.eval('(begin (* 2 3))')).toBe(6);
+
+      // empty begin should return null
+      expect(await env.eval('(begin)')).toBe(null);
+
+      // begin should handle side effects
+      await env.eval('(begin (define x 10) (define y 20))');
+      expect(await env.eval('(+ x y)')).toBe(30);
+    });
+
+    it('should handle let expressions', async () => {
+      const env = create();
+      // // basic let binding
+      expect(await env.eval('(let ((x 5) (y 3)) (+ x y))')).toBe(8);
+
+      // // let with multiple expressions in body
+      expect(await env.eval('(let ((x 10)) (let ((y 20)) (+ x y)))')).toBe(30);
+
+      // // nested let expressions
+      expect(await env.eval('(let ((x 5)) (let ((y (* x 2))) (+ x y)))')).toBe(
+        15
+      );
+
+      // // let should create a new scope
+      await env.eval('(define x 100)');
+      expect(await env.eval('(let ((x 5)) (+ x x))')).toBe(10);
+      expect(await env.eval('x')).toBe(100); // outer x should remain unchanged
+    });
+
+    it('should handle async operations in sequence', async () => {
+      const env = create();
+      const start = Date.now();
+
+      // Test sequential waits using begin
+      await env.eval('(begin (wait 50) (wait 50))');
+      const end = Date.now();
+      expect(end - start).toBeGreaterThanOrEqual(100);
+
+      // Test wait inside let
+      const startLet = Date.now();
+      await env.eval('(let ((delay 50)) (wait delay))');
+      const endLet = Date.now();
+      expect(endLet - startLet).toBeGreaterThanOrEqual(50);
+
+      // Test multiple sequential waits
+      const startMulti = Date.now();
+      await env.eval(`
+        (begin
+          (wait 25)
+          (wait 25)
+          (wait 25)
+          (wait 25)
+        )
+      `);
+      const endMulti = Date.now();
+      expect(endMulti - startMulti).toBeGreaterThanOrEqual(100);
     });
   });
 });
