@@ -8,17 +8,29 @@ import {
   QuotedExpr
 } from './types';
 
+export const getLispType = (expr: LispExpr): string => {
+  if (isLispBasicValue(expr)) {
+    return 'basic';
+  }
+  return typeof expr === 'object' && 'type' in expr ? expr.type : 'unknown';
+};
+export const isPromise = (expr: LispExpr): expr is Promise<LispExpr> =>
+  expr !== null &&
+  typeof expr === 'object' &&
+  'then' in expr &&
+  typeof expr.then === 'function';
+
 export const isString = (expr: LispExpr): expr is string =>
   typeof expr === 'string';
 
-export function isList(expr: LispExpr): expr is LispList {
+export const isList = (expr: LispExpr): expr is LispList => {
   return (
     expr !== null &&
     typeof expr === 'object' &&
     'type' in expr &&
     expr.type === 'list'
   );
-}
+};
 
 export const isLispFunction = (expr: LispExpr): expr is LispFunction =>
   expr !== null &&

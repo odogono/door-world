@@ -17,7 +17,9 @@ export type QuotedExpr = {
 };
 
 // Function types
-export type LispBuiltinFunction = (...args: LispExpr[]) => LispExpr;
+export type LispBuiltinFunction = (
+  ...args: LispExpr[]
+) => LispExpr | Promise<LispExpr>;
 
 export type LispFunction = {
   body: LispExpr;
@@ -32,4 +34,5 @@ export type LispExpr =
   | LispBuiltinFunction
   | LispList
   | QuotedExpr
-  | LispFunction;
+  | LispFunction
+  | Promise<LispExpr>;

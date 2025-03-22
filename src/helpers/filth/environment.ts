@@ -21,7 +21,10 @@ export class Environment {
     if (this.parent) {
       return this.parent.lookup(name);
     }
+
+    // console.debug('[lookup] bindings', this.bindings);
     throw new UndefinedSymbolError(name);
+    // log.debug('[lookup] undefined symbol', name);
   }
 
   create(): Environment {

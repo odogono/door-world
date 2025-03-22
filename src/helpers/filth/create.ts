@@ -13,7 +13,7 @@ class EvalEnvironment extends Environment {
     return new EvalEnvironment(this);
   }
 
-  eval(expr: string): LispExpr {
+  async eval(expr: string): Promise<LispExpr> {
     return evaluate(this, parse(expr));
   }
 }
@@ -26,6 +26,43 @@ export const create = (): EvalEnvironment => {
   env.define('false', false);
 
   // Basic arithmetic operations
+  defineArithmetic(env);
+
+  // List predicates
+  defineListPredicates(env);
+
+  // Promises
+  definePromises(env);
+
+  // Logging
+  defineLogging(env);
+
+  return env;
+};
+
+const defineLogging = (env: EvalEnvironment) => {
+  env.define('log', (...args: LispExpr[]) => {
+    // eslint-disable-next-line no-console
+    console.debug('[FILTH]', ...args);
+    return null;
+  });
+};
+
+const definePromises = (env: EvalEnvironment) => {
+  env.define('wait', (ms: LispExpr) => {
+    return new Promise<LispExpr>(resolve => {
+      setTimeout(() => resolve(null), ms as number);
+    });
+  });
+
+  // env.define('sequence', async (...args: LispExpr[]) => {
+  //   for (const arg of args) {
+  //     await env.eval(arg);
+  //   }
+  // });
+};
+
+const defineArithmetic = (env: EvalEnvironment) => {
   env.define('+', (...args: LispExpr[]) =>
     args.reduce((a, b) => (a as number) + (b as number), 0)
   );
@@ -50,13 +87,12 @@ export const create = (): EvalEnvironment => {
     }
     return args.reduce((a, b) => (a as number) / (b as number));
   });
+};
 
-  // List predicates
+const defineListPredicates = (env: EvalEnvironment) => {
   env.define('list?', (x: LispExpr) => isList(x));
   env.define(
     'equal?',
     (a: LispExpr, b: LispExpr) => JSON.stringify(a) === JSON.stringify(b)
   );
-
-  return env;
 };

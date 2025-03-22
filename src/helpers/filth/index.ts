@@ -4,25 +4,17 @@ import { createLog } from '@helpers/log';
 import { type Environment } from './environment';
 import { EvaluationError, LambdaError } from './error';
 import {
+  getLispType,
   isLispBasicValue,
   isLispFunction,
   isList,
   isString,
   isTruthy
 } from './helpers';
-import { parse, parseLambdaParams } from './parse';
-import { LispExpr } from './types';
+import { parseLambdaParams } from './parse';
+import { LispExpr, LispFunction, LispList } from './types';
 
 const log = createLog('filth');
-
-/**
- * Evaluate a string as a Lisp expression
- * @param input - The input string to evaluate
- * @param env - The environment to evaluate the expression in
- * @returns The evaluated Lisp expression
- */
-export const evalString = (env: Environment, input: string): LispExpr =>
-  evaluate(env, parse(input));
 
 /**
  * Evaluate a Lisp expression
@@ -30,21 +22,31 @@ export const evalString = (env: Environment, input: string): LispExpr =>
  * @param env - The environment to evaluate the expression in
  * @returns The evaluated Lisp expression
  */
-export const evaluate = (
+export const evaluate = async (
   env: Environment,
-  expr: LispExpr | string
-): LispExpr => {
+  expr: LispExpr
+): Promise<LispExpr> => {
   if (isLispBasicValue(expr)) {
     return expr;
   }
 
   if (isString(expr)) {
-    const value = env.lookup(expr);
-    if (isString(value)) {
-      // If the value is another symbol, look it up recursively
-      return evaluate(env, value);
+    // If the string is already a string value (not a symbol), return it as is
+    if (expr.startsWith('"') && expr.endsWith('"')) {
+      return expr.slice(1, -1);
     }
-    return value;
+    // Otherwise, it's a symbol that needs to be looked up
+    try {
+      const value = env.lookup(expr);
+      if (isString(value)) {
+        // If the value is another symbol, look it up recursively
+        return evaluate(env, value);
+      }
+      return value;
+    } catch {
+      // If the symbol is not found, it's a string literal
+      return expr;
+    }
   }
 
   if ('type' in expr) {
@@ -53,45 +55,100 @@ export const evaluate = (
     }
 
     if (expr.type === 'list') {
+      // Handle multiple top-level expressions by treating them as a begin expression
+      if (expr.elements.length > 0 && !isString(expr.elements[0])) {
+        let result = null;
+        for (const e of expr.elements) {
+          result = await evaluate(env, e);
+        }
+        return result;
+      }
+
       const [operator, ...args] = expr.elements;
 
       if (isString(operator)) {
         switch (operator) {
-          case 'define':
-            const [name, value] = args;
-            if (!isString(name)) {
+          case 'define': {
+            // Handle both forms of define
+            const [nameOrList, ...body] = args;
+
+            if (!isList(nameOrList)) {
+              if (!isString(nameOrList)) {
+                throw new EvaluationError(
+                  `First argument to define must be a symbol, received ${getLispType(nameOrList)}`
+                );
+              }
+              if (body.length !== 1) {
+                throw new EvaluationError(
+                  `Define expects exactly one value, received ${body.length}`
+                );
+              }
+              const evaluatedValue = await evaluate(env, body[0]);
+              env.define(nameOrList, evaluatedValue);
+              return null;
+            }
+
+            // Function definition form: (define (name params...) body...)
+            const fnName = nameOrList.elements[0];
+            const params = nameOrList.elements.slice(1);
+
+            if (!isString(fnName)) {
               throw new EvaluationError(
-                'First argument to define must be a symbol'
+                `Function name must be a symbol, received ${getLispType(fnName)}`
               );
             }
-            const evaluatedValue = evaluate(env, value);
-            env.define(name, evaluatedValue);
-            return evaluatedValue;
 
+            // Convert parameters to strings
+            const parameters = params.map(param => {
+              if (!isString(param)) {
+                throw new EvaluationError(
+                  `Parameter must be a symbol, received ${getLispType(param)}`
+                );
+              }
+              return param;
+            });
+
+            // Create lambda expression
+            const lambda: LispFunction = {
+              body:
+                body.length === 1
+                  ? body[0]
+                  : {
+                      elements: ['begin', ...body],
+                      type: 'list'
+                    },
+              env,
+              params: parameters,
+              type: 'function'
+            };
+
+            // log.debug('[define] lambda', fnName);
+            env.define(fnName, lambda);
+            return null;
+          }
           case 'if':
             const [condition, consequent, alternate] = args;
-            const evaluatedCondition = evaluate(env, condition);
+            const evaluatedCondition = await evaluate(env, condition);
 
-            // log.debug('[if]', { alternate, condition, consequent });
-            // log.debug('[if]', { evaluatedCondition });
-            // log.debug(
-            //   '[if]',
-            //   evaluatedCondition !== null && evaluatedCondition !== false
-            // );
-            // In Lisp, any non-nil value is considered true
             return isTruthy(evaluatedCondition)
               ? evaluate(env, consequent)
               : evaluate(env, alternate);
-
           case 'cons':
-            const [car, cdr] = args.map(arg => evaluate(env, arg));
+            const [car, cdr] = args;
+            const evaluatedCar = await evaluate(env, car);
+            const evaluatedCdr = await evaluate(env, cdr);
             return {
-              elements: [car, ...(isList(cdr) ? cdr.elements : [cdr])],
+              elements: [
+                evaluatedCar,
+                ...(isList(evaluatedCdr)
+                  ? evaluatedCdr.elements
+                  : [evaluatedCdr])
+              ],
               type: 'list'
             };
 
           case 'car':
-            const list = evaluate(env, args[0]);
+            const list = await evaluate(env, args[0]);
             if (!isList(list) || list.elements.length === 0) {
               throw new EvaluationError(
                 'car: argument must be a non-empty list'
@@ -100,7 +157,7 @@ export const evaluate = (
             return list.elements[0];
 
           case 'cdr':
-            const lst = evaluate(env, args[0]);
+            const lst = await evaluate(env, args[0]);
             if (!isList(lst) || lst.elements.length === 0) {
               throw new EvaluationError(
                 'cdr: argument must be a non-empty list'
@@ -110,15 +167,18 @@ export const evaluate = (
               elements: lst.elements.slice(1),
               type: 'list'
             };
-
-          case 'list':
+          case 'list': {
+            const elements = await Promise.all(
+              args.map(async arg => await evaluate(env, arg))
+            );
             return {
-              elements: args.map(arg => evaluate(env, arg)),
+              elements,
               type: 'list'
             };
+          }
 
           case 'null?':
-            const val = evaluate(env, args[0]);
+            const val = await evaluate(env, args[0]);
             return isList(val) && val.elements.length === 0;
 
           case 'lambda':
@@ -137,22 +197,61 @@ export const evaluate = (
               type: 'function'
             };
 
+          // begin is a special form used to execute a sequence of expressions in order,
+          // returning the value of the last expression. It's primarily used to group
+          // multiple expressions together where only one expression is expected.
+          case 'begin': {
+            let result = null;
+            // console.debug('[begin] expr', args);
+            for (const expr of args) {
+              result = await evaluate(env, expr);
+            }
+            return result;
+          }
+
+          // let is a special form used to create local bindings. It introduces a new scope
+          // where you can define variables that are only accessible within that scope
+          case 'let': {
+            const bindings = args[0] as LispList;
+            const body = args.slice(1);
+            const newEnv = env.create();
+
+            for (const binding of bindings.elements) {
+              if (!isList(binding)) {
+                continue;
+              }
+              const [name, value] = binding.elements;
+              if (isString(name)) {
+                const evaluatedValue = await evaluate(newEnv, value);
+                newEnv.define(name, evaluatedValue);
+              }
+            }
+            let result = null;
+            for (const expr of body) {
+              result = await evaluate(newEnv, expr);
+            }
+            return result;
+          }
+
           default:
             // For non-special forms, evaluate the operator and apply it
             const fn = env.lookup(operator);
+
             if (typeof fn === 'function') {
               // Handle built-in functions
-              return fn(...args.map(arg => evaluate(env, arg)));
-            } else if (
-              fn &&
-              typeof fn === 'object' &&
-              'type' in fn &&
-              fn.type === 'function'
-            ) {
+              // console.debug('[operator] args', args);
+              const evaluatedArgs = await Promise.all(
+                args.map(async arg => await evaluate(env, arg))
+              );
+              return fn(...evaluatedArgs);
+            } else if (isLispFunction(fn)) {
               // Handle lambda function application
               const newEnv = fn.env.create();
+              const evaluatedArgs = await Promise.all(
+                args.map(async arg => await evaluate(env, arg))
+              );
               fn.params.forEach((param: string, i: number) => {
-                newEnv.define(param, evaluate(env, args[i]));
+                newEnv.define(param, evaluatedArgs[i]);
               });
               return evaluate(newEnv, fn.body);
             } else {
@@ -163,18 +262,35 @@ export const evaluate = (
         }
       } else {
         // If the operator is not a string, evaluate it and apply it
-        const fn = evaluate(env, operator);
+        const fn = await evaluate(env, operator);
+
+        if (isLispBasicValue(fn)) {
+          return fn;
+        }
+
+        // log.debug('[operator] evaluating operator', operator, 'result', null);
         if (isLispFunction(fn)) {
           // Handle lambda function application
           const newEnv = fn.env.create();
+          const evaluatedArgs = await Promise.all(
+            args.map(async arg => await evaluate(env, arg))
+          );
+          log.debug('[apply] lambda params', fn.params);
           fn.params.forEach((param: string, i: number) => {
-            newEnv.define(param, evaluate(env, args[i]));
+            newEnv.define(param, evaluatedArgs[i]);
           });
           return evaluate(newEnv, fn.body);
         } else if (typeof fn === 'function') {
           // Handle built-in functions
-          return fn(...args.map(arg => evaluate(env, arg)));
+          const evaluatedArgs = await Promise.all(
+            args.map(async arg => await evaluate(env, arg))
+          );
+          return fn(...evaluatedArgs);
         } else {
+          // log.debug(
+          //   '[apply] fn',
+          //   `Cannot apply ${JSON.stringify(fn)} as a function`
+          // );
           throw new EvaluationError(
             `Cannot apply ${JSON.stringify(fn)} as a function`
           );
