@@ -49,5 +49,17 @@ describe('Lisp Interpreter', () => {
         type: 'list'
       });
     });
+
+    it('should handle comments', () => {
+      const input = `
+      ; This is a comment
+      (1 2 3) ; also a comment
+      `;
+      const result = parse(input);
+      expect(result).toEqual({
+        elements: [1, 2, 3],
+        type: 'list'
+      });
+    });
   });
 });
