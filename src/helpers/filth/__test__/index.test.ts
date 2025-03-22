@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { Environment, evaluate, parse, setupEnvironment } from '../index';
+import { Environment } from '../environment';
+import { evaluate, parse, setupEnvironment } from '../index';
 
 describe('Lisp Interpreter', () => {
   describe('Parser', () => {
@@ -82,7 +83,7 @@ describe('Lisp Interpreter', () => {
     });
 
     it('should evaluate variable definitions', () => {
-      const testEnv = new Environment();
+      const testEnv = setupEnvironment();
       evaluate(parse('(define x 42)'), testEnv);
       expect(evaluate(parse('x'), testEnv)).toBe(42);
     });
