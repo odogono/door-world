@@ -4,6 +4,7 @@ import { createLog } from '@helpers/log';
 import { type Environment } from './environment';
 import { EvaluationError, LambdaError } from './error';
 import {
+  checkRestParams,
   getLispType,
   isLispBasicValue,
   isLispFunction,
@@ -98,15 +99,12 @@ export const evaluate = async (
               );
             }
 
-            // Convert parameters to strings
-            const parameters = params.map(param => {
-              if (!isString(param)) {
-                throw new EvaluationError(
-                  `Parameter must be a symbol, received ${getLispType(param)}`
-                );
-              }
-              return param;
-            });
+            const { hasRest, parameters, restParam } = checkRestParams(params);
+
+            // log.debug('[define] params', params);
+            // log.debug('[define] hasRest', hasRest);
+            // log.debug('[define] parameters', parameters);
+            // log.debug('[define] restParam', restParam);
 
             // Create lambda expression
             const lambda: LispFunction = {
@@ -119,6 +117,7 @@ export const evaluate = async (
                     },
               env,
               params: parameters,
+              restParam: hasRest ? restParam : null,
               type: 'function'
             };
 
@@ -126,6 +125,59 @@ export const evaluate = async (
             env.define(fnName, lambda);
             return null;
           }
+
+          case 'apply': {
+            // log.debug('[apply] args', args);
+            // log.debug('[apply] bindings', env.bindings);
+            if (args.length < 2) {
+              throw new EvaluationError(
+                'apply requires at least two arguments'
+              );
+            }
+            const fn = await evaluate(env, args[0]);
+            const lastArg = await evaluate(env, args.at(-1) ?? null);
+
+            const evaluatedArgs = await Promise.all(
+              args
+                .slice(1, args.length - 1)
+                .map(async arg => await evaluate(env, arg))
+            );
+
+            if (!isList(lastArg)) {
+              throw new EvaluationError(
+                `last argument to apply must be a list, received ${getLispType(lastArg)}`
+              );
+            }
+
+            const allArgs = [...evaluatedArgs, ...lastArg.elements];
+
+            if (typeof fn === 'function') {
+              return fn(...allArgs);
+            } else if (isLispFunction(fn)) {
+              const newEnv = fn.env.create();
+
+              // bind parameters
+              for (let ii = 0; ii < fn.params.length; ii++) {
+                newEnv.define(fn.params[ii], allArgs[ii]);
+              }
+
+              // handle rest parameter if present
+              if (fn.restParam) {
+                const restArgs = allArgs.slice(fn.params.length);
+                newEnv.define(fn.restParam, {
+                  elements: restArgs,
+                  type: 'list'
+                });
+              }
+
+              return evaluate(newEnv, fn.body);
+            } else {
+              throw new EvaluationError(
+                `First argument to apply must be a function, not ${getLispType(fn)} (${JSON.stringify(fn)})`
+              );
+            }
+          }
+
           case 'if':
             const [condition, consequent, alternate] = args;
             const evaluatedCondition = await evaluate(env, condition);
@@ -247,12 +299,25 @@ export const evaluate = async (
             } else if (isLispFunction(fn)) {
               // Handle lambda function application
               const newEnv = fn.env.create();
-              const evaluatedArgs = await Promise.all(
-                args.map(async arg => await evaluate(env, arg))
-              );
-              fn.params.forEach((param: string, i: number) => {
-                newEnv.define(param, evaluatedArgs[i]);
-              });
+
+              // bind regular parameters
+              const evaluatedArgs = args;
+              // const evaluatedArgs = await Promise.all(
+              //   args.map(async arg => await evaluate(env, arg))
+              // );
+              for (let ii = 0; ii < fn.params.length; ii++) {
+                newEnv.define(fn.params[ii], evaluatedArgs[ii]);
+              }
+
+              // handle rest parameter if present
+              if (fn.restParam) {
+                const restArgs = evaluatedArgs.slice(fn.params.length);
+                newEnv.define(fn.restParam, {
+                  elements: restArgs,
+                  type: 'list'
+                });
+              }
+
               return evaluate(newEnv, fn.body);
             } else {
               throw new EvaluationError(

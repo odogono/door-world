@@ -1,3 +1,4 @@
+import { EvaluationError } from './error';
 import {
   LispBasicValue,
   LispBuiltinFunction,
@@ -10,9 +11,9 @@ import {
 
 export const getLispType = (expr: LispExpr): string => {
   if (isLispBasicValue(expr)) {
-    return 'basic';
+    return typeof expr;
   }
-  return typeof expr === 'object' && 'type' in expr ? expr.type : 'unknown';
+  return typeof expr === 'object' && 'type' in expr ? expr.type : typeof expr;
 };
 export const isPromise = (expr: LispExpr): expr is Promise<LispExpr> =>
   expr !== null &&
@@ -66,3 +67,31 @@ export const isTruthy = (value: null | false | undefined | string | LispExpr) =>
 
 export const isFalsey = (value: null | false | undefined | string | LispExpr) =>
   value === null || value === false || value === undefined || value === 'false';
+
+export const checkRestParams = (params: LispExpr[]) => {
+  const parameters: string[] = [];
+  let hasRest = false;
+  let restParam = '';
+
+  for (let ii = 0; ii < params.length; ii++) {
+    const param = params[ii];
+    if (param === '.' || param === '@rest' || param === '...') {
+      hasRest = true;
+      if (ii + 1 >= params.length) {
+        throw new EvaluationError('rest parameter missing');
+      }
+      const nextParam = params[ii + 1];
+      if (!isString(nextParam)) {
+        throw new EvaluationError('rest parameter must be a symbol');
+      }
+      restParam = nextParam;
+      break;
+    }
+    if (!isString(param)) {
+      throw new EvaluationError('parameter must be a symbol');
+    }
+    parameters.push(param);
+  }
+
+  return { hasRest, parameters, restParam };
+};

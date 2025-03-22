@@ -25,6 +25,7 @@ export type LispFunction = {
   body: LispExpr;
   env: Environment;
   params: string[];
+  restParam?: string | null;
   type: 'function';
 };
 

@@ -25,6 +25,9 @@ export const create = (): EvalEnvironment => {
   env.define('true', true);
   env.define('false', false);
 
+  // placeholder, handling is in evaluate
+  env.define('apply', null);
+
   // Basic arithmetic operations
   defineArithmetic(env);
 

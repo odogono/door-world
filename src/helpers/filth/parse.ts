@@ -11,6 +11,7 @@ export function parse(input: string): LispExpr {
   const tokens: string[] = [];
   let currentToken = '';
   let inQuotes = false;
+  let inComment = false;
 
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
@@ -20,6 +21,18 @@ export function parse(input: string): LispExpr {
       if (char === '"') {
         inQuotes = !inQuotes;
       }
+      continue;
+    }
+
+    if (inComment) {
+      if (char === '\n') {
+        inComment = false;
+      }
+      continue;
+    }
+
+    if (char === ';') {
+      inComment = true;
       continue;
     }
 
