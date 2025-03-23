@@ -5,7 +5,7 @@ import {
   ROOM_SIZE_MEDIUM,
   ROOM_SIZE_SMALL
 } from './constants';
-import { getDungeonRoomById, getRoomId } from './helpers';
+import { generateRoomId, getDungeonRoomById } from './helpers';
 import { DungeonData, Position, Room, RoomId, RoomType } from './types';
 
 export const getMaxRoomDepth = (rooms: Room[]): number => {
@@ -195,7 +195,7 @@ export const generateRoomAround = (
     if (isValid) {
       return {
         ...newRoom,
-        id: getRoomId(dungeon)
+        id: generateRoomId(dungeon)
       };
     }
   }

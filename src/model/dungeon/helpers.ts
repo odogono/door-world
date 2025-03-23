@@ -1,7 +1,7 @@
-import { randomUnsignedInt } from '../../helpers/random';
-import { DungeonData, Room } from './types';
+import { randomUnsignedInt } from '@helpers/random';
+import { Door, DungeonData, Room } from './types';
 
-export const getRoomId = (dungeon: DungeonData) => {
+export const generateRoomId = (dungeon: DungeonData) => {
   return dungeon.idInc++;
 };
 
@@ -26,4 +26,15 @@ export const getDungeonRoomById = (
   }
 
   return dungeon.rooms.find(room => room.id === id);
+};
+
+export const getDungeonDoorById = (
+  dungeon?: DungeonData | null,
+  id?: string
+): Door | undefined => {
+  if (!dungeon || !id) {
+    return undefined;
+  }
+
+  return dungeon.doors.find(door => door.id === id);
 };

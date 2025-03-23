@@ -19,7 +19,7 @@ export const Dungeon = () => {
   const { currentRoom, dungeon } = useDungeonCurrentRoom();
 
   const handleDoorTouch = useCallback((door: Door) => {
-    log.debug('Door clicked', door);
+    log.debug('Door clicked', door.id);
 
     // open the door
     // move the camera to the new room
@@ -42,11 +42,7 @@ export const Dungeon = () => {
         <Room3d dungeon={dungeon} key={room.id} room={room} />
       ))}
       {doors.map(door => (
-        <DoorContainer
-          door={door}
-          key={`door-${door.room1}-${door.room2}`}
-          onTouch={handleDoorTouch}
-        />
+        <DoorContainer door={door} key={door.id} onTouch={handleDoorTouch} />
       ))}
     </>
   );
@@ -75,7 +71,7 @@ const DoorContainer = ({ door, onTouch }: DoorContainerProps) => {
   return (
     <Door3d
       doorColor="#00f900"
-      id={`door-${room1}-${room2}`}
+      id={door.id}
       isMounted={false}
       isOpen={false}
       onTouch={handleTouch}
