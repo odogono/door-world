@@ -30,8 +30,8 @@ export const World3D = () => {
     // setTargetPosition(pos);
     setClickedPosition(pos);
     await cameraRef.current?.moveTo({
-      position: vector3ToTuple(pos),
-      zoom: 200
+      position: vector3ToTuple(pos)
+      // zoom: 200
     });
     log.debug('Moved to', pos);
   };
@@ -39,7 +39,11 @@ export const World3D = () => {
   return (
     <div className="w-full h-full">
       <Canvas gl={{ localClippingEnabled: true }}>
-        <IsometricCamera ref={cameraRef} />
+        <IsometricCamera
+          initialPosition={[0, 0, -2]}
+          initialZoom={100}
+          ref={cameraRef}
+        />
 
         {/* <XYZAxis /> */}
         <Dungeon />

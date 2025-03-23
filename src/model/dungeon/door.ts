@@ -1,7 +1,7 @@
 import { createLog } from '@helpers/log';
 import { DOOR_HEIGHT, DOOR_WIDTH } from './constants';
-import { getRoomCenter, roomsTouch } from './room';
-import { CompassDirection, Door, Position, Room } from './types';
+import { roomsTouch } from './room';
+import { CompassDirection, Door, DungeonData, Position, Room } from './types';
 
 const log = createLog('Dungeon.Door');
 
@@ -96,7 +96,6 @@ const getDoorDirection = (room1: Room, room2: Room): CompassDirection => {
   } else {
     return dy < 0 ? 'NORTH' : 'SOUTH';
   }
-
 };
 
 export const findDoors = (rooms: Room[]): Door[] => {
@@ -120,4 +119,16 @@ export const findDoors = (rooms: Room[]): Door[] => {
   }
 
   return doors;
+};
+
+export const getRoomDoors = (
+  dungeon: DungeonData,
+  room: Room | undefined
+): Door[] => {
+  if (!room) {
+    return [];
+  }
+  return dungeon.doors.filter(
+    door => door.room1 === room.id || door.room2 === room.id
+  );
 };

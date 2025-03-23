@@ -53,7 +53,8 @@ describe('Lisp Interpreter', () => {
     it('should evaluate variable definitions', async () => {
       const testEnv = create();
       await testEnv.eval('(define x 42)');
-      expect(await testEnv.eval('x')).toBe(42);
+      const result = await testEnv.eval('x');
+      expect(result).toBe(42);
     });
 
     it('should evaluate lambda expressions', async () => {
@@ -115,7 +116,14 @@ describe('Lisp Interpreter', () => {
   describe('begin', () => {
     it('should handle begin expressions', async () => {
       const env = create();
-      expect(await env.eval('(begin (+ 1 2) (* 3 4) (- 10 5))')).toBe(5);
+      expect(
+        await env.eval(`
+        (begin 
+          (+ 1 2) 
+          (* 3 4) 
+          (- 10 5))
+      `)
+      ).toBe(5);
     });
 
     it('should handle define with function with parameters', async () => {
@@ -136,7 +144,11 @@ describe('Lisp Interpreter', () => {
     it('should handle promises', async () => {
       const env = create();
       await env.eval(
-        '(define wait-and-log (lambda () (wait 100) (log "Hello, world!")))'
+        `(define 
+          wait-and-log 
+          (lambda () 
+            (wait 100) 
+            (log "Hello, world!")))`
       );
       await env.eval('(wait-and-log)');
     });
@@ -144,31 +156,62 @@ describe('Lisp Interpreter', () => {
     it('should handle begin expressions', async () => {
       const env = create();
       // begin should execute expressions in sequence and return the last value
-      expect(await env.eval('(begin (+ 1 2) (* 3 4) (- 10 5))')).toBe(5);
+      expect(
+        await env.eval(`
+        (begin 
+          (+ 1 2) 
+          (* 3 4) 
+          (- 10 5))`)
+      ).toBe(5);
 
       // begin with a single expression should return that expression's value
-      expect(await env.eval('(begin (* 2 3))')).toBe(6);
+      expect(
+        await env.eval(`
+        (begin 
+          (* 2 3))`)
+      ).toBe(6);
 
       // empty begin should return null
       expect(await env.eval('(begin)')).toBe(null);
 
       // begin should handle side effects
-      await env.eval('(begin (define x 10) (define y 20))');
+      await env.eval(`
+        (begin 
+          (define x 10) 
+          (define y 20))`);
       expect(await env.eval('(+ x y)')).toBe(30);
     });
 
     it('should handle let expressions', async () => {
       const env = create();
       // // basic let binding
-      expect(await env.eval('(let ((x 5) (y 3)) (+ x y))')).toBe(8);
+      expect(
+        await env.eval(`
+        (let 
+          ((x 5) 
+            (y 3)) 
+          (+ x y))`)
+      ).toBe(8);
 
       // // let with multiple expressions in body
-      expect(await env.eval('(let ((x 10)) (let ((y 20)) (+ x y)))')).toBe(30);
+      expect(
+        await env.eval(`
+        (let 
+          ((x 10)) 
+          (let 
+            ((y 20)) 
+            (+ x y)))`)
+      ).toBe(30);
 
       // // nested let expressions
-      expect(await env.eval('(let ((x 5)) (let ((y (* x 2))) (+ x y)))')).toBe(
-        15
-      );
+      expect(
+        await env.eval(`
+        (let 
+          ((x 5)) 
+          (let 
+            ((y (* x 2))) 
+            (+ x y)))`)
+      ).toBe(15);
 
       // // let should create a new scope
       await env.eval('(define x 100)');

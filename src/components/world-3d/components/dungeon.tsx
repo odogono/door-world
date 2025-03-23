@@ -1,8 +1,9 @@
 import { createLog } from '@helpers/log';
 import { Door, DungeonData, Room } from '@model/dungeon';
+import { useCallback, useRef } from 'react';
 import { Vector3 } from 'three';
 import { useDungeonCurrentRoom } from '../../../contexts/dungeon/atoms';
-import { Door as Door3d } from './door';
+import { Door as Door3d, DoorRef } from './door';
 import { Room as Room3d } from './room';
 
 const log = createLog('Dungeon');
@@ -17,11 +18,23 @@ const SCALE = 0.06;
 export const Dungeon = () => {
   const { currentRoom, dungeon } = useDungeonCurrentRoom();
 
+  const handleDoorTouch = useCallback((door: Door) => {
+    log.debug('Door clicked', door);
+
+    // open the door
+    // move the camera to the new room
+    // then
+    //    exit animate the previous room
+    //    close the door
+  }, []);
+
   if (!dungeon) {
     return null;
   }
 
   const { doors, rooms } = dungeon;
+
+  // const doors = getRoomDoors(dungeon, currentRoom);
 
   return (
     <>
@@ -29,7 +42,11 @@ export const Dungeon = () => {
         <Room3d dungeon={dungeon} key={room.id} room={room} />
       ))}
       {doors.map(door => (
-        <DoorContainer door={door} key={`door-${door.room1}-${door.room2}`} />
+        <DoorContainer
+          door={door}
+          key={`door-${door.room1}-${door.room2}`}
+          onTouch={handleDoorTouch}
+        />
       ))}
     </>
   );
@@ -37,21 +54,33 @@ export const Dungeon = () => {
 
 type DoorContainerProps = {
   door: Door;
+  onTouch: (door: Door) => void;
 };
 
-const DoorContainer = ({ door }: DoorContainerProps) => {
+const DoorContainer = ({ door, onTouch }: DoorContainerProps) => {
   const { position, room1, room2 } = door;
+
+  const ref = useRef<DoorRef>(null);
 
   const position3d = new Vector3(position.x + 4, 0, position.y + 4);
   position3d.multiplyScalar(SCALE);
   const rotationY = getDoorRotationY(door);
 
+  const handleTouch = useCallback(() => {
+    onTouch(door);
+    ref.current?.toggleOpen();
+    // ref.current?.exit();
+  }, [door, onTouch]);
+
   return (
     <Door3d
       doorColor="#00f900"
       id={`door-${room1}-${room2}`}
+      isMounted={false}
       isOpen={false}
+      onTouch={handleTouch}
       position={position3d}
+      ref={ref}
       rotationY={rotationY}
     />
   );
