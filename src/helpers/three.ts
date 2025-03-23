@@ -80,4 +80,4 @@ export const getObjectBoundingBox = (object: Object3D): Box3 => {
   return new Box3().setFromObject(object);
 };
 
-export const printGLTF = (object: GLTF) => {};
+// export const printGLTF = (object: GLTF) => {};

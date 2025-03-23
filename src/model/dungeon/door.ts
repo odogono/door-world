@@ -98,7 +98,7 @@ const getDoorDirection = (room1: Room, room2: Room): CompassDirection => {
   }
 };
 
-export const findDoors = (rooms: Room[]): Door[] => {
+export const findDoors = (_dungeon: DungeonData, rooms: Room[]): Door[] => {
   const doors: Door[] = [];
 
   for (let i = 0; i < rooms.length; i++) {
@@ -106,9 +106,11 @@ export const findDoors = (rooms: Room[]): Door[] => {
       if (roomsTouch(rooms[i], rooms[j])) {
         const doorProps = findDoorPosition(rooms[i], rooms[j]);
         if (doorProps) {
+          const id = `d-${rooms[i].id}-${rooms[j].id}`;
           const dir = getDoorDirection(rooms[i], rooms[j]);
           doors.push({
             dir,
+            id,
             position: doorProps[1],
             room1: rooms[i].id,
             room2: rooms[j].id

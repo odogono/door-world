@@ -29,9 +29,9 @@ export interface Room {
 }
 
 export interface Door {
-  // width: number;
   dir: CompassDirection;
-  // height: number;
+  id: string;
+  isOpen?: boolean;
   position: Position;
   room1: RoomId;
   room2: RoomId;

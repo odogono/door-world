@@ -97,7 +97,7 @@ export function* generateDungeonGenerator(
     if (roomsGenerated % 5 === 0) {
       yield {
         ...dungeon,
-        doors: findDoors(rooms),
+        doors: findDoors(dungeon, rooms),
         maxDepth: getMaxRoomDepth(rooms),
         rooms: [...rooms],
         strategy
@@ -108,7 +108,7 @@ export function* generateDungeonGenerator(
   // Final yield with complete dungeon
   return {
     ...dungeon,
-    doors: findDoors(rooms),
+    doors: findDoors(dungeon, rooms),
     maxDepth: getMaxRoomDepth(rooms),
     rooms,
     strategy
