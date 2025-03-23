@@ -1,32 +1,52 @@
 import { createLog } from '@helpers/log';
-import { applyClippingPlanesToMesh, applyColor, isMesh } from '@helpers/three';
+import { applyClippingPlanesToScene, applyColor } from '@helpers/three';
+import { animated, useSpring } from '@react-spring/three';
 import { useGLTF } from '@react-three/drei';
-import { ThreeEvent, useFrame } from '@react-three/fiber';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Object3D, Plane as ThreePlane, Vector3, Vector3Tuple } from 'three';
+import { ThreeEvent } from '@react-three/fiber';
+import {
+  Ref,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef
+} from 'react';
+import { Plane as ThreePlane, Vector3, Vector3Tuple } from 'three';
 
 interface DoorProps {
   doorColor?: string;
   frameColor?: string;
   id: string;
+  isMounted?: boolean;
   isOpen?: boolean;
+  onTouch?: (event: ThreeEvent<MouseEvent>) => void;
   position?: Vector3;
+  ref: Ref<DoorRef>;
   rotationY?: number;
   scale?: Vector3Tuple;
 }
 
-const log = createLog('Door');
+export type DoorRef = {
+  close: () => Promise<boolean>;
+  // animate into the scene
+  enter: () => Promise<boolean>;
+  // animate out of the scene
+  exit: () => Promise<boolean>;
+  open: () => Promise<boolean>;
+  toggleOpen: () => Promise<boolean>;
+};
 
-const ROTATION_THRESHOLD = 0.01; // Threshold to determine if animation is complete
-const POSITION_THRESHOLD = 0.01; // Threshold for position animation
-const MOUNT_ANIMATION_SPEED = 8; // Controls how fast the door rises when mounting (higher = faster)
+const log = createLog('Door');
 
 export const Door = ({
   doorColor = '#83D5FF',
   frameColor = '#FFF',
   id,
+  isMounted: isMountedProp = false,
   isOpen: isOpenProp = false,
+  onTouch,
   position = new Vector3(0, 0, 0),
+  ref,
   rotationY = -Math.PI / 2,
   scale = [1, 1, 1]
 }: DoorProps) => {
@@ -34,6 +54,11 @@ export const Door = ({
 
   // clone the scene to avoid mutating the original
   const scene = useMemo(() => gltf.scene.clone(), [gltf.scene]);
+  const doorObject = useMemo(() => scene.getObjectByName('door'), [scene]);
+  const frameObject = useMemo(
+    () => scene.getObjectByName('door-frame'),
+    [scene]
+  );
 
   const localClippingPlane = useMemo(
     () => new ThreePlane(new Vector3(0, 1, 0), 0),
@@ -41,130 +66,123 @@ export const Door = ({
   );
 
   const isOpen = useRef(isOpenProp);
-  const targetRotation = useRef(isOpen.current ? Math.PI / 2 : 0);
+  const isMounted = useRef(isMountedProp);
 
-  // const [isOpen, setIsOpen] = useState(isOpenProp);
-  const doorRef = useRef<Object3D>(null);
-  const frameRef = useRef<Object3D>(null);
-  // const targetRotation = isOpen.current ? Math.PI / 2 : 0;
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isEntering, setIsEntering] = useState(true);
-  const [isExiting, setIsExiting] = useState(false);
+  const [openDoorSpring, openDoorApi] = useSpring(() => ({
+    config: { friction: 14, tension: 120 },
+    rotation: [0, isOpen.current ? Math.PI / 2 : 0, 0]
+  }));
 
-  const groupRef = useRef<Object3D>(null);
+  const [mountingSpring, mountingApi] = useSpring(() => ({
+    config: { friction: 14, tension: 120 },
+    // onChange: () => (isMounting.current = true),
+    // onRest: () => (isMounting.current = false),
+    position: [position.x, isMounted.current ? 0 : -1.1, position.z]
+  }));
+
+  const startTransitionAnimation = useCallback(
+    (enter: boolean) => {
+      return new Promise<boolean>(resolve => {
+        if (isMounted.current === enter) {
+          resolve(isMounted.current);
+          return;
+        }
+
+        const targetY = isMounted.current ? -1.1 : 0;
+
+        // isMounting.current = true;
+        mountingApi.start({
+          onRest: () => {
+            isMounted.current = enter;
+            resolve(isMounted.current);
+          },
+          position: [position.x, targetY, position.z]
+        });
+      });
+    },
+    [position, mountingApi]
+  );
 
   useEffect(() => {
-    // Find the door and frame nodes and store their references
-    const doorNode = scene.getObjectByName('door');
-    const frameNode = scene.getObjectByName('door-frame');
+    if (!isMounted.current) {
+      startTransitionAnimation(true);
+    }
+  }, [startTransitionAnimation]);
 
-    if (!doorNode || !frameNode) {
-      log.error('Door or frame node not found');
+  const startDoorAnimation = useCallback(
+    (open: boolean) => {
+      return new Promise<boolean>(resolve => {
+        if (isOpen.current === open) {
+          resolve(isOpen.current);
+          return;
+        }
+
+        const targetRotation = isOpen.current ? 0 : Math.PI / 2;
+
+        openDoorApi.start({
+          onRest: () => {
+            isOpen.current = open;
+            resolve(isOpen.current);
+          },
+          rotation: [0, targetRotation, 0]
+        });
+      });
+    },
+    [openDoorApi]
+  );
+
+  useImperativeHandle(ref, () => ({
+    close: () => startDoorAnimation(false),
+    enter: () => startTransitionAnimation(true),
+    exit: () => startTransitionAnimation(false),
+    open: () => startDoorAnimation(true),
+    toggleOpen: () => startDoorAnimation(!isOpen.current)
+  }));
+
+  useEffect(() => {
+    if (!doorObject || !frameObject) {
+      log.debug('Door or frame node not found');
       return;
     }
 
-    if (doorNode) {
-      doorRef.current = doorNode;
-      doorRef.current.rotation.y = targetRotation.current;
-      applyColor(doorNode, doorColor);
-    }
+    applyColor(doorObject, doorColor);
 
-    if (frameNode) {
-      frameRef.current = frameNode;
-      applyColor(frameNode, frameColor);
-    }
+    applyColor(frameObject, frameColor);
 
-    scene.traverse(child => {
-      if (isMesh(child)) {
-        applyClippingPlanesToMesh(child, [localClippingPlane]);
-      }
-    });
-  }, [scene, frameColor, doorColor, localClippingPlane]);
-
-  useFrame((_state, delta) => {
-    if (!doorRef.current || !groupRef.current) {
-      return;
-    }
-
-    // Handle mounting animation
-    if (isEntering) {
-      const currentY = groupRef.current.position.y;
-      const targetY = 0;
-      groupRef.current.position.y +=
-        (targetY - currentY) * delta * MOUNT_ANIMATION_SPEED;
-
-      if (
-        Math.abs(groupRef.current.position.y - targetY) < POSITION_THRESHOLD
-      ) {
-        groupRef.current.position.y = targetY;
-        setIsEntering(false);
-      }
-    }
-
-    if (isExiting) {
-      const currentY = groupRef.current.position.y;
-      const targetY = -1.1;
-      groupRef.current.position.y +=
-        (targetY - currentY) * delta * MOUNT_ANIMATION_SPEED;
-
-      if (
-        Math.abs(groupRef.current.position.y - targetY) < POSITION_THRESHOLD
-      ) {
-        groupRef.current.position.y = targetY;
-        setIsExiting(false);
-      }
-    }
-
-    // Handle door rotation animation
-    if (isAnimating) {
-      doorRef.current.rotation.y +=
-        (targetRotation.current - doorRef.current.rotation.y) * delta * 2;
-
-      // log.debug('Door rotation', {
-      //   current: doorRef.current.rotation.y,
-      //   target: targetRotation
-      // });
-      if (
-        Math.abs(doorRef.current.rotation.y - targetRotation.current) <
-        ROTATION_THRESHOLD
-      ) {
-        doorRef.current.rotation.y = targetRotation.current;
-        setIsAnimating(false);
-      }
-    }
-  });
+    applyClippingPlanesToScene(scene, [localClippingPlane]);
+  }, [
+    scene,
+    frameColor,
+    doorColor,
+    localClippingPlane,
+    doorObject,
+    frameObject
+  ]);
 
   const handleClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
       event.stopPropagation();
-      isOpen.current = !isOpen.current;
-      targetRotation.current = isOpen.current ? Math.PI / 2 : 0;
-      setIsAnimating(true);
-      log.debug('Door clicked', { id, isOpen, targetRotation });
+      onTouch?.(event);
     },
-    [isOpen, targetRotation, id]
+    [onTouch]
   );
 
-  // log.debug('Door', {
-  //   isAnimating,
-  //   isEntering,
-  //   isExiting,
-  //   isOpen: isOpen.current
-  // });
-
   return (
-    <group position={[position.x, -1.1, position.z]} ref={groupRef}>
-      <primitive
-        object={scene}
-        position={[0, 0.5, 0]}
-        rotation={[0, rotationY, 0]}
-        scale={scale}
-      />
-
+    <animated.group position={mountingSpring.position}>
+      <group position={[0, 0.5, 0]} rotation={[0, rotationY, 0]} scale={scale}>
+        {frameObject && <primitive dispose={null} object={frameObject} />}
+        {doorObject && (
+          <animated.primitive
+            dispose={null}
+            object={doorObject}
+            rotation={openDoorSpring.rotation}
+          />
+        )}
+      </group>
       <mesh onClick={handleClick} position={[0, 0.5, 0]} visible={false}>
         <boxGeometry args={[0.8, 1, 0.4]} />
       </mesh>
-    </group>
+    </animated.group>
   );
 };
 
