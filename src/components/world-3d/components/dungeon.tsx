@@ -9,8 +9,9 @@ import {
   getRoomDoors,
   Room
 } from '@model/dungeon';
+import { Position } from '@model/dungeon/types';
 import { useCallback, useRef } from 'react';
-import { Vector3 } from 'three';
+import { Vector3, Vector3Tuple } from 'three';
 import { Door as Door3d, DoorRef } from './door';
 import { Room as Room3d, RoomRef } from './room';
 
@@ -19,11 +20,12 @@ const log = createLog('Dungeon');
 type DungeonProps = {
   currentRoom: Room | null | undefined;
   dungeon: DungeonData | null;
+  moveCameraTo: (pos: Vector3 | Vector3Tuple, zoom?: number) => Promise<void>;
 };
 
 const SCALE = 0.06;
 
-export const Dungeon = () => {
+export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
   const { currentRoom, dungeon } = useDungeonCurrentRoom();
   const openDoor = useDungeonOpenDoorAtom();
   // const [_isPending, startTransition] = useTransition();
@@ -50,14 +52,18 @@ export const Dungeon = () => {
         return;
       }
 
-      // Start the transition sequence
-      // async () => {
-      // 1. Open the door
-      await openDoor({
-        action: doorRef.setOpen,
-        doorId: door.id,
-        open: true
-      });
+      await Promise.all([
+        // Start the transition sequence
+        // async () => {
+        // 1. Open the door
+        openDoor({
+          action: doorRef.setOpen,
+          doorId: door.id,
+          open: true
+        }),
+
+        moveCameraTo(dungeonPositionToVector3(door.position))
+      ]);
 
       // 2. Exit the current room
       // await currentRoomRef.exit();
@@ -72,7 +78,7 @@ export const Dungeon = () => {
       // Use React 19's use hook to handle the promise
       // use(transition());
     },
-    [openDoor]
+    [openDoor, moveCameraTo]
   );
 
   if (!dungeon) {
@@ -94,6 +100,9 @@ export const Dungeon = () => {
             if (ref) {
               roomRefs.current.set(room.id, ref);
             }
+            return () => {
+              roomRefs.current.delete(room.id);
+            };
           }}
           room={room}
         />
@@ -105,8 +114,13 @@ export const Dungeon = () => {
           onTouch={handleDoorTouch}
           ref={(ref: DoorRef | null) => {
             if (ref) {
+              log.debug('Mounting door', door.id);
               doorRefs.current.set(door.id, ref);
             }
+            return () => {
+              log.debug('Unmounting door', door.id);
+              doorRefs.current.delete(door.id);
+            };
           }}
         />
       ))}
@@ -120,16 +134,29 @@ type DoorContainerProps = {
   ref: React.Ref<DoorRef>;
 };
 
+const dungeonPositionToVector3 = (position: Position): Vector3 => {
+  const result = new Vector3(position.x, 0, position.y);
+
+  result.multiplyScalar(SCALE);
+
+  return result;
+};
+
 const DOOR_SIZE = 4;
 const DoorContainer = ({ door, onTouch, ref }: DoorContainerProps) => {
   const { position, room1, room2 } = door;
 
-  const position3d = new Vector3(
-    position.x + DOOR_SIZE,
-    0,
-    position.y + DOOR_SIZE
-  );
-  position3d.multiplyScalar(SCALE);
+  const position3d = dungeonPositionToVector3({
+    x: position.x + DOOR_SIZE,
+    y: position.y + DOOR_SIZE
+  });
+
+  // const position3d = new Vector3(
+  //   position.x + DOOR_SIZE,
+  //   0,
+  //   position.y + DOOR_SIZE
+  // );
+  // position3d.multiplyScalar(SCALE);
   const rotationY = getDoorRotationY(door);
 
   const handleTouch = useCallback(() => {

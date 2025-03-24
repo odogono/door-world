@@ -10,8 +10,8 @@ import { createLog } from '@helpers/log';
 import { vector3ToTuple } from '@helpers/three';
 import { Grid } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { useRef, useState } from 'react';
-import { Vector3 } from 'three';
+import { useCallback, useRef, useState } from 'react';
+import { Vector3, Vector3Tuple } from 'three';
 import { MiniMap } from '../world-2d/components/mini-map';
 import { ClickMarker, ClickPlane } from './components/click-plane';
 import { Dungeon } from './components/dungeon';
@@ -36,6 +36,16 @@ export const World3D = () => {
     log.debug('Moved to', pos);
   };
 
+  const handleMoveCameraTo = useCallback(
+    async (pos: Vector3 | Vector3Tuple, zoom?: number) => {
+      await cameraRef.current?.moveTo({
+        position: pos,
+        zoom
+      });
+    },
+    []
+  );
+
   return (
     <div className="w-full h-full">
       <Canvas gl={{ localClippingEnabled: true }}>
@@ -46,7 +56,7 @@ export const World3D = () => {
         />
 
         {/* <XYZAxis /> */}
-        <Dungeon />
+        <Dungeon moveCameraTo={handleMoveCameraTo} />
         {/* <Door position={[0, 0, 4]} /> */}
         {/* <Door doorColor="#00f900" isOpen position={[-4, 0, 0]} rotationY={0} /> */}
         {/* <Door doorColor="#7F42FF" position={[0, 0, -4]} /> */}

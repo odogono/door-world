@@ -55,3 +55,13 @@ export type StrategyType = 'random' | 'growth' | 'type' | 'branch' | 'simple';
 export type CompassDirection = 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';
 
 export type DoorDirection = 'NORTH_SOUTH' | 'EAST_WEST';
+
+export const isPosition = (value: unknown): value is Position => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !('z' in value) &&
+    'x' in value &&
+    'y' in value
+  );
+};
