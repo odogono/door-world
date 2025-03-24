@@ -6,7 +6,7 @@ import { Position } from '@model/dungeon/types';
 import { useCallback, useRef } from 'react';
 import { Vector3, Vector3Tuple } from 'three';
 import { Door as Door3d, DoorRef } from './door';
-import { Room as Room3d, RoomRef } from './room';
+import { Room as Room3d, RoomRef, RoomTouchEvent } from './room';
 
 const log = createLog('Dungeon');
 
@@ -70,6 +70,14 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
     [moveToRoom, moveCameraTo]
   );
 
+  const handleRoomTouch = useCallback(
+    (event: RoomTouchEvent) => {
+      log.debug('Room clicked', event.room.id, event.world);
+      moveCameraTo(event.world);
+    },
+    [moveCameraTo]
+  );
+
   // const rooms = [currentRoom!];
   // const doors = getRoomDoors(dungeon, currentRoom);
 
@@ -86,6 +94,7 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
       {rooms.map(room => (
         <Room3d
           key={room.id}
+          onTouch={handleRoomTouch}
           ref={(ref: RoomRef | null) => {
             if (ref) {
               roomRefs.current.set(room.id, ref);
