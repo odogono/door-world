@@ -19,7 +19,9 @@ interface DoorProps {
   id: string;
   isMounted?: boolean;
   isOpen?: boolean;
+  mountDuration?: number;
   onTouch?: (event: ThreeEvent<MouseEvent>) => void;
+  openDuration?: number;
   position: Vector3;
   ref: Ref<DoorRef>;
   rotationY?: number;
@@ -29,12 +31,12 @@ interface DoorProps {
 export type DoorRef = {
   close: () => Promise<boolean>;
   // animate into the scene
-  enter: () => Promise<boolean>;
+  mount: () => Promise<boolean>;
   // animate out of the scene
-  exit: () => Promise<boolean>;
   open: () => Promise<boolean>;
   setOpen: (open: boolean) => Promise<boolean>;
   toggleOpen: () => Promise<boolean>;
+  unmount: () => Promise<boolean>;
 };
 
 const log = createLog('Door');
@@ -45,7 +47,9 @@ export const Door = ({
   id,
   isMounted: isMountedProp = false,
   isOpen: isOpenProp = false,
+  mountDuration = 500,
   onTouch,
+  openDuration = 750,
   position = new Vector3(0, 0, 0),
   ref,
   rotationY = -Math.PI / 2,
@@ -91,7 +95,7 @@ export const Door = ({
 
         // isMounting.current = true;
         mountingApi.start({
-          config: { duration: 500, easing: easings.easeInOutSine },
+          config: { duration: mountDuration, easing: easings.easeInOutSine },
           onRest: () => {
             isMounted.current = enter;
             resolve(isMounted.current);
@@ -100,7 +104,7 @@ export const Door = ({
         });
       });
     },
-    [position, mountingApi]
+    [mountDuration, position, mountingApi]
   );
 
   useEffect(() => {
@@ -120,7 +124,7 @@ export const Door = ({
         const targetRotation = isOpen.current ? 0 : Math.PI / 2;
 
         openDoorApi.start({
-          config: { duration: 750, easing: easings.easeInOutSine },
+          config: { duration: openDuration, easing: easings.easeInOutSine },
           onRest: () => {
             isOpen.current = open;
             resolve(isOpen.current);
@@ -129,16 +133,16 @@ export const Door = ({
         });
       });
     },
-    [openDoorApi]
+    [openDuration, openDoorApi]
   );
 
   useImperativeHandle(ref, () => ({
     close: () => startDoorAnimation(false),
-    enter: () => startTransitionAnimation(true),
-    exit: () => startTransitionAnimation(false),
+    mount: () => startTransitionAnimation(true),
     open: () => startDoorAnimation(true),
     setOpen: (isOpen: boolean) => startDoorAnimation(isOpen),
-    toggleOpen: () => startDoorAnimation(!isOpen.current)
+    toggleOpen: () => startDoorAnimation(!isOpen.current),
+    unmount: () => startTransitionAnimation(false)
   }));
 
   useEffect(() => {

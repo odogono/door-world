@@ -12,11 +12,12 @@ import {
 } from 'react';
 
 export type RoomRef = {
-  enter: () => Promise<boolean>;
-  exit: () => Promise<boolean>;
+  mount: () => Promise<boolean>;
+  unmount: () => Promise<boolean>;
 };
 
 type RoomProps = {
+  mountDuration?: number;
   ref?: Ref<RoomRef>;
   renderOrder?: number;
   room?: RoomType;
@@ -24,7 +25,12 @@ type RoomProps = {
 
 const SCALE = 0.06;
 
-export const Room = ({ ref, renderOrder, room }: RoomProps) => {
+export const Room = ({
+  mountDuration = 500,
+  ref,
+  renderOrder,
+  room
+}: RoomProps) => {
   const { dungeon } = useDungeon();
   const isMounted = useRef(false);
   const [springs, api] = useSpring(() => ({
@@ -42,7 +48,7 @@ export const Room = ({ ref, renderOrder, room }: RoomProps) => {
         }
 
         api.start({
-          config: { duration: 1000, easing: easings.easeInOutSine },
+          config: { duration: mountDuration, easing: easings.easeInOutSine },
           onRest: () => {
             isMounted.current = enter;
             resolve(isMounted.current);
@@ -51,12 +57,12 @@ export const Room = ({ ref, renderOrder, room }: RoomProps) => {
         });
       });
     },
-    [api, isMounted]
+    [api, isMounted, mountDuration]
   );
 
   useImperativeHandle(ref, () => ({
-    enter: () => startTransitionAnimation(true),
-    exit: () => startTransitionAnimation(false)
+    mount: () => startTransitionAnimation(true),
+    unmount: () => startTransitionAnimation(false)
   }));
 
   useEffect(() => {
