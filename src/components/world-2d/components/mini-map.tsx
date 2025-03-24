@@ -1,3 +1,4 @@
+import { useDungeonJourney } from '@contexts/dungeon/hooks/use-dungeon-journey';
 import { useTheme } from '@contexts/theme/context';
 import { DungeonData } from '@model/dungeon';
 import { useEffect, useRef } from 'react';
@@ -11,6 +12,7 @@ type MiniMapProps = {
 export const MiniMap = ({ dungeon, size = 200 }: MiniMapProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { theme } = useTheme();
+  const { currentRoomId } = useDungeonJourney();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -66,6 +68,7 @@ export const MiniMap = ({ dungeon, size = 200 }: MiniMapProps) => {
 
     // Render the dungeon with the calculated offset
     renderDungeon(canvas, dungeon, viewportOffset, {
+      highlightRoomId: currentRoomId,
       showConnections: false,
       showDoors: false,
       showLegend: false,
@@ -75,7 +78,7 @@ export const MiniMap = ({ dungeon, size = 200 }: MiniMapProps) => {
 
     // Restore the context state
     ctx.restore();
-  }, [dungeon, size, theme]);
+  }, [dungeon, size, theme, currentRoomId]);
 
   return (
     <canvas
