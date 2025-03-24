@@ -12,6 +12,7 @@ import {
   Vector3,
   Vector3Tuple
 } from 'three';
+import { isPosition } from '../model/dungeon/types';
 
 type GLTF = ReturnType<typeof useGLTF>;
 
@@ -77,6 +78,25 @@ export const applyClippingPlanesToMesh = (
     m.needsUpdate = true;
     mesh.material = m;
   }
+};
+
+export const toTuple = (vector3: Vector3 | Vector3Tuple): Vector3Tuple => {
+  if (Array.isArray(vector3)) {
+    return vector3;
+  }
+  return [vector3.x, vector3.y, vector3.z];
+};
+
+export const toVector3 = (
+  tuple: Vector3Tuple | Vector3 | Position
+): Vector3 => {
+  if (isPosition(tuple)) {
+    return new Vector3(tuple.x, 0, tuple.y);
+  }
+  if (Array.isArray(tuple)) {
+    return new Vector3(tuple[0], tuple[1], tuple[2]);
+  }
+  return tuple as unknown as Vector3;
 };
 
 export const vector3ToTuple = (vector3: Vector3): Vector3Tuple => {

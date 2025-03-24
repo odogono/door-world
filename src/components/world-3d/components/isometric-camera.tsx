@@ -1,11 +1,12 @@
 import { createLog } from '@helpers/log';
-import { tupleToVector3 } from '@helpers/three';
+import { toTuple, tupleToVector3 } from '@helpers/three';
 import { animated, SpringConfig, useSpring } from '@react-spring/three';
 import { OrthographicCamera } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { Ref, useEffect, useImperativeHandle, useRef } from 'react';
 import {
   OrthographicCamera as OrthographicCameraImpl,
+  Vector3,
   Vector3Tuple
 } from 'three';
 
@@ -33,7 +34,7 @@ type AnimationProps = {
 export type IsometricCameraRef = {
   moveTo: (props: {
     config?: SpringConfig;
-    position?: Vector3Tuple;
+    position?: Vector3 | Vector3Tuple;
     zoom?: number;
   }) => Promise<void>;
 };
@@ -142,7 +143,7 @@ export const IsometricCamera = ({
 };
 
 const calculateIsometricPosition = (
-  targetPosition: Vector3Tuple
+  targetPosition: Vector3Tuple | Vector3
 ): Vector3Tuple => {
   // Calculate isometric position relative to target
   // For isometric view, we need equal angles (120 degrees) between all axes
@@ -165,11 +166,9 @@ const calculateIsometricPosition = (
   //   DISTANCE * Math.sin(ISO_ANGLE)
   // );
 
-  return [
-    targetPosition[0] + offsetX,
-    targetPosition[1] + offsetY,
-    targetPosition[2] + offsetZ
-  ];
+  const pos = toTuple(targetPosition);
+
+  return [pos[0] + offsetX, pos[1] + offsetY, pos[2] + offsetZ];
 };
 
 // // You can also create a utility hook for more complex camera sequences:
