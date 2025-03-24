@@ -7,10 +7,11 @@ import {
   getRoomCenter,
   Room
 } from '@model/dungeon';
-import { Position } from '@model/dungeon/types';
+import { Position, RoomId } from '@model/dungeon/types';
 
 type RenderDungeonOptions = {
   generationProgress?: number;
+  highlightRoomId?: RoomId;
   isGenerating?: boolean;
   showConnections?: boolean;
   showDoors?: boolean;
@@ -52,7 +53,7 @@ export const renderDungeon = (
   ctx.translate(viewportOffset.x, viewportOffset.y);
 
   if (showRooms) {
-    renderRooms(ctx, dungeon, null);
+    renderRooms(ctx, dungeon, options);
   }
   if (showDoors) {
     renderDoors(ctx, dungeon);
@@ -90,12 +91,18 @@ export const renderDungeon = (
 export const renderRooms = (
   ctx: CanvasRenderingContext2D,
   dungeon: DungeonData,
-  highlightedRoom: Room | null
+  options: RenderDungeonOptions
 ) => {
+  const { highlightRoomId } = options;
   const colourIncrement = 1 / (dungeon.maxDepth || 1);
 
   dungeon.rooms.forEach(room => {
-    renderRoom({ colourIncrement, ctx, highlightedRoom, room });
+    renderRoom({
+      colourIncrement,
+      ctx,
+      isHighlighted: room.id === highlightRoomId,
+      room
+    });
   });
 };
 
@@ -119,6 +126,9 @@ export const renderConnections = (
   dungeon.doors.forEach(door => {
     const center1 = getRoomCenter(dungeon, door.room1);
     const center2 = getRoomCenter(dungeon, door.room2);
+    if (!center1 || !center2) {
+      return;
+    }
     ctx.beginPath();
     ctx.moveTo(center1.x, center1.y);
     ctx.lineTo(center2.x, center2.y);
@@ -129,14 +139,14 @@ export const renderConnections = (
 type RenderRoomProps = {
   colourIncrement: number;
   ctx: CanvasRenderingContext2D;
-  highlightedRoom: Room | null;
+  isHighlighted?: boolean;
   room: Room;
 };
 
 export const renderRoom = ({
   colourIncrement,
   ctx,
-  highlightedRoom,
+  isHighlighted = false,
   room
 }: RenderRoomProps) => {
   if (room.isCentral) {
@@ -148,13 +158,13 @@ export const renderRoom = ({
   }
   ctx.fillRect(room.area.x, room.area.y, room.area.width, room.area.height);
 
-  if (room === highlightedRoom) {
+  if (isHighlighted) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.fillRect(room.area.x, room.area.y, room.area.width, room.area.height);
   }
 
-  ctx.strokeStyle = room === highlightedRoom ? '#ffffff' : '#AAA';
-  ctx.lineWidth = room === highlightedRoom ? 2 : 1;
+  ctx.strokeStyle = isHighlighted ? '#ffffff' : '#AAA';
+  ctx.lineWidth = isHighlighted ? 2 : 1;
   ctx.strokeRect(room.area.x, room.area.y, room.area.width, room.area.height);
 
   ctx.fillStyle = '#ffffff';

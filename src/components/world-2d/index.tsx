@@ -1,3 +1,4 @@
+import { useDungeonJourney } from '@contexts/dungeon/hooks/use-dungeon-journey';
 import { useDungeon } from '@contexts/dungeon/use-dungeon';
 import { useTheme } from '@contexts/theme/context';
 import { createLog } from '@helpers/log';
@@ -21,6 +22,7 @@ export const World2D = () => {
     seed,
     setSeed
   } = useDungeon();
+  const { currentRoomId } = useDungeonJourney();
 
   const [selectedStrategy, setSelectedStrategy] =
     useState<StrategyType>('random');
@@ -82,6 +84,7 @@ export const World2D = () => {
   // Draw dungeon
   useEffect(() => {
     renderDungeon(canvasRef.current, dungeon, viewportOffset, {
+      highlightRoomId: currentRoomId,
       showConnections,
       showDoors,
       showRooms,
@@ -89,15 +92,16 @@ export const World2D = () => {
     });
   }, [
     canvasSize,
+    currentRoomId,
     dungeon,
-    showConnections,
-    showRooms,
-    showDoors,
-    viewportOffset,
     highlightedRoom,
     isGenerating,
     generationProgress,
-    theme
+    showConnections,
+    showDoors,
+    showRooms,
+    theme,
+    viewportOffset
   ]);
 
   const regenerateDungeon = useCallback(async () => {
