@@ -45,6 +45,17 @@ export const applyClippingPlanesToScene = (
   });
 };
 
+export const applyClippingPlanesToObject = (
+  object: Object3D,
+  clippingPlanes: Plane[]
+) => {
+  object.traverse(child => {
+    if (isMesh(child)) {
+      applyClippingPlanesToMesh(child, clippingPlanes);
+    }
+  });
+};
+
 export const applyClippingPlanesToMesh = (
   mesh: Mesh,
   clippingPlanes: Plane[]

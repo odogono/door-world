@@ -38,3 +38,16 @@ export const getDungeonDoorById = (
 
   return dungeon.doors.find(door => door.id === id);
 };
+
+export const updateDungeonDoorState = (
+  dungeon: DungeonData,
+  doorId: string,
+  isOpen: boolean
+): DungeonData => {
+  return {
+    ...dungeon,
+    doors: dungeon.doors.map(door =>
+      door.id === doorId ? { ...door, isOpen } : door
+    )
+  };
+};

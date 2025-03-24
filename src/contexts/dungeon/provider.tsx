@@ -1,13 +1,11 @@
 import { createLog } from '@helpers/log';
 import { generateDungeon } from '@model/dungeon';
 import { generateRoomsAround as generateRoomsAroundHelper } from '@model/dungeon/generateRoomsAround';
-import { StrategyType } from '@model/dungeon/types';
 import { useCallback, useEffect, useState } from 'react';
 import { useDungeonAtom, useDungeonSeed } from './atoms';
 import { DungeonContext } from './context';
 import type {
   GenerateRoomsAroundProps,
-  GenerateRoomsOptions,
   RegenerateDungeonOptions
 } from './types';
 
@@ -66,34 +64,6 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
     [setDungeon]
   );
 
-  const generateRooms = useCallback(
-    async (options: GenerateRoomsOptions) => {
-      if (!dungeon) {
-        throw new Error('No dungeon exists. Call regenerate first.');
-      }
-
-      const {
-        roomCount = 10,
-        maxAttempts = roomCount * 2,
-        onProgress
-      } = options;
-
-      const result = await generateDungeon({
-        dungeon,
-        maxAttempts,
-        maxRooms: dungeon.rooms.length + roomCount,
-        onProgress,
-        seed: dungeon.seed,
-        strategy:
-          (dungeon.strategy?.constructor.name.toLowerCase() as StrategyType) ??
-          'random'
-      });
-
-      setDungeon(result);
-    },
-    [dungeon, setDungeon]
-  );
-
   const generateRoomsAround = useCallback(
     async ({ recurseCount = 1, room, roomCount }: GenerateRoomsAroundProps) => {
       if (!dungeon) {
@@ -128,7 +98,6 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
     <DungeonContext.Provider
       value={{
         dungeon,
-        generateRooms,
         generateRoomsAround,
         generationProgress,
         isGenerating: generationProgress < 100,
