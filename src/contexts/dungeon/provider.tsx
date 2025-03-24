@@ -18,6 +18,7 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
   const { dungeon, setDungeon } = useDungeonAtom();
   // const [dungeon, setDungeon] = useState<DungeonData | null>(null);
   const [generationProgress, setGenerationProgress] = useState(100);
+  // const setCurrentRoomId = useSetAtom(dungeonCurrentRoomAtom);
 
   const { seed, setSeed } = useDungeonSeed();
 
@@ -55,6 +56,7 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setGenerationProgress(100);
       setDungeon(result);
+      // setCurrentRoomId(result.rooms[0].id);
 
       log.debug('Dungeon regenerated', {
         dungeon: result,
@@ -83,12 +85,14 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   useEffect(() => {
-    regenerate({
-      maxRooms: 5,
-      seed,
-      strategy: 'random'
-    });
-  }, [regenerate, seed]);
+    if (!dungeon) {
+      regenerate({
+        maxRooms: 500,
+        seed: seed || Math.floor(Math.random() * 1_000_000),
+        strategy: 'random'
+      });
+    }
+  }, [dungeon, regenerate, seed]);
 
   // log.debug('Dungeon generated', {
   //   progress: generationProgress,
