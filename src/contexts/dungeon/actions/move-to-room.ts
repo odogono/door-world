@@ -1,3 +1,4 @@
+import { createLog } from '@helpers/log';
 import { getRoomDoors, getRoomDoorsExcluding } from '@model/dungeon/door';
 import {
   getDungeonConnectingRoom,
@@ -9,6 +10,8 @@ import { Position } from '@model/dungeon/types';
 import { atom } from 'jotai';
 import { dungeonAtom, dungeonCurrentRoomAtom } from '../atoms';
 import { setDungeonVisibleAtom } from './set-visible';
+
+const log = createLog('moveToRoomAtom');
 
 type MoveToRoomProps = {
   doorAction: (doorId: string, open: boolean) => Promise<boolean>;
@@ -27,18 +30,21 @@ export const moveToRoomAtom = atom(
     const door = getDungeonDoorById(get(dungeonAtom), props.doorId);
 
     if (!door) {
+      log.error('Door not found', { doorId });
       return;
     }
 
     // TODO determine whether the door can be opened
 
     // 1. open the door and move the camera to the door
+    log.debug('Opening door', { doorId });
     await Promise.all([
       doorAction(doorId, true),
       moveCameraAction(door.position)
     ]);
 
     // 2. update the door status
+    log.debug('Updating door status', { doorId });
     set(dungeonAtom, dungeon => updateDungeonDoorState(dungeon, doorId, true));
 
     // get the next room
@@ -49,6 +55,7 @@ export const moveToRoomAtom = atom(
     );
 
     if (!nextRoom) {
+      log.error('Next room not found', { doorId });
       throw new Error('Next room not found');
     }
 
@@ -59,15 +66,18 @@ export const moveToRoomAtom = atom(
     });
 
     // 3. Enter the target room
+    log.debug('Moving camera to room', { roomId: nextRoom.id });
     await moveCameraAction(getRoomCenter(get(dungeonAtom), nextRoom));
     set(dungeonCurrentRoomAtom, nextRoom.id);
 
     // 4. close the door
+    log.debug('Closing door', { doorId });
     await doorAction(doorId, false);
     set(dungeonAtom, dungeon => updateDungeonDoorState(dungeon, doorId, false));
 
     // 5. unmount the current room
     // get the doors which exist in the current room, but not in the nextRoom
+    log.debug('Unmounting room', { roomId: currentRoomId });
     const unmountDoorIds = getRoomDoorsExcluding(
       get(dungeonAtom),
       currentRoomId,
@@ -81,5 +91,7 @@ export const moveToRoomAtom = atom(
       doors: getRoomDoors(get(dungeonAtom), nextRoom),
       rooms: [nextRoom]
     });
+
+    log.debug('Moved to room', { roomId: nextRoom.id });
   }
 );
