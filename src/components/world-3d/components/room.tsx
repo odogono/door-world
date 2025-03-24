@@ -1,38 +1,65 @@
 import { useDungeon } from '@contexts/dungeon/use-dungeon';
 import { darkenColor } from '@helpers/colour';
-import { Room as RoomType } from '@model/dungeon';
+import { Room as RoomModel } from '@model/dungeon';
 import { animated, easings, useSpring } from '@react-spring/three';
 import { Plane } from '@react-three/drei';
+import { ThreeEvent } from '@react-three/fiber';
 import {
   Ref,
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef
 } from 'react';
+import { Vector3 } from 'three';
 
 export type RoomRef = {
   mount: () => Promise<boolean>;
   unmount: () => Promise<boolean>;
 };
 
+export type RoomTouchEvent = {
+  local: Vector3;
+  room: RoomModel;
+  world: Vector3;
+};
+
 type RoomProps = {
   mountDuration?: number;
+  onTouch?: (event: RoomTouchEvent) => void;
   ref?: Ref<RoomRef>;
   renderOrder?: number;
-  room?: RoomType;
+  room?: RoomModel;
 };
 
 const SCALE = 0.06;
 
 export const Room = ({
   mountDuration = 500,
+  onTouch,
   ref,
   renderOrder,
   room
 }: RoomProps) => {
   const { dungeon } = useDungeon();
   const isMounted = useRef(false);
+
+  const position = useMemo(() => {
+    if (!room) {
+      return null;
+    }
+    const { height, width, x, y } = room.area;
+
+    return new Vector3(
+      x * SCALE + (width * SCALE) / 2,
+      -0.001,
+      y * SCALE + (height * SCALE) / 2
+    );
+
+    // return new Vector3(room.area.x, 0, room.area.y);
+  }, [room]);
+
   const [springs, api] = useSpring(() => ({
     // config: { duration: 8000 },
 
@@ -71,7 +98,18 @@ export const Room = ({
     }
   }, [startTransitionAnimation]);
 
-  if (!room) {
+  const handleTouch = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+
+    const local = new Vector3(event.point.x, 0, event.point.z);
+    const world = local; // local.add(position!);
+
+    if (onTouch) {
+      onTouch({ local, room: room!, world });
+    }
+  };
+
+  if (!room || !position) {
     return null;
   }
 
@@ -89,11 +127,8 @@ export const Room = ({
     <group>
       <Plane
         args={[width * SCALE, height * SCALE]}
-        position={[
-          area.x * SCALE + (width * SCALE) / 2,
-          -0.001,
-          area.y * SCALE + (height * SCALE) / 2
-        ]}
+        onClick={handleTouch}
+        position={position}
         renderOrder={renderOrder}
         rotation={[-Math.PI / 2, 0, 0]}
       >
