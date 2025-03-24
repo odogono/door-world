@@ -1,23 +1,24 @@
 import { useDungeonJourney } from '@contexts/dungeon/hooks/use-dungeon-journey';
 import { createLog } from '@helpers/log';
-import { useRenderingTrace } from '@helpers/use-rendering-trace';
-import { Door as DoorModel } from '@model/dungeon';
+import { Door as DoorModel, getRoomCenter } from '@model/dungeon';
 import { Position } from '@model/dungeon/types';
-import { useCallback, useRef } from 'react';
-import { Vector3, Vector3Tuple } from 'three';
+import { useCallback, useEffect, useRef } from 'react';
+import { Vector3 } from 'three';
 import { Door as Door3d, DoorRef } from './door';
+import { IsometricCameraMoveToProps } from './isometric-camera';
 import { Room as Room3d, RoomRef, RoomTouchEvent } from './room';
 
 const log = createLog('Dungeon');
 
 type DungeonProps = {
-  moveCameraTo: (pos: Vector3 | Vector3Tuple, zoom?: number) => Promise<void>;
+  moveCameraTo: (props: IsometricCameraMoveToProps) => Promise<void>;
 };
 
 const SCALE = 0.06;
 
 export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
-  const { doors, moveToRoom, rooms } = useDungeonJourney();
+  const { currentRoom, doors, dungeon, moveToRoom, rooms } =
+    useDungeonJourney();
   const isMoving = useRef(false);
 
   // Store refs for all doors and rooms
@@ -37,6 +38,7 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
       }
 
       if (isMoving.current) {
+        log.debug('Already moving');
         return;
       }
 
@@ -47,16 +49,21 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
           const doorRef = doorRefs.current.get(doorId);
 
           if (!doorRef) {
+            log.error('Missing refs for door transition', { doorId });
             return false;
           }
 
+          // log.debug('Setting door open', { doorId, open });
           await doorRef.setOpen(open);
 
+          // log.debug('Door set open', { doorId, open });
           return true;
         },
         doorId: door.id,
         moveCameraAction: (position: Position | null) =>
-          moveCameraTo(dungeonPositionToVector3(position)!),
+          moveCameraTo({
+            position: dungeonPositionToVector3(position)!
+          }),
         unmountRoomAction: (roomId: number, doorIds: string[]) => {
           const roomRef = roomRefs.current.get(roomId);
 
@@ -72,6 +79,7 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
           ]).then(() => true);
         }
       });
+      log.debug('Moved to room', { roomId: door.id });
 
       isMoving.current = false;
     },
@@ -81,7 +89,9 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
   const handleRoomTouch = useCallback(
     (event: RoomTouchEvent) => {
       log.debug('Room clicked', event.room.id, event.world);
-      moveCameraTo(event.world);
+      moveCameraTo({
+        position: event.world
+      });
     },
     [moveCameraTo]
   );
@@ -90,12 +100,27 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
   // const doors = getRoomDoors(dungeon, currentRoom);
 
   // log.debug('render');
-  useRenderingTrace('Dungeon', {
-    doors,
-    rooms
-  });
+  // useRenderingTrace('Dungeon', {
+  //   doors,
+  //   rooms
+  // });
 
   // log.debug('currentRoom', currentRoom);
+
+  useEffect(() => {
+    if (!currentRoom) {
+      return;
+    }
+    const roomPosition = getRoomCenter(dungeon, currentRoom.id);
+
+    moveCameraTo({
+      duration: 0,
+      position: dungeonPositionToVector3(roomPosition)!
+    });
+
+    log.debug('currentRoom', currentRoom?.id, roomPosition);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRoom?.id]);
 
   return (
     <>
