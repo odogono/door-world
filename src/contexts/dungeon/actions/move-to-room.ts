@@ -11,7 +11,7 @@ import { atom } from 'jotai';
 import { dungeonAtom, dungeonCurrentRoomAtom } from '../atoms';
 import { setDungeonVisibleAtom } from './set-visible';
 
-const log = createLog('moveToRoomAtom');
+const log = createLog('moveToRoomAtom', ['debug']);
 
 type MoveToRoomProps = {
   doorAction: (doorId: string, open: boolean) => Promise<boolean>;

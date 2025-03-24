@@ -158,12 +158,12 @@ export const renderRoom = ({
   }
   ctx.fillRect(room.area.x, room.area.y, room.area.width, room.area.height);
 
-  if (isHighlighted) {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.fillRect(room.area.x, room.area.y, room.area.width, room.area.height);
-  }
+  // if (isHighlighted) {
+  //   ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+  //   ctx.fillRect(room.area.x, room.area.y, room.area.width, room.area.height);
+  // }
 
-  ctx.strokeStyle = isHighlighted ? '#ffffff' : '#AAA';
+  ctx.strokeStyle = isHighlighted ? '#f00' : '#AAA';
   ctx.lineWidth = isHighlighted ? 2 : 1;
   ctx.strokeRect(room.area.x, room.area.y, room.area.width, room.area.height);
 
