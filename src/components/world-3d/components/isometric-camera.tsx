@@ -1,6 +1,6 @@
 import { createLog } from '@helpers/log';
 import { toTuple, tupleToVector3 } from '@helpers/three';
-import { animated, SpringConfig, useSpring } from '@react-spring/three';
+import { animated, useSpring } from '@react-spring/three';
 import { OrthographicCamera } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { Ref, useEffect, useImperativeHandle, useRef } from 'react';
@@ -31,12 +31,14 @@ type AnimationProps = {
   zoom?: number;
 };
 
+export type IsometricCameraMoveToProps = {
+  duration?: number;
+  position?: Vector3 | Vector3Tuple;
+  zoom?: number;
+};
+
 export type IsometricCameraRef = {
-  moveTo: (props: {
-    config?: SpringConfig;
-    position?: Vector3 | Vector3Tuple;
-    zoom?: number;
-  }) => Promise<void>;
+  moveTo: (props: IsometricCameraMoveToProps) => Promise<void>;
 };
 
 export const IsometricCamera = ({
@@ -78,9 +80,9 @@ export const IsometricCamera = ({
   });
 
   useImperativeHandle(ref, () => ({
-    moveTo: ({ config = {}, position, zoom }): Promise<void> => {
+    moveTo: ({ duration = -1, position, zoom }): Promise<void> => {
       return new Promise(resolve => {
-        log.debug('Moving to', { position, zoom });
+        // log.debug('Moving to', { position, zoom });
         // moveToResolveRef.current = resolve;
 
         const animationProps: AnimationProps = {};
@@ -94,22 +96,25 @@ export const IsometricCamera = ({
           animationProps.zoom = zoom;
         }
 
+        const config =
+          duration !== -1
+            ? { duration }
+            : {
+                friction: SPRING_FRICTION,
+                precision: SPRING_PRECISION,
+                tension: SPRING_TENSION
+              };
+
         api.start({
           ...animationProps,
-          config: {
-            // duration: config.duration ?? 1000,
-            friction: config.friction ?? SPRING_FRICTION,
-            // mass: config.mass ?? 1,
-            precision: config.precision ?? SPRING_PRECISION,
-            tension: config.tension ?? SPRING_TENSION
-          },
+          config,
           onChange: () => {
             isAnimating.current = true;
           },
           onRest: () => {
             isAnimating.current = false;
             resolve();
-            log.debug('Moved to', { position, zoom: springs.zoom.get() });
+            // log.debug('Moved to', { position, zoom: springs.zoom.get() });
           }
         });
       });
