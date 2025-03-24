@@ -39,8 +39,10 @@ export const useMounted = ({
             return;
           }
 
+          const duration = enter ? mountDuration : mountDuration / 2;
+
           api.start({
-            config: { duration: mountDuration, easing: easings.easeInOutSine },
+            config: { duration, easing: easings.easeInOutSine },
             onRest: async () => {
               isMounted.current = enter;
 
