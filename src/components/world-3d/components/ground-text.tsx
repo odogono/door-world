@@ -1,23 +1,35 @@
+import { animated } from '@react-spring/three';
 import { Text } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { MeshStandardMaterial, Vector3, Vector3Tuple } from 'three';
+import { Ref, Suspense, useMemo } from 'react';
+import { Vector3, Vector3Tuple } from 'three';
+import { useMounted } from './hooks/useMounted';
+import { EntityRef } from './types';
+
+export type GroundTextRef = EntityRef;
 
 interface GroundTextProps {
-  font?: string;
   // Path to the font file relative to the public directory
+  font?: string;
+  mountDuration?: number;
   onEnterSpeed?: number;
   position: Vector3 | Vector3Tuple;
+  ref?: Ref<GroundTextRef>;
   text: string;
 }
 
 // GroundText component to display text aligned with the ground
 export const GroundText = ({
   font = '/fonts/Nohemi-Bold-BF6438cc587b5b5.ttf',
-  onEnterSpeed = 0.08,
+  mountDuration = 500,
   position,
+  ref,
   text
 }: GroundTextProps) => {
+  const { springs } = useMounted({
+    mountDuration,
+    ref
+  });
+
   const pos = useMemo(
     () =>
       Array.isArray(position)
@@ -25,23 +37,23 @@ export const GroundText = ({
         : position,
     [position]
   );
-  const posRef = useRef(pos);
+  // const posRef = useRef(pos);
 
-  const [opacity, setOpacity] = useState(0);
-  const materialRef = useRef<MeshStandardMaterial>(null);
+  // const [opacity, setOpacity] = useState(0);
+  // const materialRef = useRef<MeshStandardMaterial>(null);
 
-  useEffect(() => {
-    if (!posRef.current.equals(pos)) {
-      setOpacity(0);
-      posRef.current.copy(pos);
-    }
-  }, [pos]);
+  // useEffect(() => {
+  //   if (!posRef.current.equals(pos)) {
+  //     setOpacity(0);
+  //     posRef.current.copy(pos);
+  //   }
+  // }, [pos]);
 
-  useFrame(() => {
-    if (opacity < 1) {
-      setOpacity(prev => Math.min(prev + onEnterSpeed, 1));
-    }
-  });
+  // useFrame(() => {
+  //   if (opacity < 1) {
+  //     setOpacity(prev => Math.min(prev + onEnterSpeed, 1));
+  //   }
+  // });
 
   return (
     <Suspense fallback={null}>
@@ -57,11 +69,7 @@ export const GroundText = ({
         textAlign="center"
       >
         {text}
-        <meshStandardMaterial
-          color="#555"
-          opacity={opacity}
-          ref={materialRef}
-        />
+        <animated.meshStandardMaterial color="#555" opacity={springs.opacity} />
       </Text>
     </Suspense>
   );

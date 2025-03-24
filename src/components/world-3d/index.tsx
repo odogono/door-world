@@ -1,5 +1,4 @@
 // import './index.css';
-import { GroundText } from '@components/world-3d/components/ground-text';
 import {
   IsometricCamera,
   IsometricCameraRef
@@ -11,7 +10,6 @@ import { Canvas } from '@react-three/fiber';
 import { useCallback, useRef, useState } from 'react';
 import { Vector3, Vector3Tuple } from 'three';
 import { MiniMap } from '../world-2d/components/mini-map';
-import { ClickMarker } from './components/click-plane';
 import { Dungeon } from './components/dungeon';
 
 const log = createLog('World3D');
@@ -57,7 +55,7 @@ export const World3D = () => {
         {/* <Door doorColor="#00f900" isOpen position={[-4, 0, 0]} rotationY={0} /> */}
         {/* <Door doorColor="#7F42FF" position={[0, 0, -4]} /> */}
         {/* <ClickPlane onTargetPositionChange={handleTargetPositionChange} /> */}
-        {clickedPosition && (
+        {/* {clickedPosition && (
           <>
             <ClickMarker position={clickedPosition} />
             <GroundText
@@ -66,7 +64,7 @@ export const World3D = () => {
               text="Clicked here!"
             />
           </>
-        )}
+        )} */}
         {/* <Grid
           cellSize={0.1}
           infiniteGrid
@@ -74,8 +72,6 @@ export const World3D = () => {
           sectionColor="black"
           sectionSize={1}
         /> */}
-
-        <GroundText position={[0, 0, 0]} text="Open Door Go North" />
 
         <ambientLight intensity={0.1} />
         <directionalLight intensity={2} position={[10, 10, 5]} />

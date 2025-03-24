@@ -18,7 +18,7 @@ const SCALE = 0.06;
 
 export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
   const { doors, moveToRoom, rooms } = useDungeonJourney();
-  // const openDoor = useDungeonOpenDoorAtom();
+  const isMoving = useRef(false);
 
   // Store refs for all doors and rooms
   const doorRefs = useRef<Map<string, DoorRef>>(new Map());
@@ -35,6 +35,12 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
         log.error('Missing refs for door transition', { doorId: door.id });
         return;
       }
+
+      if (isMoving.current) {
+        return;
+      }
+
+      isMoving.current = true;
 
       await moveToRoom({
         doorAction: async (doorId: string, open: boolean) => {
@@ -66,6 +72,8 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
           ]).then(() => true);
         }
       });
+
+      isMoving.current = false;
     },
     [moveToRoom, moveCameraTo]
   );
@@ -113,11 +121,11 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
           onTouch={handleDoorTouch}
           ref={(ref: DoorRef | null) => {
             if (ref) {
-              log.debug('Mounting door', door.id);
+              // log.debug('Mounting door', door.id);
               doorRefs.current.set(door.id, ref);
             }
             return () => {
-              log.debug('Unmounting door', door.id);
+              // log.debug('Unmounting door', door.id);
               doorRefs.current.delete(door.id);
             };
           }}
