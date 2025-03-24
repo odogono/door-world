@@ -74,3 +74,33 @@ export const darkenColor = (hex: string, factor: number = 0.15): string => {
 
   return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
 };
+
+// Seeded random number generator
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed++) * 10_000;
+  return x - Math.floor(x);
+};
+
+// Generate an array of random hex colors using a seed
+export const generateRandomColors = (
+  count: number,
+  seed: number = Date.now()
+): string[] => {
+  const colors: string[] = [];
+
+  for (let i = 0; i < count; i++) {
+    // Use different seeds for each component to ensure good distribution
+    const r = Math.floor(seededRandom(seed + i) * 256);
+    const g = Math.floor(seededRandom(seed + i + 1000) * 256);
+    const b = Math.floor(seededRandom(seed + i + 2000) * 256);
+
+    colors.push(`#${toHex(r)}${toHex(g)}${toHex(b)}`);
+  }
+
+  return colors;
+};
+
+export const generateRandomColor = (seed: number = Date.now()): string => {
+  const colors = generateRandomColors(1, seed);
+  return colors[0];
+};

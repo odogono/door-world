@@ -1,5 +1,7 @@
 import { useDungeonJourney } from '@contexts/dungeon/hooks/use-dungeon-journey';
+import { generateRandomColor } from '@helpers/colour';
 import { createLog } from '@helpers/log';
+import { djb2Hash } from '@helpers/random';
 import { Door as DoorModel, getRoomCenter } from '@model/dungeon';
 import { Position } from '@model/dungeon/types';
 import { useCallback, useEffect, useRef } from 'react';
@@ -122,6 +124,8 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRoom?.id]);
 
+  // const doorColors = generateRandomColors(doors.length, currentRoom?.id ?? 0);
+
   return (
     <>
       {rooms.map(room => (
@@ -139,7 +143,7 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
           room={room}
         />
       ))}
-      {doors.map(door => (
+      {doors.map((door, index) => (
         <DoorContainer
           door={door}
           key={door.id}
@@ -161,6 +165,7 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
 };
 
 type DoorContainerProps = {
+  color?: string;
   door: DoorModel;
   onTouch: (door: DoorModel) => void;
   ref: React.Ref<DoorRef>;
@@ -181,13 +186,17 @@ const dungeonPositionToVector3 = (
 };
 
 const DOOR_SIZE = 4;
-const DoorContainer = ({ door, onTouch, ref }: DoorContainerProps) => {
+const DoorContainer = ({ color, door, onTouch, ref }: DoorContainerProps) => {
   const { position, room1, room2 } = door;
 
   const position3d = dungeonPositionToVector3({
     x: position.x + DOOR_SIZE,
     y: position.y + DOOR_SIZE
   })!;
+
+  const seed = djb2Hash(door.id);
+
+  color = generateRandomColor(seed);
 
   // const position3d = new Vector3(
   //   position.x + DOOR_SIZE,
@@ -203,7 +212,7 @@ const DoorContainer = ({ door, onTouch, ref }: DoorContainerProps) => {
 
   return (
     <Door3d
-      doorColor="#00f900"
+      doorColor={color}
       id={door.id}
       isMounted={false}
       isOpen={door.isOpen}
