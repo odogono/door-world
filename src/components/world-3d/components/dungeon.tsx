@@ -50,7 +50,21 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
         },
         doorId: door.id,
         moveCameraAction: (position: Position | null) =>
-          moveCameraTo(dungeonPositionToVector3(position)!)
+          moveCameraTo(dungeonPositionToVector3(position)!),
+        unmountRoomAction: (roomId: number, doorIds: string[]) => {
+          const roomRef = roomRefs.current.get(roomId);
+
+          if (!roomRef) {
+            return Promise.resolve(false);
+          }
+
+          const refs = doorIds.map(id => doorRefs.current.get(id)) as DoorRef[];
+
+          return Promise.all([
+            roomRef.unmount(),
+            ...refs.map(ref => ref.unmount())
+          ]).then(() => true);
+        }
       });
     },
     [moveToRoom, moveCameraTo]

@@ -1,4 +1,4 @@
-import { getRoomDoors } from '@model/dungeon/door';
+import { getRoomDoors, getRoomDoorsExcluding } from '@model/dungeon/door';
 import {
   getDungeonConnectingRoom,
   getDungeonDoorById,
@@ -14,13 +14,13 @@ type MoveToRoomProps = {
   doorAction: (doorId: string, open: boolean) => Promise<boolean>;
   doorId: string;
   moveCameraAction: (position: Position | null) => Promise<void>;
-  // roomId: RoomId;
+  unmountRoomAction: (roomId: number, doorIds: string[]) => Promise<boolean>;
 };
 
 export const moveToRoomAtom = atom(
   null,
   async (get, set, props: MoveToRoomProps) => {
-    const { doorAction, doorId, moveCameraAction } = props;
+    const { doorAction, doorId, moveCameraAction, unmountRoomAction } = props;
 
     const currentRoomId = get(dungeonCurrentRoomAtom);
 
@@ -52,7 +52,7 @@ export const moveToRoomAtom = atom(
       throw new Error('Next room not found');
     }
 
-    // set the so both rooms and doors are showing
+    // set both rooms and doors are showing
     set(setDungeonVisibleAtom, {
       doors: getRoomDoors(get(dungeonAtom), nextRoom),
       rooms: [nextRoom]
@@ -65,6 +65,15 @@ export const moveToRoomAtom = atom(
     // 4. close the door
     await doorAction(doorId, false);
     set(dungeonAtom, dungeon => updateDungeonDoorState(dungeon, doorId, false));
+
+    // 5. unmount the current room
+    // get the doors which exist in the current room, but not in the nextRoom
+    const unmountDoorIds = getRoomDoorsExcluding(
+      get(dungeonAtom),
+      currentRoomId,
+      nextRoom.id
+    ).map(door => door.id);
+    await unmountRoomAction(currentRoomId, unmountDoorIds);
 
     // clear the old rooms and doors
     set(setDungeonVisibleAtom, {

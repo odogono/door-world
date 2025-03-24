@@ -134,3 +134,23 @@ export const getRoomDoors = (
     door => door.room1 === room.id || door.room2 === room.id
   );
 };
+
+export const getRoomDoorsExcluding = (
+  dungeon: DungeonData | null | undefined,
+  roomId: number,
+  excludeRoomId: number = -1
+): Door[] => {
+  if (!dungeon) {
+    return [];
+  }
+
+  const roomDoors = dungeon.doors.filter(door => {
+    return (
+      (door.room1 === roomId || door.room2 === roomId) &&
+      door.room1 !== excludeRoomId &&
+      door.room2 !== excludeRoomId
+    );
+  });
+
+  return roomDoors;
+};
