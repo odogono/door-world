@@ -90,9 +90,11 @@ export const Door = ({
 
         const targetY = isMounted.current ? -1.1 : 0;
 
+        const duration = enter ? mountDuration : mountDuration / 2;
+
         // isMounting.current = true;
         mountingApi.start({
-          config: { duration: mountDuration, easing: easings.easeInOutSine },
+          config: { duration, easing: easings.easeInOutSine },
           onRest: () => {
             isMounted.current = enter;
             resolve(isMounted.current);
@@ -120,8 +122,10 @@ export const Door = ({
 
         const targetRotation = isOpen.current ? 0 : Math.PI / 2;
 
+        const duration = open ? openDuration : openDuration / 2;
+
         openDoorApi.start({
-          config: { duration: openDuration, easing: easings.easeInOutSine },
+          config: { duration, easing: easings.easeInOutSine },
           onRest: () => {
             isOpen.current = open;
             resolve(isOpen.current);
