@@ -1,5 +1,6 @@
+import { useDungeon } from '@contexts/dungeon/use-dungeon';
 import { darkenColor } from '@helpers/colour';
-import { DungeonData, Room as RoomType } from '@model/dungeon';
+import { Room as RoomType } from '@model/dungeon';
 import { animated, easings, useSpring } from '@react-spring/three';
 import { Plane } from '@react-three/drei';
 import {
@@ -16,7 +17,6 @@ export type RoomRef = {
 };
 
 type RoomProps = {
-  dungeon: DungeonData;
   ref?: Ref<RoomRef>;
   renderOrder?: number;
   room?: RoomType;
@@ -24,7 +24,8 @@ type RoomProps = {
 
 const SCALE = 0.06;
 
-export const Room = ({ dungeon, ref, renderOrder, room }: RoomProps) => {
+export const Room = ({ ref, renderOrder, room }: RoomProps) => {
+  const { dungeon } = useDungeon();
   const isMounted = useRef(false);
   const [springs, api] = useSpring(() => ({
     // config: { duration: 8000 },
@@ -41,7 +42,7 @@ export const Room = ({ dungeon, ref, renderOrder, room }: RoomProps) => {
         }
 
         api.start({
-          config: { duration: 2000, easing: easings.easeInOutSine },
+          config: { duration: 1000, easing: easings.easeInOutSine },
           onRest: () => {
             isMounted.current = enter;
             resolve(isMounted.current);
@@ -70,7 +71,7 @@ export const Room = ({ dungeon, ref, renderOrder, room }: RoomProps) => {
 
   const baseColor = '#e0e0e0';
   const depth = room.depth || 0;
-  const colourIncrement = 1 / (dungeon.maxDepth || 1);
+  const colourIncrement = 1 / (dungeon?.maxDepth ?? 1);
   const color = darkenColor(baseColor, depth * colourIncrement);
 
   const groundColor = room.isCentral ? '#4a9eff' : color;

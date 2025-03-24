@@ -4,7 +4,6 @@ import {
   IsometricCamera,
   IsometricCameraRef
 } from '@components/world-3d/components/isometric-camera';
-import { useDungeonCurrentRoom } from '@contexts/dungeon/atoms';
 import { useDungeon } from '@contexts/dungeon/use-dungeon';
 import { createLog } from '@helpers/log';
 import { vector3ToTuple } from '@helpers/three';
@@ -20,8 +19,6 @@ const log = createLog('World3D');
 
 export const World3D = () => {
   const cameraRef = useRef<IsometricCameraRef>(null);
-  const { dungeon } = useDungeon();
-  const { currentRoom } = useDungeonCurrentRoom();
 
   // const [targetPosition, setTargetPosition] = useState<Vector3 | null>(null);
   const [clickedPosition, setClickedPosition] = useState<Vector3 | null>(null);
@@ -84,7 +81,13 @@ export const World3D = () => {
         <ambientLight intensity={0.1} />
         <directionalLight intensity={2} position={[10, 10, 5]} />
       </Canvas>
-      <MiniMap dungeon={dungeon} />
+      <DungeonMiniMap />
     </div>
   );
+};
+
+const DungeonMiniMap = () => {
+  const { dungeon } = useDungeon();
+
+  return <MiniMap dungeon={dungeon} />;
 };
