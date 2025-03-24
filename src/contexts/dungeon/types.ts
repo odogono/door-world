@@ -2,7 +2,6 @@ import { DungeonData, Room, StrategyType } from '@model/dungeon';
 
 export interface DungeonContextType {
   dungeon: DungeonData | null;
-  generateRooms: (options: GenerateRoomsOptions) => Promise<void>;
   generateRoomsAround: (options: GenerateRoomsAroundProps) => Promise<void>;
   // percent
   generationProgress: number;

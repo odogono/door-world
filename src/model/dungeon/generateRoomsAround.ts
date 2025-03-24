@@ -70,7 +70,7 @@ export const generateRoomsAround = ({
 
   return {
     ...dungeon,
-    doors: findDoors(rooms),
+    doors: findDoors(dungeon, rooms),
     maxDepth: getMaxRoomDepth(rooms),
     rooms
   };

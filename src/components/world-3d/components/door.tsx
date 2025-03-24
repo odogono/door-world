@@ -1,6 +1,6 @@
 import { createLog } from '@helpers/log';
-import { applyClippingPlanesToScene, applyColor } from '@helpers/three';
-import { animated, useSpring } from '@react-spring/three';
+import { applyClippingPlanesToObject, applyColor } from '@helpers/three';
+import { animated, easings, useSpring } from '@react-spring/three';
 import { useGLTF } from '@react-three/drei';
 import { ThreeEvent } from '@react-three/fiber';
 import {
@@ -33,6 +33,7 @@ export type DoorRef = {
   // animate out of the scene
   exit: () => Promise<boolean>;
   open: () => Promise<boolean>;
+  setOpen: (open: boolean) => Promise<boolean>;
   toggleOpen: () => Promise<boolean>;
 };
 
@@ -69,12 +70,14 @@ export const Door = ({
   const isMounted = useRef(isMountedProp);
 
   const [openDoorSpring, openDoorApi] = useSpring(() => ({
-    config: { friction: 14, tension: 120 },
+    // config: { duration: 16_000, easing: easings.easeInOutSine },
+    // config: { duration: 8000, friction: 14, tension: 120 },
     rotation: [0, isOpen.current ? Math.PI / 2 : 0, 0]
   }));
 
   const [mountingSpring, mountingApi] = useSpring(() => ({
-    config: { friction: 14, tension: 120 },
+    // config: { friction: 14, tension: 120 },
+    // config: { duration: 16_000, easing: easings.easeInOutSine },
     // onChange: () => (isMounting.current = true),
     // onRest: () => (isMounting.current = false),
     position: [position.x, isMounted.current ? 0 : -1.1, position.z]
@@ -92,6 +95,7 @@ export const Door = ({
 
         // isMounting.current = true;
         mountingApi.start({
+          config: { duration: 500, easing: easings.easeInOutSine },
           onRest: () => {
             isMounted.current = enter;
             resolve(isMounted.current);
@@ -120,6 +124,7 @@ export const Door = ({
         const targetRotation = isOpen.current ? 0 : Math.PI / 2;
 
         openDoorApi.start({
+          config: { duration: 750, easing: easings.easeInOutSine },
           onRest: () => {
             isOpen.current = open;
             resolve(isOpen.current);
@@ -136,6 +141,7 @@ export const Door = ({
     enter: () => startTransitionAnimation(true),
     exit: () => startTransitionAnimation(false),
     open: () => startDoorAnimation(true),
+    setOpen: (isOpen: boolean) => startDoorAnimation(isOpen),
     toggleOpen: () => startDoorAnimation(!isOpen.current)
   }));
 
@@ -149,7 +155,8 @@ export const Door = ({
 
     applyColor(frameObject, frameColor);
 
-    applyClippingPlanesToScene(scene, [localClippingPlane]);
+    applyClippingPlanesToObject(frameObject, [localClippingPlane]);
+    applyClippingPlanesToObject(doorObject, [localClippingPlane]);
   }, [
     scene,
     frameColor,
@@ -167,6 +174,7 @@ export const Door = ({
     [onTouch]
   );
 
+  log.debug('door', id, { isOpenProp });
   return (
     <animated.group position={mountingSpring.position}>
       <group position={[0, 0.5, 0]} rotation={[0, rotationY, 0]} scale={scale}>
