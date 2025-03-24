@@ -1,23 +1,19 @@
 import { useDungeon } from '@contexts/dungeon/use-dungeon';
 import { darkenColor } from '@helpers/colour';
+import { createLog } from '@helpers/log';
 import { Room as RoomModel } from '@model/dungeon';
-import { animated, easings, useSpring } from '@react-spring/three';
+import { animated } from '@react-spring/three';
 import { Plane } from '@react-three/drei';
 import { ThreeEvent } from '@react-three/fiber';
-import {
-  Ref,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef
-} from 'react';
+import { Ref, useMemo, useRef } from 'react';
 import { Vector3 } from 'three';
+import { GroundText, GroundTextRef } from './ground-text';
+import { useMounted } from './hooks/useMounted';
+import { EntityRef } from './types';
 
-export type RoomRef = {
-  mount: () => Promise<boolean>;
-  unmount: () => Promise<boolean>;
-};
+const log = createLog('Room');
+
+export type RoomRef = EntityRef;
 
 export type RoomTouchEvent = {
   local: Vector3;
@@ -43,7 +39,23 @@ export const Room = ({
   room
 }: RoomProps) => {
   const { dungeon } = useDungeon();
-  const isMounted = useRef(false);
+  const textRef = useRef<GroundTextRef>(null);
+  const { springs } = useMounted({
+    mountDuration,
+    onMount: async () => {
+      // log.debug('Mounted', room?.id);
+
+      // runAfter(3000, () => textRef.current?.unmount());
+      return true;
+    },
+    onUnmount: () => {
+      if (textRef.current) {
+        return textRef.current.unmount();
+      }
+      return Promise.resolve(true);
+    },
+    ref
+  });
 
   const position = useMemo(() => {
     if (!room) {
@@ -59,44 +71,6 @@ export const Room = ({
 
     // return new Vector3(room.area.x, 0, room.area.y);
   }, [room]);
-
-  const [springs, api] = useSpring(() => ({
-    // config: { duration: 8000 },
-
-    opacity: isMounted.current ? 1 : 0
-  }));
-
-  const startTransitionAnimation = useCallback(
-    (enter: boolean) => {
-      return new Promise<boolean>(resolve => {
-        if (isMounted.current === enter) {
-          resolve(isMounted.current);
-          return;
-        }
-
-        api.start({
-          config: { duration: mountDuration, easing: easings.easeInOutSine },
-          onRest: () => {
-            isMounted.current = enter;
-            resolve(isMounted.current);
-          },
-          opacity: enter ? 1 : 0
-        });
-      });
-    },
-    [api, isMounted, mountDuration]
-  );
-
-  useImperativeHandle(ref, () => ({
-    mount: () => startTransitionAnimation(true),
-    unmount: () => startTransitionAnimation(false)
-  }));
-
-  useEffect(() => {
-    if (!isMounted.current) {
-      startTransitionAnimation(true);
-    }
-  }, [startTransitionAnimation]);
 
   const handleTouch = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
@@ -119,6 +93,7 @@ export const Room = ({
   const color = darkenColor(baseColor, depth * colourIncrement);
 
   const groundColor = room.isCentral ? '#4a9eff' : color;
+  const text = room.isCentral ? 'Open Door Go North' : `Room ${room.id}`;
 
   const { area } = room;
   const [width, height] = [area.width, area.height];
@@ -138,8 +113,12 @@ export const Room = ({
           transparent
         />
       </Plane>
+      <GroundText
+        mountDuration={200}
+        position={position}
+        ref={textRef}
+        text={text}
+      />
     </group>
   );
 };
-
-Room.displayName = 'Room';

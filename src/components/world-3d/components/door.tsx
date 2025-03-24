@@ -12,6 +12,7 @@ import {
   useRef
 } from 'react';
 import { Plane as ThreePlane, Vector3, Vector3Tuple } from 'three';
+import { EntityRef } from './types';
 
 interface DoorProps {
   doorColor?: string;
@@ -28,11 +29,7 @@ interface DoorProps {
   scale?: Vector3Tuple;
 }
 
-export type DoorRef = {
-  close: () => Promise<boolean>;
-  // animate into the scene
-  mount: () => Promise<boolean>;
-  // animate out of the scene
+export type DoorRef = EntityRef & {
   open: () => Promise<boolean>;
   setOpen: (open: boolean) => Promise<boolean>;
   toggleOpen: () => Promise<boolean>;
@@ -174,7 +171,7 @@ export const Door = ({
     [onTouch]
   );
 
-  log.debug('door', id, { isOpenProp });
+  // log.debug('door', id, { isOpenProp });
   return (
     <animated.group position={mountingSpring.position}>
       <group position={[0, 0.5, 0]} rotation={[0, rotationY, 0]} scale={scale}>
