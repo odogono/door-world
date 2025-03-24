@@ -1,6 +1,11 @@
-import type { DungeonData, RoomId, StrategyType } from '@model/dungeon';
-import { getDungeonRoomById } from '@model/dungeon/helpers';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import {
+  type Door,
+  type DungeonData,
+  type Room,
+  type RoomId,
+  type StrategyType
+} from '@model/dungeon';
+import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
 export const dungeonAtom = atomWithStorage<DungeonData | null>('dungeon', null);
@@ -14,70 +19,55 @@ export const dungeonStrategyAtom = atomWithStorage<StrategyType>(
 
 export const dungeonCurrentRoomAtom = atomWithStorage<RoomId>('dungeonRoom', 1);
 
-export const useDungeonSeed = () => {
-  const [seed, setSeed] = useAtom(dungeonSeedAtom);
+export const dungeonVisibleRoomsAtom = atom<Room[]>([]);
+export const dungeonVisibleDoorsAtom = atom<Door[]>([]);
 
-  return {
-    seed,
-    setSeed
-  };
-};
+// export const useDungeonCurrentRoom = () => {
+//   const dungeon = useAtomValue(dungeonAtom);
+//   const [roomId, setRoomId] = useAtom(dungeonCurrentRoomAtom);
 
-export const useDungeonCurrentRoom = () => {
-  const dungeon = useAtomValue(dungeonAtom);
-  const [roomId, setRoomId] = useAtom(dungeonCurrentRoomAtom);
+//   const currentRoom = getDungeonRoomById(dungeon, roomId);
 
-  const currentRoom = getDungeonRoomById(dungeon, roomId);
+//   return {
+//     currentRoom,
+//     dungeon,
+//     roomId,
+//     setRoomId
+//   };
+// };
 
-  return {
-    currentRoom,
-    dungeon,
-    roomId,
-    setRoomId
-  };
-};
+// type OpenDungeonDoorProps = {
+//   action?: (isOpen: boolean) => Promise<boolean>;
+//   doorId: string;
+//   open?: boolean;
+// };
 
-export const useDungeonAtom = () => {
-  const [dungeon, setDungeon] = useAtom(dungeonAtom);
+// const openDungeonDoorAtom = atom(
+//   null,
+//   async (get, set, props: OpenDungeonDoorProps) => {
+//     const { action, doorId, open = true } = props;
 
-  return {
-    dungeon,
-    setDungeon
-  };
-};
+//     const dungeon: DungeonData | null = get(dungeonAtom);
+//     if (!dungeon) {
+//       return;
+//     }
 
-type OpenDungeonDoorProps = {
-  action?: (isOpen: boolean) => Promise<boolean>;
-  doorId: string;
-  open?: boolean;
-};
+//     const update = {
+//       ...dungeon,
+//       doors: dungeon.doors.map(door =>
+//         door.id === doorId ? { ...door, isOpen: open } : door
+//       )
+//     } as DungeonData;
 
-const openDungeonDoorAtom = atom(
-  null,
-  async (get, set, props: OpenDungeonDoorProps) => {
-    const { action, doorId, open = true } = props;
+//     if (action) {
+//       await action(open);
+//     }
 
-    const dungeon: DungeonData | null = get(dungeonAtom);
-    if (!dungeon) {
-      return;
-    }
+//     set(dungeonAtom, update);
 
-    const update = {
-      ...dungeon,
-      doors: dungeon.doors.map(door =>
-        door.id === doorId ? { ...door, isOpen: open } : door
-      )
-    } as DungeonData;
+//     // action succeeded
+//     return true;
+//   }
+// );
 
-    if (action) {
-      await action(open);
-    }
-
-    set(dungeonAtom, update);
-
-    // action succeeded
-    return true;
-  }
-);
-
-export const useDungeonOpenDoorAtom = () => useSetAtom(openDungeonDoorAtom);
+// export const useDungeonOpenDoorAtom = () => useSetAtom(openDungeonDoorAtom);

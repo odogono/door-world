@@ -124,10 +124,10 @@ export const findDoors = (_dungeon: DungeonData, rooms: Room[]): Door[] => {
 };
 
 export const getRoomDoors = (
-  dungeon: DungeonData,
-  room: Room | undefined
+  dungeon: DungeonData | null | undefined,
+  room: Room | null | undefined
 ): Door[] => {
-  if (!room) {
+  if (!dungeon || !room) {
     return [];
   }
   return dungeon.doors.filter(

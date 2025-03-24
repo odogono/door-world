@@ -4,6 +4,10 @@ export type Position = { x: number; y: number };
 export type Size = { height: number; width: number };
 export type Area = { height: number; width: number; x: number; y: number };
 
+export type Entity = {
+  id: string | number;
+};
+
 export interface DungeonData {
   doors: Door[];
   idInc: number;

@@ -2,8 +2,9 @@ import { createLog } from '@helpers/log';
 import { generateDungeon } from '@model/dungeon';
 import { generateRoomsAround as generateRoomsAroundHelper } from '@model/dungeon/generateRoomsAround';
 import { useCallback, useEffect, useState } from 'react';
-import { useDungeonAtom, useDungeonSeed } from './atoms';
 import { DungeonContext } from './context';
+import { useDungeonAtom } from './hooks/use-dungeon';
+import { useDungeonSeed } from './hooks/use-dungeon-seed';
 import type {
   GenerateRoomsAroundProps,
   RegenerateDungeonOptions

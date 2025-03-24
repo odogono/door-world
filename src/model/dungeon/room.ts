@@ -69,9 +69,9 @@ export const roomsTouch = (room1: Room, room2: Room): boolean => {
 };
 
 export const getRoomCenter = (
-  dungeon: DungeonData,
+  dungeon: DungeonData | null,
   room: Room | RoomId
-): Position => {
+): Position | null => {
   const target = isNumber(room) ? getDungeonRoomById(dungeon, room) : room;
 
   if (!target) {
@@ -91,6 +91,11 @@ export const getDistanceBetweenRooms = (
 ): number => {
   const center1 = getRoomCenter(dungeon, room1);
   const center2 = getRoomCenter(dungeon, room2);
+
+  if (!center1 || !center2) {
+    return 0;
+  }
+
   return Math.sqrt(
     Math.pow(center2.x - center1.x, 2) + Math.pow(center2.y - center1.y, 2)
   );

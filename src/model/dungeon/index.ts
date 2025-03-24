@@ -5,7 +5,7 @@ import { generateRoomAround, getMaxRoomDepth } from './room';
 import { createStrategy } from './strategies';
 import { DungeonData, Room, RoomType, StrategyType } from './types';
 
-const log = createLog('Dungeon');
+const log = createLog('model/dungeon');
 
 export * from './types';
 export * from './constants';

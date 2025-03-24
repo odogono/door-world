@@ -20,7 +20,7 @@ interface DoorProps {
   isMounted?: boolean;
   isOpen?: boolean;
   onTouch?: (event: ThreeEvent<MouseEvent>) => void;
-  position?: Vector3;
+  position: Vector3;
   ref: Ref<DoorRef>;
   rotationY?: number;
   scale?: Vector3Tuple;
@@ -76,10 +76,6 @@ export const Door = ({
   }));
 
   const [mountingSpring, mountingApi] = useSpring(() => ({
-    // config: { friction: 14, tension: 120 },
-    // config: { duration: 16_000, easing: easings.easeInOutSine },
-    // onChange: () => (isMounting.current = true),
-    // onRest: () => (isMounting.current = false),
     position: [position.x, isMounted.current ? 0 : -1.1, position.z]
   }));
 

@@ -1,5 +1,5 @@
 import { randomUnsignedInt } from '@helpers/random';
-import { Door, DungeonData, Room } from './types';
+import { Door, DungeonData, Room, RoomId } from './types';
 
 export const generateRoomId = (dungeon: DungeonData) => {
   return dungeon.idInc++;
@@ -39,11 +39,29 @@ export const getDungeonDoorById = (
   return dungeon.doors.find(door => door.id === id);
 };
 
+export const getDungeonConnectingRoom = (
+  dungeon: DungeonData | null,
+  roomId: RoomId,
+  door: Door
+) => {
+  if (!dungeon) {
+    return null;
+  }
+
+  const nextRoomId = door.room1 === roomId ? door.room2 : door.room1;
+
+  return getDungeonRoomById(dungeon, nextRoomId);
+};
+
 export const updateDungeonDoorState = (
-  dungeon: DungeonData,
+  dungeon: DungeonData | null,
   doorId: string,
   isOpen: boolean
-): DungeonData => {
+): DungeonData | null => {
+  if (!dungeon) {
+    return null;
+  }
+
   return {
     ...dungeon,
     doors: dungeon.doors.map(door =>
@@ -51,3 +69,20 @@ export const updateDungeonDoorState = (
     )
   };
 };
+
+// export const updateDungeonDoor = (
+//   dungeon: DungeonData | null,
+//   doorId: string,
+//   open: boolean
+// ) => {
+//   if (!dungeon) {
+//     return null;
+//   }
+
+//   return {
+//     ...dungeon,
+//     doors: dungeon.doors.map(door =>
+//       door.id === doorId ? { ...door, isOpen: open } : door
+//     )
+//   } as DungeonData;
+// };
