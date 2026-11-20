@@ -54,3 +54,8 @@ _Avoid_: breadcrumbs, trail
 
 **Visited Room**:
 Any Room the visitor has entered at least once on this Journey.
+
+**Demo Mode**:
+The Journey carrying on by itself, through one Door after another, while the
+visitor has not interacted for a while.
+_Avoid_: inactivity timeout, autopilot, idle mode
