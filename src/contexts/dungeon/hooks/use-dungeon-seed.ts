@@ -1,8 +1,8 @@
 import { useAtom } from 'jotai';
-import { dungeonSeedAtom } from '../atoms';
+import { seedAtom } from '../atoms';
 
 export const useDungeonSeed = () => {
-  const [seed, setSeed] = useAtom(dungeonSeedAtom);
+  const [seed, setSeed] = useAtom(seedAtom);
 
   return {
     seed,

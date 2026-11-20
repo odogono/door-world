@@ -1,4 +1,4 @@
-import { StrategyType } from '@model/dungeon';
+import type { StrategyType } from '../../../model/dungeon';
 import { ActionButton } from './action-button';
 import { CheckboxControl } from './checkbox-control';
 import { NumberInput } from './number-input';
@@ -42,56 +42,54 @@ export const ControlsPanel = ({
   showConnections,
   showDoors,
   showRooms
-}: ControlsPanelProps) => {
-  return (
-    <div className="flex flex-wrap gap-4 items-center p-2 bg-[#2a2a2a] rounded fixed top-5 left-1/2 -translate-x-1/2 z-50">
-      <StrategySelect onChange={onStrategyChange} value={selectedStrategy} />
+}: ControlsPanelProps) => (
+  <div className="fixed top-5 left-1/2 z-50 flex -translate-x-1/2 flex-wrap items-center gap-4 rounded bg-[#2a2a2a] p-2">
+    <StrategySelect onChange={onStrategyChange} value={selectedStrategy} />
 
+    <CheckboxControl
+      checked={fillSpace}
+      label="Fill Space"
+      onChange={onFillSpaceChange}
+    />
+
+    <NumberInput
+      label="Seed"
+      onChange={onSeedChange}
+      placeholder="Enter seed"
+      value={seed}
+    />
+
+    <NumberInput
+      label="Recurse"
+      min={1}
+      onChange={onRecurseCountChange}
+      placeholder="Recurse count"
+      value={recurseCount}
+    />
+
+    <div className="flex gap-4">
       <CheckboxControl
-        checked={fillSpace}
-        label="Fill Space"
-        onChange={onFillSpaceChange}
+        checked={showConnections}
+        label="Show Connections"
+        onChange={onShowConnectionsChange}
       />
-
-      <NumberInput
-        label="Seed"
-        onChange={onSeedChange}
-        placeholder="Enter seed"
-        value={seed}
+      <CheckboxControl
+        checked={showRooms}
+        label="Show Rooms"
+        onChange={onShowRoomsChange}
       />
-
-      <NumberInput
-        label="Recurse"
-        min={1}
-        onChange={onRecurseCountChange}
-        placeholder="Recurse count"
-        value={recurseCount}
+      <CheckboxControl
+        checked={showDoors}
+        label="Show Doors"
+        onChange={onShowDoorsChange}
       />
-
-      <div className="flex gap-4">
-        <CheckboxControl
-          checked={showConnections}
-          label="Show Connections"
-          onChange={onShowConnectionsChange}
-        />
-        <CheckboxControl
-          checked={showRooms}
-          label="Show Rooms"
-          onChange={onShowRoomsChange}
-        />
-        <CheckboxControl
-          checked={showDoors}
-          label="Show Doors"
-          onChange={onShowDoorsChange}
-        />
-      </div>
-
-      <div className="flex gap-2">
-        <ActionButton disabled={isGenerating} onClick={onRegenerate}>
-          {isGenerating ? 'Generating...' : 'Regenerate'}
-        </ActionButton>
-        <ActionButton onClick={onResetView}>Reset View</ActionButton>
-      </div>
     </div>
-  );
-};
+
+    <div className="flex gap-2">
+      <ActionButton disabled={isGenerating} onClick={onRegenerate}>
+        {isGenerating ? 'Generating...' : 'Regenerate'}
+      </ActionButton>
+      <ActionButton onClick={onResetView}>Reset View</ActionButton>
+    </div>
+  </div>
+);

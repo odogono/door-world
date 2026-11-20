@@ -1,4 +1,4 @@
-import { DungeonData, Room, RoomGenerationStrategy } from '../types';
+import type { DungeonData, Room, RoomGenerationStrategy } from '../types';
 
 // Simple strategy
 export class SimpleStrategy implements RoomGenerationStrategy {

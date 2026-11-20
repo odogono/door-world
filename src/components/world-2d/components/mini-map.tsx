@@ -1,15 +1,20 @@
-import { useDungeonJourney } from '@contexts/dungeon/hooks/use-dungeon-journey';
-import { useTheme } from '@contexts/theme/context';
-import { DungeonData } from '@model/dungeon';
 import { useEffect, useRef } from 'react';
+import { useDungeonJourney } from '../../../contexts/dungeon/hooks/use-dungeon-journey';
+import { useTheme } from '../../../contexts/theme/context';
+import type { DungeonData } from '../../../model/dungeon';
 import { renderDungeon } from '../helpers';
 
-type MiniMapProps = {
+interface MiniMapProps {
   dungeon: DungeonData | null;
   size?: number;
-};
+  skipRender?: boolean;
+}
 
-export const MiniMap = ({ dungeon, size = 200 }: MiniMapProps) => {
+export const MiniMap = ({
+  dungeon,
+  size = 200,
+  skipRender = false
+}: MiniMapProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { theme } = useTheme();
   const { currentRoomId } = useDungeonJourney();
@@ -17,6 +22,10 @@ export const MiniMap = ({ dungeon, size = 200 }: MiniMapProps) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) {
+      return;
+    }
+
+    if (skipRender) {
       return;
     }
 
@@ -78,13 +87,20 @@ export const MiniMap = ({ dungeon, size = 200 }: MiniMapProps) => {
 
     // Restore the context state
     ctx.restore();
-  }, [dungeon, size, theme, currentRoomId]);
+  }, [dungeon, size, theme, currentRoomId, skipRender]);
 
   return (
     <canvas
-      className="absolute bottom-14 right-4 border border-gray-600 rounded-lg"
       height={size}
       ref={canvasRef}
+      style={{
+        border: '1px solid #4b5563',
+        borderRadius: '0.5rem',
+        bottom: '3.5rem',
+        display: skipRender ? 'none' : undefined,
+        position: 'absolute',
+        right: '1rem'
+      }}
       width={size}
     />
   );

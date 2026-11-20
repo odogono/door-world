@@ -1,5 +1,5 @@
-import { prngIntRange } from '@helpers/random';
-import { DungeonData, Room, RoomGenerationStrategy } from '../types';
+import { prngIntRange } from '../../../helpers/random';
+import type { DungeonData, Room, RoomGenerationStrategy } from '../types';
 
 // Random strategy
 export class RandomStrategy implements RoomGenerationStrategy {

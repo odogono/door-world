@@ -1,6 +1,6 @@
 import { findDoors } from './door';
 import { generateRoomAround, getMaxRoomDepth } from './room';
-import { DungeonData, Room } from './types';
+import type { DungeonData, Room } from './types';
 
 interface GenerateRoomsAroundProps {
   dungeon: DungeonData;

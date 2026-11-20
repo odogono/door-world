@@ -1,7 +1,7 @@
-import { createLog } from '@helpers/log';
-import { generateDungeon } from '@model/dungeon';
-import { generateRoomsAround as generateRoomsAroundHelper } from '@model/dungeon/generateRoomsAround';
 import { useCallback, useEffect, useState } from 'react';
+import { createLog } from '../../helpers/log';
+import { generateDungeon } from '../../model/dungeon';
+import { generateRoomsAround as generateRoomsAroundHelper } from '../../model/dungeon/generateRoomsAround';
 import { DungeonContext } from './context';
 import { useDungeonAtom } from './hooks/use-dungeon';
 import { useDungeonSeed } from './hooks/use-dungeon-seed';
@@ -16,9 +16,7 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
   const { dungeon, setDungeon } = useDungeonAtom();
-  // const [dungeon, setDungeon] = useState<DungeonData | null>(null);
   const [generationProgress, setGenerationProgress] = useState(100);
-  // const setCurrentRoomId = useSetAtom(dungeonCurrentRoomAtom);
 
   const { seed, setSeed } = useDungeonSeed();
 

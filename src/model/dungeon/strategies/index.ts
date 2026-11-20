@@ -1,4 +1,4 @@
-import { RoomGenerationStrategy, StrategyType } from '../types';
+import type { RoomGenerationStrategy, StrategyType } from '../types';
 import { BranchingStrategy } from './branching';
 import { GrowthDirectionStrategy } from './growth';
 import { RandomStrategy } from './random';

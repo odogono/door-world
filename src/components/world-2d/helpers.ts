@@ -1,15 +1,15 @@
-import { Theme } from '@contexts/theme/types';
-import { darkenColor } from '@helpers/colour';
+import type { Theme } from '../../contexts/theme/types';
+import { darkenColor } from '../../helpers/colour';
 import {
   DOOR_HEIGHT,
   DOOR_WIDTH,
-  DungeonData,
   getRoomCenter,
-  Room
-} from '@model/dungeon';
-import { Position, RoomId } from '@model/dungeon/types';
+  type DungeonData,
+  type Room
+} from '../../model/dungeon';
+import type { Position, RoomId } from '../../model/dungeon/types';
 
-type RenderDungeonOptions = {
+interface RenderDungeonOptions {
   generationProgress?: number;
   highlightRoomId?: RoomId;
   isGenerating?: boolean;
@@ -18,7 +18,7 @@ type RenderDungeonOptions = {
   showLegend?: boolean;
   showRooms?: boolean;
   theme?: Theme;
-};
+}
 
 export const renderDungeon = (
   canvas: HTMLCanvasElement | null,
@@ -136,12 +136,12 @@ export const renderConnections = (
   });
 };
 
-type RenderRoomProps = {
+interface RenderRoomProps {
   colourIncrement: number;
   ctx: CanvasRenderingContext2D;
   isHighlighted?: boolean;
   room: Room;
-};
+}
 
 export const renderRoom = ({
   colourIncrement,

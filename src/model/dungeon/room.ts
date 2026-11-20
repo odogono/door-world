@@ -1,12 +1,18 @@
-import { isNumber } from '@helpers/number';
-import { prngIntRange, prngShuffle } from '@helpers/random';
+import { isNumber } from '../../helpers/number';
+import { prngIntRange, prngShuffle } from '../../helpers/random';
 import {
   ROOM_SIZE_LARGE,
   ROOM_SIZE_MEDIUM,
   ROOM_SIZE_SMALL
 } from './constants';
 import { generateRoomId, getDungeonRoomById } from './helpers';
-import { DungeonData, Position, Room, RoomId, RoomType } from './types';
+import {
+  RoomType,
+  type DungeonData,
+  type Position,
+  type Room,
+  type RoomId
+} from './types';
 
 export const getMaxRoomDepth = (rooms: Room[]): number => {
   if (rooms.length === 0) {
@@ -104,14 +110,11 @@ export const getDistanceBetweenRooms = (
 export const isPointInRoom = (
   point: { x: number; y: number },
   room: Room
-): boolean => {
-  return (
-    point.x >= room.area.x &&
-    point.x <= room.area.x + room.area.width &&
-    point.y >= room.area.y &&
-    point.y <= room.area.y + room.area.height
-  );
-};
+): boolean =>
+  point.x >= room.area.x &&
+  point.x <= room.area.x + room.area.width &&
+  point.y >= room.area.y &&
+  point.y <= room.area.y + room.area.height;
 
 export const generateRoomAround = (
   dungeon: DungeonData,

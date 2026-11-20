@@ -1,4 +1,4 @@
-import { RoomSizeRange } from './types';
+import type { RoomSizeRange } from './types';
 
 export const ROOM_SIZE_SMALL: RoomSizeRange = [45, 50];
 export const ROOM_SIZE_MEDIUM: RoomSizeRange = [50, 80];

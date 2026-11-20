@@ -25,10 +25,8 @@ export const safeParseFloat = (
   return Number.isNaN(parsed) ? defaultTo : parsed;
 };
 
-export const integerToString = (value: number = 0) => {
-  return Math.round(value).toString();
-};
+export const integerToString = (value: number = 0) =>
+  Math.round(value).toString();
 
-export const isNumber = (value: unknown): value is number => {
-  return typeof value === 'number' && !Number.isNaN(value);
-};
+export const isNumber = (value: unknown): value is number =>
+  typeof value === 'number' && !Number.isNaN(value);

@@ -52,9 +52,8 @@ export const prngShuffle = <T>(seed: number, array: T[]): [number, T[]] => {
   return [seed, result];
 };
 
-export const randomUnsignedInt = (min: number, max: number): number => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
+export const randomUnsignedInt = (min: number, max: number): number =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
 
 /**
  * djb2 hash function
@@ -70,7 +69,7 @@ export const djb2Hash = (str: string) => {
 };
 
 // Seeded random number generator
-// export const seededRandomUnsignedInt = (seed: number) => {
-//   const x = Math.sin(seed++) * 10_000;
-//   return x - Math.floor(x);
-// };
+export const seededRandomUnsignedInt = (seed: number) => {
+  const x = Math.sin(seed++) * 10_000;
+  return x - Math.floor(x);
+};

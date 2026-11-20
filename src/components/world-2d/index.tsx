@@ -1,9 +1,14 @@
-import { useDungeonJourney } from '@contexts/dungeon/hooks/use-dungeon-journey';
-import { useDungeon } from '@contexts/dungeon/use-dungeon';
-import { useTheme } from '@contexts/theme/context';
-import { createLog } from '@helpers/log';
-import { isPointInRoom, MAX_ROOMS, Room, StrategyType } from '@model/dungeon';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDungeonJourney } from '../../contexts/dungeon/hooks/use-dungeon-journey';
+import { useDungeon } from '../../contexts/dungeon/use-dungeon';
+import { useTheme } from '../../contexts/theme/context';
+import { createLog } from '../../helpers/log';
+import {
+  isPointInRoom,
+  MAX_ROOMS,
+  type Room,
+  type StrategyType
+} from '../../model/dungeon';
 import { ControlsPanel } from './components/controls-panel';
 import { MiniMap } from './components/mini-map';
 import { renderDungeon } from './helpers';
@@ -227,7 +232,7 @@ export const World2D = () => {
         showRooms={showRooms}
       />
       <canvas
-        className="absolute inset-0 border-none cursor-grab active:cursor-grabbing"
+        className="absolute inset-0 cursor-grab border-none active:cursor-grabbing"
         onClick={handlePointerClick}
         onPointerCancel={handlePointerUp}
         onPointerDown={handlePointerDown}

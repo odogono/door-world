@@ -1,11 +1,4 @@
-// Add this helper function to get computed CSS values
-export const getComputedColor = (varName: string) => {
-  // Remove var() wrapper if it exists
-  const cleanVarName = varName.replace(/^var\((.*)\)$/, '$1').trim();
-
-  const style = getComputedStyle(document.documentElement);
-  return style.getPropertyValue(cleanVarName).trim();
-};
+import Chroma from 'chroma-js';
 
 // Convert hex to RGB
 export const hexToRGB = (hex: string): { b: number; g: number; r: number } => {
@@ -60,6 +53,9 @@ const toHex = (c: number): string => {
 const darkenComponent = (c: number, factor: number): number =>
   Math.round(Math.max(0, c * (1 - factor)));
 
+const lightenComponent = (c: number, factor: number): number =>
+  Math.round(Math.min(255, c * (1 + factor)));
+
 // Darken a hex color by a factor (0-1)
 export const darkenColor = (hex: string, factor: number = 0.15): string => {
   // Ensure factor is between 0 and 1
@@ -75,6 +71,17 @@ export const darkenColor = (hex: string, factor: number = 0.15): string => {
   return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
 };
 
+export const lightenColor = (hex: string, factor: number = 0.15): string => {
+  const color = Chroma(hex);
+  const lightened = color.brighten(factor);
+  return lightened.hex();
+  // const { b, g, r } = hexToRGB(hex);
+  // const newR = lightenComponent(r, factor);
+  // const newG = lightenComponent(g, factor);
+  // const newB = lightenComponent(b, factor);
+
+  // return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
+};
 // Seeded random number generator
 const seededRandom = (seed: number) => {
   const x = Math.sin(seed++) * 10_000;

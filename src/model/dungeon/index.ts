@@ -1,9 +1,15 @@
-import { createLog } from '@helpers/log';
+import { createLog } from '../../helpers/log';
 import { findDoors } from './door';
 import { createDungeon } from './helpers';
 import { generateRoomAround, getMaxRoomDepth } from './room';
 import { createStrategy } from './strategies';
-import { DungeonData, Room, RoomType, StrategyType } from './types';
+import {
+  FloorType,
+  RoomType,
+  type DungeonData,
+  type Room,
+  type StrategyType
+} from './types';
 
 const log = createLog('model/dungeon');
 
@@ -13,14 +19,14 @@ export * from './strategies';
 export * from './room';
 export * from './door';
 
-type GenerateDungeonOptions = {
+interface GenerateDungeonOptions {
   dungeon?: DungeonData;
   maxAttempts: number;
   maxRooms: number;
   onProgress?: (dungeon: DungeonData) => void;
   seed: number;
   strategy: StrategyType;
-};
+}
 
 export const generateDungeon = async (
   props: GenerateDungeonOptions
@@ -35,6 +41,7 @@ export const generateDungeon = async (
       allowedEdges: ['NORTH'],
       area: { height: 100, width: 100, x: -50, y: -50 },
       depth: 0,
+      floorType: FloorType.TRANSPARENT,
       id: 1,
       isCentral: true,
       type: RoomType.NORMAL

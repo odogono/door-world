@@ -1,113 +1,77 @@
-import { useDungeonJourney } from '@contexts/dungeon/hooks/use-dungeon-journey';
-import { generateRandomColor } from '@helpers/colour';
-import { createLog } from '@helpers/log';
-import { djb2Hash } from '@helpers/random';
-import { Door as DoorModel, getRoomCenter } from '@model/dungeon';
-import { Position } from '@model/dungeon/types';
-import { useCallback, useEffect, useRef } from 'react';
-import { Vector3 } from 'three';
-import { Door as Door3d, DoorRef } from './door';
-import { IsometricCameraMoveToProps } from './isometric-camera';
-import { Room as Room3d, RoomRef, RoomTouchEvent } from './room';
+import { useCallback, useEffect } from 'react';
+import { generateRandomColor } from '../../../helpers/colour';
+import { createLog } from '../../../helpers/log';
+import { djb2Hash } from '../../../helpers/random';
+import { getRoomCenter, type Door as DoorModel } from '../../../model/dungeon';
+import { Door as Door3d, type DoorRef } from './door';
+import { dungeonPositionToVector3 } from './helpers';
+import { useInactivityTimeout } from './hooks/use-inactivity-timeout';
+import { useMoveToRoom } from './hooks/use-move-to-room';
+import type { IsometricCameraMoveToProps } from './isometric-camera';
+import { Room as Room3d, type RoomRef, type RoomTouchEvent } from './room';
 
 const log = createLog('Dungeon');
 
-type DungeonProps = {
-  moveCameraTo: (props: IsometricCameraMoveToProps) => Promise<void>;
-};
+const INACTIVITY_TIMEOUT = 5000;
 
-const SCALE = 0.06;
+interface DungeonProps {
+  moveCameraTo: (props: IsometricCameraMoveToProps) => Promise<void>;
+}
 
 export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
-  const { currentRoom, doors, dungeon, moveToRoom, rooms } =
-    useDungeonJourney();
-  const isMoving = useRef(false);
+  const {
+    currentRoom,
+    doorRefs,
+    doors,
+    dungeon,
+    moveThroughDoor,
+    nextDoorId,
+    roomRefs,
+    rooms
+  } = useMoveToRoom({
+    moveCameraTo
+  });
 
-  // Store refs for all doors and rooms
-  const doorRefs = useRef<Map<string, DoorRef>>(new Map());
-  const roomRefs = useRef<Map<number, RoomRef>>(new Map());
+  const onInactivityTimeout = useCallback(() => {
+    log.debug('Inactivity - Moving through door', nextDoorId);
+
+    if (nextDoorId) {
+      moveThroughDoor(nextDoorId);
+    }
+  }, [nextDoorId, moveThroughDoor]);
+
+  const { clearInactivityTimeout, resetInactivityTimeout } =
+    useInactivityTimeout({
+      onInactivityTimeout
+    });
 
   const handleDoorTouch = useCallback(
     async (door: DoorModel) => {
       log.debug('Door clicked', door.id);
 
-      // Get the refs we need
-      const doorRef = doorRefs.current.get(door.id);
+      clearInactivityTimeout();
 
-      if (!doorRef) {
-        log.error('Missing refs for door transition', { doorId: door.id });
-        return;
-      }
+      await moveThroughDoor(door.id);
 
-      if (isMoving.current) {
-        log.debug('Already moving');
-        return;
-      }
-
-      isMoving.current = true;
-
-      await moveToRoom({
-        doorAction: async (doorId: string, open: boolean) => {
-          const doorRef = doorRefs.current.get(doorId);
-
-          if (!doorRef) {
-            log.error('Missing refs for door transition', { doorId });
-            return false;
-          }
-
-          // log.debug('Setting door open', { doorId, open });
-          await doorRef.setOpen(open);
-
-          // log.debug('Door set open', { doorId, open });
-          return true;
-        },
-        doorId: door.id,
-        moveCameraAction: (position: Position | null) =>
-          moveCameraTo({
-            position: dungeonPositionToVector3(position)!
-          }),
-        unmountRoomAction: (roomId: number, doorIds: string[]) => {
-          const roomRef = roomRefs.current.get(roomId);
-
-          if (!roomRef) {
-            return Promise.resolve(false);
-          }
-
-          const refs = doorIds.map(id => doorRefs.current.get(id)) as DoorRef[];
-
-          return Promise.all([
-            roomRef.unmount(),
-            ...refs.map(ref => ref.unmount())
-          ]).then(() => true);
-        }
-      });
-      log.debug('Moved to room', { roomId: door.id });
-
-      isMoving.current = false;
+      resetInactivityTimeout();
     },
-    [moveToRoom, moveCameraTo]
+    [clearInactivityTimeout, moveThroughDoor, resetInactivityTimeout]
   );
 
   const handleRoomTouch = useCallback(
     (event: RoomTouchEvent) => {
       log.debug('Room clicked', event.room.id, event.world);
+
+      clearInactivityTimeout();
+
       moveCameraTo({
         position: event.world
       });
+
+      resetInactivityTimeout();
     },
-    [moveCameraTo]
+    [clearInactivityTimeout, moveCameraTo, resetInactivityTimeout]
   );
-
-  // const rooms = [currentRoom!];
-  // const doors = getRoomDoors(dungeon, currentRoom);
-
-  // log.debug('render');
-  // useRenderingTrace('Dungeon', {
-  //   doors,
-  //   rooms
-  // });
-
-  // log.debug('currentRoom', currentRoom);
 
   useEffect(() => {
     if (!currentRoom) {
@@ -121,10 +85,11 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
     });
 
     log.debug('currentRoom', currentRoom?.id, roomPosition);
+
+    resetInactivityTimeout();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRoom?.id]);
-
-  // const doorColors = generateRandomColors(doors.length, currentRoom?.id ?? 0);
 
   return (
     <>
@@ -164,26 +129,12 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
   );
 };
 
-type DoorContainerProps = {
+interface DoorContainerProps {
   color?: string;
   door: DoorModel;
   onTouch: (door: DoorModel) => void;
   ref: React.Ref<DoorRef>;
-};
-
-const dungeonPositionToVector3 = (
-  position: Position | null
-): Vector3 | null => {
-  if (!position) {
-    return null;
-  }
-
-  const result = new Vector3(position.x, 0, position.y);
-
-  result.multiplyScalar(SCALE);
-
-  return result;
-};
+}
 
 const DOOR_SIZE = 4;
 const DoorContainer = ({ color, door, onTouch, ref }: DoorContainerProps) => {

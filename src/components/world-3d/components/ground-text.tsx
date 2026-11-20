@@ -1,15 +1,18 @@
 import { animated } from '@react-spring/three';
 import { Text } from '@react-three/drei';
-import { Ref, Suspense, useMemo } from 'react';
-import { Vector3, Vector3Tuple } from 'three';
-import { useMounted } from './hooks/useMounted';
-import { EntityRef } from './types';
+import { Suspense, useMemo, type Ref } from 'react';
+import { Vector3, type Vector3Tuple } from 'three';
+import { floorTextFontUrl } from '../../../assets.generated';
+import { useMounted } from './hooks/use-mounted';
+import { type EntityRef } from './types';
 
 export type GroundTextRef = EntityRef;
 
 interface GroundTextProps {
-  // Path to the font file relative to the public directory
+  color?: string;
+  // URL of the font file
   font?: string;
+  maxWidth?: number;
   mountDuration?: number;
   onEnterSpeed?: number;
   position: Vector3 | Vector3Tuple;
@@ -19,15 +22,23 @@ interface GroundTextProps {
 
 // GroundText component to display text aligned with the ground
 export const GroundText = ({
-  font = '/fonts/Nohemi-Bold-BF6438cc587b5b5.ttf',
+  color = '#555',
+  font = floorTextFontUrl,
+  maxWidth = 3,
   mountDuration = 500,
   position,
   ref,
   text
 }: GroundTextProps) => {
   const { springs } = useMounted({
-    mountDuration,
-    ref
+    initialValues: (isMounted: boolean) => ({
+      opacity: isMounted ? 1 : 0
+    }),
+    ref,
+    targetValues: (isMounted: boolean) => ({
+      duration: isMounted ? mountDuration / 2 : mountDuration,
+      opacity: isMounted ? 0 : 1
+    })
   });
 
   const pos = useMemo(
@@ -37,39 +48,25 @@ export const GroundText = ({
         : position,
     [position]
   );
-  // const posRef = useRef(pos);
-
-  // const [opacity, setOpacity] = useState(0);
-  // const materialRef = useRef<MeshStandardMaterial>(null);
-
-  // useEffect(() => {
-  //   if (!posRef.current.equals(pos)) {
-  //     setOpacity(0);
-  //     posRef.current.copy(pos);
-  //   }
-  // }, [pos]);
-
-  // useFrame(() => {
-  //   if (opacity < 1) {
-  //     setOpacity(prev => Math.min(prev + onEnterSpeed, 1));
-  //   }
-  // });
 
   return (
     <Suspense fallback={null}>
       <Text
         anchorX="center"
         anchorY="middle"
-        color="#555"
+        color={color}
         font={font}
         fontSize={0.5}
-        maxWidth={3}
+        maxWidth={maxWidth}
         position={[pos.x, 0.1, pos.z]}
         rotation={[-Math.PI / 2, 0, Math.PI / 2]}
         textAlign="center"
       >
         {text}
-        <animated.meshStandardMaterial color="#555" opacity={springs.opacity} />
+        <animated.meshStandardMaterial
+          color={color}
+          opacity={springs.opacity}
+        />
       </Text>
     </Suspense>
   );
