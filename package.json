@@ -38,6 +38,7 @@
     "three": ">=0.177.0"
   },
   "devDependencies": {
+    "@happy-dom/global-registrator": "^21.0.4",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@nkzw/eslint-config": "^3.3.0",
     "@react-three/drei": "^10.7.9",

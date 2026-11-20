@@ -50,16 +50,22 @@ export const useRoomText = ({ interval, room, textRef }: RoomTextProps) => {
     );
   }, [interval]);
 
-  // Handle text cycling
+  // Handle text cycling. Cleanup cancels a cycle in progress, so StrictMode's
+  // remount does not run two at once
   useEffect(() => {
     if (!room || !isTransitioning) {
       return;
     }
 
+    let isCancelled = false;
+
     const cycleText = async () => {
       // Unmount current text
       if (textRef.current) {
         await textRef.current.unmount();
+      }
+      if (isCancelled) {
+        return;
       }
 
       setCurrentTextIndex(prev => (prev + 1) % textScript.length);
@@ -68,20 +74,27 @@ export const useRoomText = ({ interval, room, textRef }: RoomTextProps) => {
       if (textRef.current) {
         await textRef.current.mount();
       }
+      if (isCancelled) {
+        return;
+      }
 
       // Schedule next transition
       runTextTransition();
     };
 
     cycleText();
-  }, [
-    room,
-    isTransitioning,
-    textRef,
-    textScript,
-    runTextTransition,
-    currentTextIndex
-  ]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [room, isTransitioning, textRef, textScript, runTextTransition]);
+
+  useEffect(
+    () => () => {
+      clearRunAfterMs(textTransitionTimeoutId.current);
+    },
+    []
+  );
 
   return {
     runTextTransition,

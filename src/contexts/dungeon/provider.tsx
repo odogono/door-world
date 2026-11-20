@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import { createLog } from '../../helpers/log';
 import { generateDungeon } from '../../model/dungeon';
 import { generateRoomsAround as generateRoomsAroundHelper } from '../../model/dungeon/generateRoomsAround';
@@ -30,6 +30,7 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
       const {
         maxRooms = 50,
         seed = Math.floor(Math.random() * 1_000_000),
+        signal,
         strategy = 'random'
       } = options;
 
@@ -52,6 +53,7 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
           setDungeon(intermediateDungeon);
         },
         seed,
+        signal,
         strategy
       });
 
@@ -93,18 +95,32 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
     [dungeon, setDungeon]
   );
 
-  useEffect(() => {
-    if (!dungeon) {
-      // generate() only sets state after its first await, which this rule
-      // cannot see through
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      generate({
-        maxRooms: 500,
-        seed: seed || Math.floor(Math.random() * 1_000_000),
-        strategy: 'random'
-      });
+  const generateIfMissing = useEffectEvent((signal: AbortSignal) => {
+    if (dungeon) {
+      return;
     }
-  }, [dungeon, generate, seed]);
+    generate({
+      maxRooms: 500,
+      seed: seed || Math.floor(Math.random() * 1_000_000),
+      signal,
+      strategy: 'random'
+    }).catch(error => {
+      if (!signal.aborted) {
+        throw error;
+      }
+    });
+  });
+
+  // Generates once on mount. Unmounting aborts the generation, so StrictMode's
+  // remount starts a single fresh one instead of racing a second
+  useEffect(() => {
+    const controller = new AbortController();
+    // generate() only sets state after its first await, which this rule
+    // cannot see through
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    generateIfMissing(controller.signal);
+    return () => controller.abort();
+  }, []);
 
   // log.debug('Dungeon generated', {
   //   progress: generationProgress,

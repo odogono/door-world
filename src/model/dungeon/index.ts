@@ -25,6 +25,8 @@ interface GenerateDungeonOptions {
   maxRooms: number;
   onProgress?: (dungeon: DungeonData) => void;
   seed: number;
+  /** Stops generation, rejecting with the signal's reason */
+  signal?: AbortSignal;
   strategy: StrategyType;
 }
 
@@ -130,7 +132,7 @@ export function* generateDungeonGenerator(
 export const generateDungeonAsync = async (
   props: GenerateDungeonOptions
 ): Promise<DungeonData> => {
-  const { onProgress } = props;
+  const { onProgress, signal } = props;
   const generator = generateDungeonGenerator(props);
   let result: DungeonData;
 
@@ -138,6 +140,7 @@ export const generateDungeonAsync = async (
     // Allow other tasks to run; also keeps onProgress off the caller's
     // synchronous path, so it never fires during a React render or effect
     await new Promise(resolve => setTimeout(resolve, 0));
+    signal?.throwIfAborted();
 
     const { done, value } = generator.next();
     if (done) {

@@ -14,6 +14,7 @@ export interface DungeonContextType {
 export interface RegenerateDungeonOptions {
   maxRooms?: number;
   seed?: number;
+  signal?: AbortSignal;
   strategy?: StrategyType;
 }
 

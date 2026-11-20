@@ -2,7 +2,7 @@
 // internal 2D view as a debug tool for tuning generation strategies.
 import './index.css';
 import { Provider as JotaiProvider } from 'jotai';
-import { useState } from 'react';
+import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DoorWorld, type Theme } from '../src';
 import { World2D } from '../src/components/world-2d';
@@ -49,7 +49,7 @@ const Playground = () => {
 };
 
 createRoot(document.getElementById('root')!).render(
-  // Not wrapped in <StrictMode>: Door World does not yet survive its
-  // double-invoked effects (see README)
-  <Playground />
+  <StrictMode>
+    <Playground />
+  </StrictMode>
 );

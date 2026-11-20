@@ -2,6 +2,7 @@ import { easings, useSpring } from '@react-spring/three';
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useImperativeHandle,
   useRef,
   type Ref
@@ -82,11 +83,20 @@ export const useMounted = ({
     unmount: () => startTransitionAnimation(false)
   }));
 
-  useEffect(() => {
+  const mountOnFirstRender = useEffectEvent(() => {
     if (!isMounted.current && mountOnEnter) {
       startTransitionAnimation(true);
     }
-  }, [startTransitionAnimation, mountOnEnter]);
+  });
+
+  useEffect(() => {
+    mountOnFirstRender();
+    // react-spring stops the animation on unmount without calling onRest, so
+    // clear the flag or StrictMode's remount would never start it again
+    return () => {
+      isMounting.current = false;
+    };
+  }, []);
 
   return { isMounted, springs, startTransitionAnimation };
 };
