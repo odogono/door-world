@@ -11,9 +11,18 @@ export const ActionButton = ({
 }: ActionButtonProps) => {
   return (
     <button
-      className="px-4 py-1.5 bg-[#4a9eff] text-white border-none rounded cursor-pointer text-sm transition-colors hover:bg-[#3a8eef] disabled:opacity-50"
       disabled={disabled}
       onClick={onClick}
+      style={{
+        background: '#4a9eff',
+        border: 'none',
+        borderRadius: '0.25rem',
+        color: 'white',
+        cursor: disabled ? 'default' : 'pointer',
+        fontSize: '0.875rem',
+        opacity: disabled ? 0.5 : 1,
+        padding: '0.375rem 1rem'
+      }}
     >
       {children}
     </button>

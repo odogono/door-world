@@ -232,7 +232,6 @@ export const World2D = () => {
         showRooms={showRooms}
       />
       <canvas
-        className="absolute inset-0 cursor-grab border-none active:cursor-grabbing"
         onClick={handlePointerClick}
         onPointerCancel={handlePointerUp}
         onPointerDown={handlePointerDown}
@@ -240,7 +239,10 @@ export const World2D = () => {
         onPointerUp={handlePointerUp}
         ref={canvasRef}
         style={{
-          cursor: isDragging ? 'grabbing' : isOverRoom ? 'pointer' : 'grab'
+          border: 'none',
+          cursor: isDragging ? 'grabbing' : isOverRoom ? 'pointer' : 'grab',
+          inset: 0,
+          position: 'absolute'
         }}
       />
       <MiniMap dungeon={dungeon} />
