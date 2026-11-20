@@ -1,57 +1,29 @@
-import { resolve } from 'node:path';
 import nkzw from '@nkzw/eslint-config';
-import { ReactThreeFiber } from '@react-three/fiber';
+import reactThree from '@react-three/eslint-plugin';
 
 export default [
   {
-    ignores: ['**/dist/*']
+    ignores: ['**/dist/*', 'src/assets.generated.ts']
   },
   {
     plugins: {
-      '@react-three': ReactThreeFiber
+      '@react-three': reactThree
     }
   },
   ...nkzw,
   {
     rules: {
       'func-style': ['error', 'declaration', { allowArrowFunctions: true }],
+      'import-x/no-unresolved': ['error', { ignore: ['^bun:'] }],
       'prefer-arrow-callback': 'error',
-      'react/no-unknown-property': 'off'
-    },
-    settings: {
-      'import/resolver': {
-        typescript: {
-          project: resolve(process.cwd(), './tsconfig.app.json')
-        }
-      }
+      // Ported code predates the React Compiler rules; tracked as warnings
+      'react-hooks/immutability': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react/no-unknown-property': 'off',
+      'unicorn/consistent-function-scoping': [
+        'error',
+        { checkArrowFunctions: false }
+      ]
     }
   }
-  // { ignores: ['dist'] },
-  // {
-  //   extends: [js.configs.recommended, eslintConfigPrettier],
-  //   files: ['**/*.{ts,tsx}'],
-  //   languageOptions: {
-  //     ecmaVersion: 2020,
-  //     globals: globals.browser
-  //   },
-  //   plugins: {
-  //     'react-hooks': reactHooks,
-  //     'react-refresh': reactRefresh
-  //   },
-  //   rules: {
-  //     ...nkzw.rules,
-  //     ...reactHooks.configs.recommended.rules,
-  //     'arrow-body-style': ['error', 'as-needed'],
-  //     'arrow-parens': ['error', 'as-needed'],
-  //     'arrow-spacing': ['error', { after: true, before: true }],
-  //     'func-style': ['error', 'arrow'],
-  //     'no-var': 'error',
-  //     'prefer-arrow-callback': 'error',
-  //     'prefer-const': 'error',
-  //     'react-refresh/only-export-components': [
-  //       'warn',
-  //       { allowConstantExport: true }
-  //     ]
-  //   }
-  // }
 ];

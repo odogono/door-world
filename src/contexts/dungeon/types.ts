@@ -1,4 +1,4 @@
-import { DungeonData, Room, StrategyType } from '@model/dungeon';
+import type { DungeonData, Room, StrategyType } from '../../model/dungeon';
 
 export interface DungeonContextType {
   dungeon: DungeonData | null;
@@ -23,8 +23,8 @@ export interface GenerateRoomsOptions {
   roomCount?: number;
 }
 
-export type GenerateRoomsAroundProps = {
+export interface GenerateRoomsAroundProps {
   recurseCount?: number;
   room: Room;
   roomCount: number;
-};
+}

@@ -1,6 +1,6 @@
-import { prngIntRange } from '@helpers/random';
+import { prngIntRange } from '../../../helpers/random';
 import { CANVAS_SIZE } from '../constants';
-import { DungeonData, Room, RoomGenerationStrategy } from '../types';
+import type { DungeonData, Room, RoomGenerationStrategy } from '../types';
 
 // Growth direction strategy
 export class GrowthDirectionStrategy implements RoomGenerationStrategy {

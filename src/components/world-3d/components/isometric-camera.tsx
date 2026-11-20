@@ -1,14 +1,14 @@
-import { createLog } from '@helpers/log';
-import { toTuple, tupleToVector3 } from '@helpers/three';
 import { animated, useSpring } from '@react-spring/three';
 import { OrthographicCamera } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { Ref, useEffect, useImperativeHandle, useRef } from 'react';
+import { useEffect, useImperativeHandle, useRef, type Ref } from 'react';
 import {
-  OrthographicCamera as OrthographicCameraImpl,
-  Vector3,
-  Vector3Tuple
+  type OrthographicCamera as OrthographicCameraImpl,
+  type Vector3,
+  type Vector3Tuple
 } from 'three';
+import { createLog } from '../../../helpers/log';
+import { toTuple, tupleToVector3 } from '../../../helpers/three';
 
 const log = createLog('IsometricCamera');
 
@@ -20,26 +20,26 @@ const SPRING_FRICTION = 14; // 120
 const SPRING_TENSION = 60; // 280
 const AnimatedOrthographicCamera = animated(OrthographicCamera);
 
-type IsometricCameraProps = {
+interface IsometricCameraProps {
   initialPosition?: Vector3Tuple;
   initialZoom?: number;
   ref: Ref<IsometricCameraRef>;
-};
+}
 
-type AnimationProps = {
+interface AnimationProps {
   position?: Vector3Tuple;
   zoom?: number;
-};
+}
 
-export type IsometricCameraMoveToProps = {
+export interface IsometricCameraMoveToProps {
   duration?: number;
   position?: Vector3 | Vector3Tuple;
   zoom?: number;
-};
+}
 
-export type IsometricCameraRef = {
+export interface IsometricCameraRef {
   moveTo: (props: IsometricCameraMoveToProps) => Promise<void>;
-};
+}
 
 export const IsometricCamera = ({
   initialPosition = [0, 0, 0],
@@ -80,8 +80,8 @@ export const IsometricCamera = ({
   });
 
   useImperativeHandle(ref, () => ({
-    moveTo: ({ duration = -1, position, zoom }): Promise<void> => {
-      return new Promise(resolve => {
+    moveTo: ({ duration = -1, position, zoom }): Promise<void> =>
+      new Promise(resolve => {
         // log.debug('Moving to', { position, zoom });
         // moveToResolveRef.current = resolve;
 
@@ -117,8 +117,7 @@ export const IsometricCamera = ({
             // log.debug('Moved to', { position, zoom: springs.zoom.get() });
           }
         });
-      });
-    }
+      })
   }));
 
   useEffect(() => {
@@ -140,6 +139,8 @@ export const IsometricCamera = ({
       far={100}
       makeDefault
       near={0.1}
+      // react-spring 9.7.5's types lag @react-three/fiber 9.8; fine at runtime
+      // @ts-expect-error SpringValue<Vector3Tuple> is animated by `animated`
       position={springs.position}
       ref={cameraRef}
       zoom={springs.zoom.get()}

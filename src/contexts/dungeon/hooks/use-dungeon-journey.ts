@@ -1,14 +1,21 @@
-import { createLog } from '@helpers/log';
-import { getRoomDoors } from '@model/dungeon/door';
-import { getDungeonRoomById } from '@model/dungeon/helpers';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useMemo } from 'react';
+import { createLog } from '../../../helpers/log';
+import { getRoomDoors } from '../../../model/dungeon/door';
+import { getDungeonRoomById } from '../../../model/dungeon/helpers';
 import { moveToRoomAtom } from '../actions/move-to-room';
+import { addVisitedRoomAtom, applyNextRoomAtom } from '../actions/room-history';
 import {
+  getVisibleDoorsAtom,
+  getVisibleRoomsAtom
+} from '../actions/set-visible';
+import {
+  currentRoomAtom,
   dungeonAtom,
-  dungeonCurrentRoomAtom,
-  dungeonVisibleDoorsAtom,
-  dungeonVisibleRoomsAtom
+  nextDoorAtom,
+  nextRoomAtom,
+  visibleDoorsAtom,
+  visibleRoomsAtom
 } from '../atoms';
 
 const log = createLog('useDungeonJourney');
@@ -21,10 +28,10 @@ const initialiseDungeonJourneyAtom = atom(null, async (get, set) => {
   }
 
   // re-initialise the dungeon journey
-  set(dungeonCurrentRoomAtom, 1);
+  const currentRoomId = 1;
+  set(currentRoomAtom, currentRoomId);
 
   const dungeon = get(dungeonAtom);
-  const currentRoomId = get(dungeonCurrentRoomAtom);
 
   const currentRoom = getDungeonRoomById(dungeon, currentRoomId);
 
@@ -35,25 +42,32 @@ const initialiseDungeonJourneyAtom = atom(null, async (get, set) => {
 
   const visibleDoors = getRoomDoors(dungeon, currentRoom);
 
-  set(dungeonVisibleRoomsAtom, [currentRoom]);
-  set(dungeonVisibleDoorsAtom, visibleDoors);
-
+  set(visibleRoomsAtom, [currentRoomId]);
+  set(
+    visibleDoorsAtom,
+    visibleDoors.map(door => door.id)
+  );
+  set(addVisitedRoomAtom, currentRoomId);
+  set(applyNextRoomAtom);
   set(isInitialisedAtom, true);
 
-  log.debug('Dungeon journey initialised', { currentRoomId });
+  const nextRoomId = get(nextRoomAtom);
+
+  log.debug('Dungeon journey initialised', { currentRoomId, nextRoomId });
 });
 
 export const useDungeonJourney = () => {
   const dungeon = useAtomValue(dungeonAtom);
   const initialiseDungeonJourney = useSetAtom(initialiseDungeonJourneyAtom);
-  const doors = useAtomValue(dungeonVisibleDoorsAtom);
-  const rooms = useAtomValue(dungeonVisibleRoomsAtom);
+  const doors = useAtomValue(getVisibleDoorsAtom);
+  const rooms = useAtomValue(getVisibleRoomsAtom);
   const moveToRoom = useSetAtom(moveToRoomAtom);
-  const currentRoomId = useAtomValue(dungeonCurrentRoomAtom);
+  const currentRoomId = useAtomValue(currentRoomAtom);
   const currentRoom = useMemo(
     () => getDungeonRoomById(dungeon, currentRoomId),
     [dungeon, currentRoomId]
   );
+  const nextDoorId = useAtomValue(nextDoorAtom);
 
   useEffect(() => {
     initialiseDungeonJourney();
@@ -65,6 +79,7 @@ export const useDungeonJourney = () => {
     doors,
     dungeon,
     moveToRoom,
+    nextDoorId,
     rooms
   };
 };

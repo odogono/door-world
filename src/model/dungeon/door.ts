@@ -1,7 +1,13 @@
-import { createLog } from '@helpers/log';
+import { createLog } from '../../helpers/log';
 import { DOOR_HEIGHT, DOOR_WIDTH } from './constants';
 import { roomsTouch } from './room';
-import { CompassDirection, Door, DungeonData, Position, Room } from './types';
+import type {
+  CompassDirection,
+  Door,
+  DungeonData,
+  Position,
+  Room
+} from './types';
 
 const log = createLog('Dungeon.Door');
 
@@ -77,12 +83,10 @@ export const findDoorPosition = (
   return null;
 };
 
-const getRoomCenter = (room: Room): Position => {
-  return {
-    x: room.area.x + room.area.width / 2,
-    y: room.area.y + room.area.height / 2
-  };
-};
+const getRoomCenter = (room: Room): Position => ({
+  x: room.area.x + room.area.width / 2,
+  y: room.area.y + room.area.height / 2
+});
 
 const getDoorDirection = (room1: Room, room2: Room): CompassDirection => {
   const fromRoom = getRoomCenter(room1);
@@ -144,13 +148,12 @@ export const getRoomDoorsExcluding = (
     return [];
   }
 
-  const roomDoors = dungeon.doors.filter(door => {
-    return (
+  const roomDoors = dungeon.doors.filter(
+    door =>
       (door.room1 === roomId || door.room2 === roomId) &&
       door.room1 !== excludeRoomId &&
       door.room2 !== excludeRoomId
-    );
-  });
+  );
 
   return roomDoors;
 };

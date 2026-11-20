@@ -1,18 +1,23 @@
-import { createLog } from '@helpers/log';
-import { applyClippingPlanesToObject, applyColor } from '@helpers/three';
 import { animated, easings, useSpring } from '@react-spring/three';
 import { useGLTF } from '@react-three/drei';
-import { ThreeEvent } from '@react-three/fiber';
+import type { ThreeEvent } from '@react-three/fiber';
 import {
-  Ref,
   useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef
+  useRef,
+  type Ref
 } from 'react';
-import { Plane as ThreePlane, Vector3, Vector3Tuple } from 'three';
-import { EntityRef } from './types';
+import { Plane as ThreePlane, Vector3, type Vector3Tuple } from 'three';
+import { doorModelUrl } from '../../../assets.generated';
+import { createLog } from '../../../helpers/log';
+import {
+  applyClippingPlanesToObject,
+  applyColor
+} from '../../../helpers/three';
+import { useMounted } from './hooks/use-mounted';
+import type { EntityRef } from './types';
 
 interface DoorProps {
   doorColor?: string;
@@ -33,7 +38,6 @@ export type DoorRef = EntityRef & {
   open: () => Promise<boolean>;
   setOpen: (open: boolean) => Promise<boolean>;
   toggleOpen: () => Promise<boolean>;
-  unmount: () => Promise<boolean>;
 };
 
 const log = createLog('Door');
@@ -52,7 +56,7 @@ export const Door = ({
   rotationY = -Math.PI / 2,
   scale = [1, 1, 1]
 }: DoorProps) => {
-  const gltf = useGLTF('/vbasic.door.glb');
+  const gltf = useGLTF(doorModelUrl);
 
   // clone the scene to avoid mutating the original
   const scene = useMemo(() => gltf.scene.clone(), [gltf.scene]);
@@ -68,53 +72,27 @@ export const Door = ({
   );
 
   const isOpen = useRef(isOpenProp);
-  const isMounted = useRef(isMountedProp);
 
   const [openDoorSpring, openDoorApi] = useSpring(() => ({
-    // config: { duration: 16_000, easing: easings.easeInOutSine },
-    // config: { duration: 8000, friction: 14, tension: 120 },
     rotation: [0, isOpen.current ? Math.PI / 2 : 0, 0]
   }));
 
-  const [mountingSpring, mountingApi] = useSpring(() => ({
-    position: [position.x, isMounted.current ? 0 : -1.1, position.z]
-  }));
-
-  const startTransitionAnimation = useCallback(
-    (enter: boolean) => {
-      return new Promise<boolean>(resolve => {
-        if (isMounted.current === enter) {
-          resolve(isMounted.current);
-          return;
-        }
-
-        const targetY = isMounted.current ? -1.1 : 0;
-
-        const duration = enter ? mountDuration : mountDuration / 2;
-
-        // isMounting.current = true;
-        mountingApi.start({
-          config: { duration, easing: easings.easeInOutSine },
-          onRest: () => {
-            isMounted.current = enter;
-            resolve(isMounted.current);
-          },
-          position: [position.x, targetY, position.z]
-        });
-      });
-    },
-    [mountDuration, position, mountingApi]
-  );
-
-  useEffect(() => {
-    if (!isMounted.current) {
-      startTransitionAnimation(true);
-    }
-  }, [startTransitionAnimation]);
+  const { springs: mountingSpring, startTransitionAnimation } = useMounted({
+    initialValues: (isMounted: boolean) => ({
+      opacity: isMounted ? 1 : 0,
+      position: [position.x, isMounted ? 0 : -1.1, position.z]
+    }),
+    ref,
+    targetValues: (isMounted: boolean) => ({
+      duration: isMounted ? mountDuration / 2 : mountDuration,
+      opacity: isMounted ? 0 : 1,
+      position: [position.x, isMounted ? -1.1 : 0, position.z]
+    })
+  });
 
   const startDoorAnimation = useCallback(
-    (open: boolean) => {
-      return new Promise<boolean>(resolve => {
+    (open: boolean) =>
+      new Promise<boolean>(resolve => {
         if (isOpen.current === open) {
           resolve(isOpen.current);
           return;
@@ -132,13 +110,13 @@ export const Door = ({
           },
           rotation: [0, targetRotation, 0]
         });
-      });
-    },
+      }),
     [openDuration, openDoorApi]
   );
 
   useImperativeHandle(ref, () => ({
     close: () => startDoorAnimation(false),
+    // annoying that the mount/unmount methods have to be redefined here
     mount: () => startTransitionAnimation(true),
     open: () => startDoorAnimation(true),
     setOpen: (isOpen: boolean) => startDoorAnimation(isOpen),
@@ -179,10 +157,19 @@ export const Door = ({
   return (
     <animated.group position={mountingSpring.position}>
       <group position={[0, 0.5, 0]} rotation={[0, rotationY, 0]} scale={scale}>
-        {frameObject && <primitive dispose={null} object={frameObject} />}
+        {frameObject && (
+          <animated.primitive
+            dispose={null}
+            material-opacity={mountingSpring.opacity}
+            material-transparent={true}
+            object={frameObject}
+          />
+        )}
         {doorObject && (
           <animated.primitive
             dispose={null}
+            material-opacity={mountingSpring.opacity}
+            material-transparent={true}
             object={doorObject}
             rotation={openDoorSpring.rotation}
           />
@@ -194,6 +181,3 @@ export const Door = ({
     </animated.group>
   );
 };
-
-// Preload the model
-// useGLTF.preload('/vbasic.door.glb');
