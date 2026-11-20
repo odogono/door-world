@@ -35,12 +35,6 @@ import { DoorWorld } from '@odogono/door-world';
   peer dependencies.
 - The generated world and the current room persist in `localStorage`.
 
-### Known limitations
-
-- Does not yet render under React `<StrictMode>` (double-invoked effects).
-- Stays on jotai 2.x: under jotai 3 the world does not render.
-- `@react-spring/three` is pinned to 9.7.5.
-
 ## Developing
 
 ```sh
