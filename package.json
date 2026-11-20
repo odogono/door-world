@@ -28,7 +28,7 @@
   "dependencies": {
     "@react-spring/three": "9.7.5",
     "chroma-js": "^3.3.0",
-    "jotai": "^2.20.3"
+    "jotai": "^3.0.2"
   },
   "peerDependencies": {
     "@react-three/drei": "^10.7.0",
