@@ -16,7 +16,8 @@ export const dungeonStrategyAtom = atomWithStorage<StrategyType>(
   'random'
 );
 
-export const currentRoomAtom = atomWithStorage<RoomId>('dungeonRoom', 1);
+// Not saved: every visit starts a new Journey in the first Room
+export const currentRoomAtom = atom<RoomId>(1);
 
 export const visibleRoomsAtom = atom<RoomId[]>([]);
 export const visibleDoorsAtom = atom<DoorId[]>([]);

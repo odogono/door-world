@@ -33,7 +33,8 @@ import { DoorWorld } from '@odogono/door-world';
 - It is browser-only: in Astro use `client:only="react"`.
 - `react`, `react-dom`, `three`, `@react-three/fiber` and `@react-three/drei` are
   peer dependencies.
-- The generated world and the current room persist in `localStorage`.
+- The generated world persists in `localStorage`. Each visit starts a new
+  Journey in the first room.
 
 ## Developing
 
