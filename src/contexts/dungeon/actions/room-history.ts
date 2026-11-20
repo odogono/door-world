@@ -7,9 +7,16 @@ import {
   nextDoorAtom,
   nextRoomAtom,
   roomHistoryAtom,
-  seedAtom,
   visitedRoomsAtom
 } from '../atoms';
+
+/**
+ * The Journey's own random-number state, used to choose the next Door.
+ * Kept apart from the Seed, which only ever says which Dungeon is generated.
+ * Like the Room History, it lives in memory only; until the Journey first
+ * chooses a Door it is null, and starts from the Dungeon's Seed.
+ */
+export const journeyRandomStateAtom = atom<number | null>(null);
 
 /**
  * Adds a room to the visited rooms list
@@ -93,19 +100,20 @@ export const getUnvisitedDoorsAtom = atom(get => {
  * Calculates the connecting door id and room id of the next room to visit
  */
 export const applyNextRoomAtom = atom(null, (get, set) => {
-  const seed = get(seedAtom);
+  const randomState =
+    get(journeyRandomStateAtom) ?? get(dungeonAtom)?.seed ?? 1;
   const currentRoomId = get(currentRoomAtom);
   // const unvisitedRooms = get(getUnvisitedRoomsAtom)(currentRoomId);
   const unvisitedDoors = get(getUnvisitedDoorsAtom)(currentRoomId);
 
   if (unvisitedDoors.length > 0) {
-    const [nextSeed, nextDoorIndex] = prngIntRange(
-      seed,
+    const [nextRandomState, nextDoorIndex] = prngIntRange(
+      randomState,
       0,
       unvisitedDoors.length - 1
     );
     const nextDoor = unvisitedDoors[nextDoorIndex];
-    set(seedAtom, nextSeed);
+    set(journeyRandomStateAtom, nextRandomState);
     set(
       nextRoomAtom,
       nextDoor.room1 === currentRoomId ? nextDoor.room2 : nextDoor.room1
