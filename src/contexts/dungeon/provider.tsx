@@ -1,7 +1,9 @@
+import { useStore } from 'jotai';
 import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import { createLog } from '../../helpers/log';
 import { generateDungeon } from '../../model/dungeon';
 import { generateRoomsAround as generateRoomsAroundHelper } from '../../model/dungeon/generateRoomsAround';
+import { dungeonAtom, seedAtom } from './atoms';
 import { DungeonContext } from './context';
 import { useDungeonAtom } from './hooks/use-dungeon';
 import { useDungeonSeed } from './hooks/use-dungeon-seed';
@@ -15,11 +17,12 @@ const log = createLog('DungeonProvider');
 export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
+  const store = useStore();
   const { dungeon, setDungeon } = useDungeonAtom();
-  // Starts at 0 when there is no stored dungeon, since one is generated on mount
-  const [generationProgress, setGenerationProgress] = useState(() =>
-    dungeon ? 100 : 0
-  );
+  // null until a generation starts. The stored Dungeon only arrives after the
+  // first render, so the progress shown until then follows the Dungeon
+  const [progress, setGenerationProgress] = useState<number | null>(null);
+  const generationProgress = progress ?? (dungeon ? 100 : 0);
 
   const { seed, setSeed } = useDungeonSeed();
 
@@ -96,12 +99,16 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const generateIfMissing = useEffectEvent((signal: AbortSignal) => {
-    if (dungeon) {
+    // The first render saw the atoms' defaults, as atomWithStorage loads the
+    // stored values when first subscribed. Those subscriptions are made in
+    // effects that run before this one, so the store now holds them
+    if (store.get(dungeonAtom)) {
       return;
     }
+    const storedSeed = store.get(seedAtom);
     generate({
       maxRooms: 500,
-      seed: seed || Math.floor(Math.random() * 1_000_000),
+      seed: storedSeed || Math.floor(Math.random() * 1_000_000),
       signal,
       strategy: 'random'
     }).catch(error => {
