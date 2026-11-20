@@ -65,10 +65,17 @@ export const useMounted = ({
 
         api.start({
           config: { duration, easing: easings.easeInOutSine },
-          onRest: async () => {
-            isMounted.current = enter;
+          onRest: async ({ finished }) => {
             isMounting.current = false;
 
+            // react-spring 10 also calls onRest when the animation is cancelled,
+            // as StrictMode's simulated unmount does
+            if (!finished) {
+              resolve(isMounted.current);
+              return;
+            }
+
+            isMounted.current = enter;
             runCallback(enter).then(() => resolve(enter));
           },
           ...values

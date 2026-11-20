@@ -26,7 +26,7 @@
     "outdated": "bunx npm-check-updates --interactive --format group"
   },
   "dependencies": {
-    "@react-spring/three": "9.7.5",
+    "@react-spring/three": "^10.1.2",
     "chroma-js": "^3.3.0",
     "jotai": "^3.0.2"
   },
