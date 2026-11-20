@@ -68,5 +68,35 @@ describe('DungeonProvider', () => {
         generateSpy.mockRestore();
       }
     });
+
+    test(`starts the Journey when it mounts before the Dungeon exists${strict ? ' under StrictMode' : ''}`, async () => {
+      let visibleRoomIds: number[] = [];
+      let hasDungeonOnMount: boolean | undefined;
+
+      const Journey = () => {
+        const journey = useDungeonJourney();
+        hasDungeonOnMount ??= journey.dungeon !== null;
+        visibleRoomIds = journey.rooms.map(room => room.id);
+        return null;
+      };
+
+      // The Journey mounts in the same commit as the provider
+      const { unmount } = await render(
+        <JotaiProvider>
+          <DungeonProvider>
+            <Journey />
+          </DungeonProvider>
+        </JotaiProvider>,
+        { strict }
+      );
+
+      try {
+        await waitUntil(() => visibleRoomIds.length > 0);
+        expect(hasDungeonOnMount).toBe(false);
+        expect(visibleRoomIds).toEqual([1]);
+      } finally {
+        await unmount();
+      }
+    });
   }
 });

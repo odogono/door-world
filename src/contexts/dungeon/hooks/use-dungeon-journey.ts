@@ -27,18 +27,16 @@ const initialiseDungeonJourneyAtom = atom(null, async (get, set) => {
     return;
   }
 
-  // re-initialise the dungeon journey
   const currentRoomId = 1;
-  set(currentRoomAtom, currentRoomId);
-
   const dungeon = get(dungeonAtom);
-
   const currentRoom = getDungeonRoomById(dungeon, currentRoomId);
 
+  // Not generated yet; the hook retries when the Dungeon changes
   if (!currentRoom) {
-    // throw new Error('Current room not found');
     return;
   }
+
+  set(currentRoomAtom, currentRoomId);
 
   const visibleDoors = getRoomDoors(dungeon, currentRoom);
 
@@ -69,9 +67,12 @@ export const useDungeonJourney = () => {
   );
   const nextDoorId = useAtomValue(nextDoorAtom);
 
+  // Waits for the Dungeon rather than relying on it existing at mount
   useEffect(() => {
-    initialiseDungeonJourney();
-  }, [initialiseDungeonJourney]);
+    if (dungeon) {
+      initialiseDungeonJourney();
+    }
+  }, [dungeon, initialiseDungeonJourney]);
 
   return {
     currentRoom,
