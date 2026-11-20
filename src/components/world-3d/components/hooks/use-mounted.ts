@@ -2,6 +2,7 @@ import { easings, useSpring } from '@react-spring/three';
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useImperativeHandle,
   useRef,
   type Ref
@@ -64,10 +65,17 @@ export const useMounted = ({
 
         api.start({
           config: { duration, easing: easings.easeInOutSine },
-          onRest: async () => {
-            isMounted.current = enter;
+          onRest: async ({ finished }) => {
             isMounting.current = false;
 
+            // react-spring 10 also calls onRest when the animation is cancelled,
+            // as StrictMode's simulated unmount does
+            if (!finished) {
+              resolve(isMounted.current);
+              return;
+            }
+
+            isMounted.current = enter;
             runCallback(enter).then(() => resolve(enter));
           },
           ...values
@@ -82,11 +90,20 @@ export const useMounted = ({
     unmount: () => startTransitionAnimation(false)
   }));
 
-  useEffect(() => {
+  const mountOnFirstRender = useEffectEvent(() => {
     if (!isMounted.current && mountOnEnter) {
       startTransitionAnimation(true);
     }
-  }, [startTransitionAnimation, mountOnEnter]);
+  });
+
+  useEffect(() => {
+    mountOnFirstRender();
+    // react-spring stops the animation on unmount without calling onRest, so
+    // clear the flag or StrictMode's remount would never start it again
+    return () => {
+      isMounting.current = false;
+    };
+  }, []);
 
   return { isMounted, springs, startTransitionAnimation };
 };

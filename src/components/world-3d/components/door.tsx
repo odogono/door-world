@@ -1,4 +1,9 @@
-import { animated, easings, useSpring } from '@react-spring/three';
+import {
+  animated,
+  easings,
+  useSpring,
+  type SpringValue
+} from '@react-spring/three';
 import { useGLTF } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
 import {
@@ -7,9 +12,15 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
+  type ComponentType,
   type Ref
 } from 'react';
-import { Plane as ThreePlane, Vector3, type Vector3Tuple } from 'three';
+import {
+  Plane as ThreePlane,
+  Vector3,
+  type Object3D,
+  type Vector3Tuple
+} from 'three';
 import { doorModelUrl } from '../../../assets.generated';
 import { createLog } from '../../../helpers/log';
 import {
@@ -41,6 +52,19 @@ export type DoorRef = EntityRef & {
 };
 
 const log = createLog('Door');
+
+interface AnimatedPrimitiveProps {
+  dispose: null;
+  'material-opacity': SpringValue<number>;
+  'material-transparent': boolean;
+  object: Object3D;
+  rotation?: SpringValue<number[]>;
+}
+
+// animated.primitive's own props are too deep for TypeScript to check
+// (TS2589), so type only the props used here
+const AnimatedPrimitive =
+  animated.primitive as unknown as ComponentType<AnimatedPrimitiveProps>;
 
 export const Door = ({
   doorColor = '#83D5FF',
@@ -158,7 +182,7 @@ export const Door = ({
     <animated.group position={mountingSpring.position}>
       <group position={[0, 0.5, 0]} rotation={[0, rotationY, 0]} scale={scale}>
         {frameObject && (
-          <animated.primitive
+          <AnimatedPrimitive
             dispose={null}
             material-opacity={mountingSpring.opacity}
             material-transparent={true}
@@ -166,7 +190,7 @@ export const Door = ({
           />
         )}
         {doorObject && (
-          <animated.primitive
+          <AnimatedPrimitive
             dispose={null}
             material-opacity={mountingSpring.opacity}
             material-transparent={true}

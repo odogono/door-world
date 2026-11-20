@@ -26,9 +26,9 @@
     "outdated": "bunx npm-check-updates --interactive --format group"
   },
   "dependencies": {
-    "@react-spring/three": "9.7.5",
+    "@react-spring/three": "^10.1.2",
     "chroma-js": "^3.3.0",
-    "jotai": "^2.20.3"
+    "jotai": "^3.0.2"
   },
   "peerDependencies": {
     "@react-three/drei": "^10.7.0",
@@ -38,6 +38,7 @@
     "three": ">=0.177.0"
   },
   "devDependencies": {
+    "@happy-dom/global-registrator": "^21.0.4",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@nkzw/eslint-config": "^3.3.0",
     "@react-three/drei": "^10.7.9",

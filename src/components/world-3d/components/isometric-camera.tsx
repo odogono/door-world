@@ -139,7 +139,7 @@ export const IsometricCamera = ({
       far={100}
       makeDefault
       near={0.1}
-      // react-spring 9.7.5's types lag @react-three/fiber 9.8; fine at runtime
+      // react-spring 10's types lag @react-three/fiber 9.8; fine at runtime
       // @ts-expect-error SpringValue<Vector3Tuple> is animated by `animated`
       position={springs.position}
       ref={cameraRef}
