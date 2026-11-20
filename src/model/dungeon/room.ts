@@ -153,7 +153,8 @@ export const generateRoomAround = (
 
   const [seedC, shuffledSides] = prngShuffle(seedB, sides);
 
-  // TODO return the dungeon
+  // Advances the seed and id counter of the dungeon being generated in place;
+  // callers pass a working copy, never stored state
   dungeon.seed = seedC;
 
   for (const side of shuffledSides) {

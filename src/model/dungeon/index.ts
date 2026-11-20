@@ -58,11 +58,15 @@ export const generateDungeon = async (
 export function* generateDungeonGenerator(
   props: GenerateDungeonOptions
 ): Generator<DungeonData, DungeonData> {
-  const { dungeon, maxAttempts, maxRooms, seed, strategy } = props;
+  const { maxAttempts, maxRooms, seed, strategy } = props;
 
-  if (!dungeon) {
+  if (!props.dungeon) {
     throw new Error('Dungeon is required');
   }
+
+  // Generation advances the working copy's seed and id counter in place, so
+  // copy it to leave the caller's dungeon untouched
+  const dungeon = { ...props.dungeon };
 
   log.debug('Generating dungeon', { maxRooms, seed, strategy });
 

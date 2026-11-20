@@ -103,4 +103,21 @@ describe('generateRoomsAround', () => {
     const newRooms = result.rooms.filter(r => r.id !== targetRoom.id);
     expect(newRooms.some(r => r.parent?.id === targetRoom.id)).toBe(true);
   });
+
+  test('does not change the dungeon it is given', () => {
+    const dungeon = createMockDungeon();
+    const targetRoom = createMockRoom(1);
+    dungeon.rooms.push(targetRoom);
+    const before = { idInc: dungeon.idInc, seed: dungeon.seed };
+
+    const result = generateRoomsAround({
+      dungeon,
+      roomCount: 3,
+      targetRoom
+    });
+
+    expect(result.rooms.length).toBeGreaterThan(1);
+    expect({ idInc: dungeon.idInc, seed: dungeon.seed }).toEqual(before);
+    expect(dungeon.rooms).toHaveLength(1);
+  });
 });
