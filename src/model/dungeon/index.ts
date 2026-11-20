@@ -131,6 +131,10 @@ export const generateDungeonAsync = async (
   let result: DungeonData;
 
   while (true) {
+    // Allow other tasks to run; also keeps onProgress off the caller's
+    // synchronous path, so it never fires during a React render or effect
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     const { done, value } = generator.next();
     if (done) {
       result = value;
@@ -139,8 +143,6 @@ export const generateDungeonAsync = async (
     if (onProgress) {
       onProgress(value);
     }
-    // Allow other tasks to run
-    await new Promise(resolve => setTimeout(resolve, 0));
   }
 
   return result;

@@ -54,6 +54,8 @@ export const World2D = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
       setCanvasSize({ height, width });
+      // Re-centre the view whenever the canvas changes size
+      setViewportOffset({ x: width / 2, y: height / 2 });
     };
 
     // Initial size
@@ -76,14 +78,6 @@ export const World2D = () => {
     // Set canvas dimensions to match window size
     canvas.width = canvasSize.width;
     canvas.height = canvasSize.height;
-  }, [canvasSize]);
-
-  // Update viewport offset when canvas size changes
-  useEffect(() => {
-    setViewportOffset({
-      x: canvasSize.width / 2,
-      y: canvasSize.height / 2
-    });
   }, [canvasSize]);
 
   // Draw dungeon
@@ -109,6 +103,18 @@ export const World2D = () => {
     viewportOffset
   ]);
 
+  const resetView = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    setViewportOffset({
+      x: canvas.width / 2,
+      y: canvas.height / 2
+    });
+  }, []);
+
   const regenerateDungeon = useCallback(async () => {
     const start = performance.now();
     resetView();
@@ -123,19 +129,7 @@ export const World2D = () => {
       const end = performance.now();
       log.debug(`Dungeon generated in ${end - start}ms`);
     }
-  }, [fillSpace, seed, selectedStrategy, regenerate]);
-
-  const resetView = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      return;
-    }
-
-    setViewportOffset({
-      x: canvas.width / 2,
-      y: canvas.height / 2
-    });
-  };
+  }, [fillSpace, seed, selectedStrategy, regenerate, resetView]);
 
   // useEffect(() => {
   //   regenerateDungeon();

@@ -16,19 +16,22 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
   const { dungeon, setDungeon } = useDungeonAtom();
-  const [generationProgress, setGenerationProgress] = useState(100);
+  // Starts at 0 when there is no stored dungeon, since one is generated on mount
+  const [generationProgress, setGenerationProgress] = useState(() =>
+    dungeon ? 100 : 0
+  );
 
   const { seed, setSeed } = useDungeonSeed();
 
-  const regenerate = useCallback(
+  // Only sets state from async generation callbacks, so it is safe to start
+  // from an effect
+  const generate = useCallback(
     async (options: RegenerateDungeonOptions) => {
       const {
         maxRooms = 50,
         seed = Math.floor(Math.random() * 1_000_000),
         strategy = 'random'
       } = options;
-
-      setGenerationProgress(0);
 
       const result = await generateDungeon({
         maxAttempts: maxRooms * 2,
@@ -65,6 +68,14 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
     [setDungeon]
   );
 
+  const regenerate = useCallback(
+    (options: RegenerateDungeonOptions) => {
+      setGenerationProgress(0);
+      return generate(options);
+    },
+    [generate]
+  );
+
   const generateRoomsAround = useCallback(
     async ({ recurseCount = 1, room, roomCount }: GenerateRoomsAroundProps) => {
       if (!dungeon) {
@@ -84,13 +95,16 @@ export const DungeonProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (!dungeon) {
-      regenerate({
+      // generate() only sets state after its first await, which this rule
+      // cannot see through
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      generate({
         maxRooms: 500,
         seed: seed || Math.floor(Math.random() * 1_000_000),
         strategy: 'random'
       });
     }
-  }, [dungeon, regenerate, seed]);
+  }, [dungeon, generate, seed]);
 
   // log.debug('Dungeon generated', {
   //   progress: generationProgress,
