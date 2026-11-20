@@ -5,14 +5,12 @@ import { djb2Hash } from '../../../helpers/random';
 import { getRoomCenter, type Door as DoorModel } from '../../../model/dungeon';
 import { Door as Door3d, type DoorRef } from './door';
 import { dungeonPositionToVector3 } from './helpers';
-import { useInactivityTimeout } from './hooks/use-inactivity-timeout';
+import { useDemoMode } from './hooks/use-demo-mode';
 import { useMoveToRoom } from './hooks/use-move-to-room';
 import type { IsometricCameraMoveToProps } from './isometric-camera';
 import { Room as Room3d, type RoomRef, type RoomTouchEvent } from './room';
 
 const log = createLog('Dungeon');
-
-const INACTIVITY_TIMEOUT = 5000;
 
 interface DungeonProps {
   moveCameraTo: (props: IsometricCameraMoveToProps) => Promise<void>;
@@ -32,45 +30,42 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
     moveCameraTo
   });
 
-  const onInactivityTimeout = useCallback(() => {
-    log.debug('Inactivity - Moving through door', nextDoorId);
+  const onDemoStep = useCallback(() => {
+    log.debug('Demo Mode - moving through door', nextDoorId);
 
     if (nextDoorId) {
       moveThroughDoor(nextDoorId);
     }
   }, [nextDoorId, moveThroughDoor]);
 
-  const { clearInactivityTimeout, resetInactivityTimeout } =
-    useInactivityTimeout({
-      onInactivityTimeout
-    });
+  const { cancelDemoStep, scheduleDemoStep } = useDemoMode({ onDemoStep });
 
   const handleDoorTouch = useCallback(
     async (door: DoorModel) => {
       log.debug('Door clicked', door.id);
 
-      clearInactivityTimeout();
+      cancelDemoStep();
 
       await moveThroughDoor(door.id);
 
-      resetInactivityTimeout();
+      scheduleDemoStep();
     },
-    [clearInactivityTimeout, moveThroughDoor, resetInactivityTimeout]
+    [cancelDemoStep, moveThroughDoor, scheduleDemoStep]
   );
 
   const handleRoomTouch = useCallback(
     (event: RoomTouchEvent) => {
       log.debug('Room clicked', event.room.id, event.world);
 
-      clearInactivityTimeout();
+      cancelDemoStep();
 
       moveCameraTo({
         position: event.world
       });
 
-      resetInactivityTimeout();
+      scheduleDemoStep();
     },
-    [clearInactivityTimeout, moveCameraTo, resetInactivityTimeout]
+    [cancelDemoStep, moveCameraTo, scheduleDemoStep]
   );
 
   useEffect(() => {
@@ -86,7 +81,7 @@ export const Dungeon = ({ moveCameraTo }: DungeonProps) => {
 
     log.debug('currentRoom', currentRoom?.id, roomPosition);
 
-    resetInactivityTimeout();
+    scheduleDemoStep();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRoom?.id]);

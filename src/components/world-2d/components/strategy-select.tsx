@@ -1,4 +1,5 @@
 import type { StrategyType } from '../../../model/dungeon';
+import { fieldStyle } from './field-style';
 
 interface StrategySelectProps {
   onChange: (strategy: StrategyType) => void;
@@ -7,8 +8,8 @@ interface StrategySelectProps {
 
 export const StrategySelect = ({ onChange, value }: StrategySelectProps) => (
   <select
-    className="rounded border border-[#4d4d4d] bg-[#3d3d3d] p-1.5 text-sm text-white"
     onChange={e => onChange(e.target.value as StrategyType)}
+    style={fieldStyle}
     value={value}
   >
     <option value="random">Random Strategy</option>

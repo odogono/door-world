@@ -13,5 +13,5 @@
     "moduleDetection": "force",
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "dev", "scripts", "vite.config.ts"]
+  "include": ["src", "dev", "scripts"]
 }

@@ -43,7 +43,22 @@ export const ControlsPanel = ({
   showDoors,
   showRooms
 }: ControlsPanelProps) => (
-  <div className="fixed top-5 left-1/2 z-50 flex -translate-x-1/2 flex-wrap items-center gap-4 rounded bg-[#2a2a2a] p-2">
+  <div
+    style={{
+      alignItems: 'center',
+      background: '#2a2a2a',
+      borderRadius: '0.25rem',
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '1rem',
+      left: '50%',
+      padding: '0.5rem',
+      position: 'fixed',
+      top: '1.25rem',
+      transform: 'translateX(-50%)',
+      zIndex: 50
+    }}
+  >
     <StrategySelect onChange={onStrategyChange} value={selectedStrategy} />
 
     <CheckboxControl
@@ -67,7 +82,7 @@ export const ControlsPanel = ({
       value={recurseCount}
     />
 
-    <div className="flex gap-4">
+    <div style={{ display: 'flex', gap: '1rem' }}>
       <CheckboxControl
         checked={showConnections}
         label="Show Connections"
@@ -85,7 +100,7 @@ export const ControlsPanel = ({
       />
     </div>
 
-    <div className="flex gap-2">
+    <div style={{ display: 'flex', gap: '0.5rem' }}>
       <ActionButton disabled={isGenerating} onClick={onRegenerate}>
         {isGenerating ? 'Generating...' : 'Regenerate'}
       </ActionButton>

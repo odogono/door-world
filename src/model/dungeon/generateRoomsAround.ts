@@ -12,13 +12,16 @@ interface GenerateRoomsAroundProps {
 }
 
 export const generateRoomsAround = ({
-  dungeon,
+  dungeon: sourceDungeon,
   maxAttempts = 20,
   maxConsecutiveFailures = 10,
   recurseCount = 1,
   roomCount,
   targetRoom
 }: GenerateRoomsAroundProps): DungeonData => {
+  // Generation advances the working copy's seed and id counter in place, so
+  // copy it to leave the caller's (possibly stored) dungeon untouched
+  const dungeon = { ...sourceDungeon };
   // const dungeonPrng = new PRNG(dungeon.seed);
   const rooms = [...dungeon.rooms];
   let roomsGenerated = 0;

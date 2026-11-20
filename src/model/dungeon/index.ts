@@ -58,11 +58,15 @@ export const generateDungeon = async (
 export function* generateDungeonGenerator(
   props: GenerateDungeonOptions
 ): Generator<DungeonData, DungeonData> {
-  const { dungeon, maxAttempts, maxRooms, seed, strategy } = props;
+  const { maxAttempts, maxRooms, seed, strategy } = props;
 
-  if (!dungeon) {
+  if (!props.dungeon) {
     throw new Error('Dungeon is required');
   }
+
+  // Generation advances the working copy's seed and id counter in place, so
+  // copy it to leave the caller's dungeon untouched
+  const dungeon = { ...props.dungeon };
 
   log.debug('Generating dungeon', { maxRooms, seed, strategy });
 
@@ -131,6 +135,10 @@ export const generateDungeonAsync = async (
   let result: DungeonData;
 
   while (true) {
+    // Allow other tasks to run; also keeps onProgress off the caller's
+    // synchronous path, so it never fires during a React render or effect
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     const { done, value } = generator.next();
     if (done) {
       result = value;
@@ -139,8 +147,6 @@ export const generateDungeonAsync = async (
     if (onProgress) {
       onProgress(value);
     }
-    // Allow other tasks to run
-    await new Promise(resolve => setTimeout(resolve, 0));
   }
 
   return result;

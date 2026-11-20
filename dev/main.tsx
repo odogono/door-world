@@ -18,7 +18,7 @@ const Playground = () => {
 
   return (
     <div
-      className="relative h-full w-full"
+      className="playground"
       style={{ background: themeColors[theme].background }}
     >
       {view === '3d' ? (
@@ -32,7 +32,7 @@ const Playground = () => {
           </ThemeContext>
         </JotaiProvider>
       )}
-      <div className="absolute bottom-4 left-4 z-50 flex items-center gap-2 rounded bg-[#2a2a2a] p-2 text-sm text-white">
+      <div className="toolbar">
         <button onClick={() => setView(view === '3d' ? '2d' : '3d')}>
           view: {view}
         </button>
@@ -40,7 +40,6 @@ const Playground = () => {
           theme: {theme}
         </button>
         <input
-          className="rounded bg-[#3d3d3d] px-1"
           onChange={event => setFloorText(event.target.value)}
           value={floorText}
         />
