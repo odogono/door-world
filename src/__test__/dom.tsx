@@ -8,6 +8,10 @@ import { createRoot, type Root } from 'react-dom/client';
 
 export const strictModes = [false, true] as const;
 
+// happy-dom's timers die with its window, which would strand react-spring's
+// pending frame and stall every later test file's springs
+const nativeSetTimeout = globalThis.setTimeout;
+
 /** Registers a DOM for the current test file only */
 export const setupDom = () => {
   const debugSpy = spyOn(console, 'debug');
@@ -22,7 +26,7 @@ export const setupDom = () => {
     // it read requestAnimationFrame before this DOM existed
     Globals.assign({
       frameLoop: 'always',
-      requestAnimationFrame: callback => setTimeout(callback, 16)
+      requestAnimationFrame: callback => nativeSetTimeout(callback, 16)
     });
   });
 

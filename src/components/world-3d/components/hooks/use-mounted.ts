@@ -4,11 +4,11 @@ import {
   useEffect,
   useEffectEvent,
   useImperativeHandle,
-  useRef,
   type Ref
 } from 'react';
 import { createLog } from '../../../../helpers/log';
 import type { EntityRef } from '../types';
+import { useToggleAnimation } from './use-toggle-animation';
 
 const log = createLog('useMounted');
 
@@ -34,8 +34,7 @@ export const useMounted = ({
   ref,
   targetValues
 }: UseMountedProps) => {
-  const isMounted = useRef(false);
-  const isMounting = useRef(false);
+  const { animateTo, settled: isMounted, target } = useToggleAnimation(false);
 
   const [springs, api] = useSpring(() => ({
     ...(initialValues?.(isMounted.current) ?? {})
@@ -48,41 +47,23 @@ export const useMounted = ({
 
   const startTransitionAnimation = useCallback(
     (enter: boolean) =>
-      new Promise<boolean>(resolve => {
-        if (isMounted.current === enter) {
-          runCallback(enter).then(() => resolve(isMounted.current));
-          return;
-        }
-
-        if (isMounting.current) {
-          return;
-        }
-
-        isMounting.current = true;
-
-        const duration = targetValues?.(isMounted.current)?.duration ?? 500;
-        const values = targetValues?.(isMounted.current);
-
-        api.start({
-          config: { duration, easing: easings.easeInOutSine },
-          onRest: async ({ finished }) => {
-            isMounting.current = false;
-
-            // react-spring 10 also calls onRest when the animation is cancelled,
-            // as StrictMode's simulated unmount does
-            if (!finished) {
-              resolve(isMounted.current);
-              return;
-            }
-
-            isMounted.current = enter;
-            runCallback(enter).then(() => resolve(enter));
-          },
-          ...values
-          // opacity
-        });
-      }),
-    [api, isMounted, runCallback, targetValues]
+      animateTo(
+        enter,
+        onRest => {
+          // targetValues describes leaving the given state
+          const values = targetValues?.(!enter);
+          api.start({
+            config: {
+              duration: values?.duration ?? 500,
+              easing: easings.easeInOutSine
+            },
+            onRest,
+            ...values
+          });
+        },
+        runCallback
+      ),
+    [animateTo, api, runCallback, targetValues]
   );
 
   useImperativeHandle(ref, () => ({
@@ -91,18 +72,13 @@ export const useMounted = ({
   }));
 
   const mountOnFirstRender = useEffectEvent(() => {
-    if (!isMounted.current && mountOnEnter) {
+    if (!target.current && mountOnEnter) {
       startTransitionAnimation(true);
     }
   });
 
   useEffect(() => {
     mountOnFirstRender();
-    // react-spring stops the animation on unmount without calling onRest, so
-    // clear the flag or StrictMode's remount would never start it again
-    return () => {
-      isMounting.current = false;
-    };
   }, []);
 
   return { isMounted, springs, startTransitionAnimation };

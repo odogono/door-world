@@ -11,7 +11,6 @@ import {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
   type ComponentType,
   type Ref
 } from 'react';
@@ -28,6 +27,7 @@ import {
   applyColor
 } from '../../../helpers/three';
 import { useMounted } from './hooks/use-mounted';
+import { useToggleAnimation } from './hooks/use-toggle-animation';
 import type { EntityRef } from './types';
 
 interface DoorProps {
@@ -95,7 +95,7 @@ export const Door = ({
     []
   );
 
-  const isOpen = useRef(isOpenProp);
+  const { animateTo, target: isOpen } = useToggleAnimation(isOpenProp);
 
   const [openDoorSpring, openDoorApi] = useSpring(() => ({
     rotation: [0, isOpen.current ? Math.PI / 2 : 0, 0]
@@ -116,26 +116,17 @@ export const Door = ({
 
   const startDoorAnimation = useCallback(
     (open: boolean) =>
-      new Promise<boolean>(resolve => {
-        if (isOpen.current === open) {
-          resolve(isOpen.current);
-          return;
-        }
-
-        const targetRotation = isOpen.current ? 0 : Math.PI / 2;
-
-        const duration = open ? openDuration : openDuration / 2;
-
+      animateTo(open, onRest => {
         openDoorApi.start({
-          config: { duration, easing: easings.easeInOutSine },
-          onRest: () => {
-            isOpen.current = open;
-            resolve(isOpen.current);
+          config: {
+            duration: open ? openDuration : openDuration / 2,
+            easing: easings.easeInOutSine
           },
-          rotation: [0, targetRotation, 0]
+          onRest,
+          rotation: [0, open ? Math.PI / 2 : 0, 0]
         });
       }),
-    [openDuration, openDoorApi]
+    [animateTo, openDuration, openDoorApi]
   );
 
   useImperativeHandle(ref, () => ({
