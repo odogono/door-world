@@ -13,6 +13,7 @@ import * as dungeonModel from '../../../model/dungeon';
 import { dungeonAtom } from '../atoms';
 import { useDungeonJourney } from '../hooks/use-dungeon-journey';
 import { DungeonProvider } from '../provider';
+import { useDungeon } from '../use-dungeon';
 
 setupDom();
 
@@ -96,6 +97,45 @@ describe('DungeonProvider', () => {
         expect(visibleRoomIds).toEqual([1]);
       } finally {
         await unmount();
+      }
+    });
+
+    test(`keeps a stored Dungeon instead of generating one${strict ? ' under StrictMode' : ''}`, async () => {
+      const stored = await dungeonModel.generateDungeon({
+        maxAttempts: 20,
+        maxRooms: 10,
+        seed: 42,
+        strategy: 'random'
+      });
+      localStorage.setItem('dungeon', JSON.stringify(stored));
+
+      const generateSpy = spyOn(dungeonModel, 'generateDungeon');
+      let seen: ReturnType<typeof useDungeon> | undefined;
+
+      const Probe = () => {
+        seen = useDungeon();
+        return null;
+      };
+
+      const { unmount } = await render(
+        <JotaiProvider>
+          <DungeonProvider>
+            <Probe />
+          </DungeonProvider>
+        </JotaiProvider>,
+        { strict }
+      );
+
+      try {
+        // Gives a wrongly started generation time to report progress
+        await act(() => new Promise(resolve => setTimeout(resolve, 50)));
+        expect(generateSpy).not.toHaveBeenCalled();
+        expect(seen?.dungeon).toEqual(structuredClone(stored));
+        expect(seen?.generationProgress).toBe(100);
+        expect(seen?.isGenerating).toBe(false);
+      } finally {
+        await unmount();
+        generateSpy.mockRestore();
       }
     });
   }
