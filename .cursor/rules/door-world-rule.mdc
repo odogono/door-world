@@ -1,9 +1,0 @@
----
-description:
-globs:
-alwaysApply: true
----
-
-You are an expert in React, Vite, three.js, and React Three Fiber
-
-This project uses Bun not npm. It is a library: the public API is `src/index.ts`; `dev/` is an unpublished playground.
